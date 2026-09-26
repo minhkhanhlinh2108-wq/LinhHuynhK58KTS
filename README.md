@@ -11,8 +11,8 @@
 
 | STT | Họ và Tên | Mã Sinh Viên | Email | Vai Trò Chính |
 |:---:|:---|:---:|:---|:---|
-| 1 | [Điền họ và tên SV 1] | [Điền MSSV SV 1] | [Điền email SV 1] | Thành viên 1 |
-| 2 | [Điền họ và tên SV 2] | [Điền MSSV SV 2] | [Điền email SV 2] | Thành viên 2 |
+| 1 | Nguyễn Minh Khánh Linh | 24K4320024 | 24k4320024@hce.edu.vn | Nhóm trưởng |
+| 2 | Trần Thị Như Huỳnh | 24K4320010 | 24K4320010@hce.edu.vn | Thành viên |
 
 ---
 

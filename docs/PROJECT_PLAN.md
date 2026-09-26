@@ -16,7 +16,7 @@ Dự án gồm **02 thành viên**. Toàn bộ quy trình phát triển chia th�
 
 ### Bảng Phân Công Vai Trò Luân Phiên
 
-| Giai Đoạn | Phạm Vi Lab | Thành Viên 1 (Sinh viên 1) | Thành Viên 2 (Sinh viên 2) |
+| Giai Đoạn | Phạm Vi Lab | Thành Viên 1: Nguyễn Minh Khánh Linh (24K4320024) | Thành Viên 2: Trần Thị Như Huỳnh (24K4320010) |
 |:---|:---:|:---|:---|
 | **Giai đoạn 1: Core Contract & Verification** | **Lab 08 – Lab 11** | **Chủ trì: Hợp đồng & Đặc tả**<br>• Phân tích đặc tả v0.1 & mô hình hóa hợp đồng.<br>• Viết mã nguồn Smart Contract cốt lõi (Fund & Claim logic). | **Chủ trì: Kiểm thử & Giao diện chuẩn bị**<br>• Thiết lập test suite (Foundry/Hardhat), viết Unit Test & Fuzz Test.<br>• Phác thảo wireframe giao diện Web3. |
 | **Giai đoạn 2: Frontend dApp & Integration** | **Lab 12 – Lab 15** | **Chủ trì: Kiểm thử E2E & Tối ưu hóa**<br>• Kiểm thử tích hợp Testnet, audit bảo mật nội bộ.<br>• Tối ưu chi phí Gas & hoàn thiện tài liệu nghiệm thu. | **Chủ trì: Giao diện & Kết nối Web3**<br>• Phát triển dApp UI hoàn chỉnh (React/Vite).<br>• Tích hợp thư viện kết nối ví (Wagmi/Viem/Ethers) với Smart Contract. |
