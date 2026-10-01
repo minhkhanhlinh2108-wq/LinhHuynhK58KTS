@@ -31,7 +31,7 @@
 ---
 
 ## 3. Điều Hướng Tài Liệu
-- Xem kế hoạch chi tiết và phân công tại: [PROJECT_PLAN.md](file:///d:/crypto-smart-contract-2026/LinhHuynhK58KTS/docs/PROJECT_PLAN.md)
-- Xem đặc tả yêu cầu và quy tắc kiểm thử tại: [SPEC.md](file:///d:/crypto-smart-contract-2026/LinhHuynhK58KTS/docs/SPEC.md)
-- Xem mô hình kinh tế và phân quyền tại: [ECONOMIC_RULES.md](file:///d:/crypto-smart-contract-2026/LinhHuynhK58KTS/docs/ECONOMIC_RULES.md)
-- Xem nhật ký tương tác và kiểm soát AI tại: [AI_JOURNAL.md](file:///d:/crypto-smart-contract-2026/LinhHuynhK58KTS/docs/AI_JOURNAL.md)
+- Xem kế hoạch chi tiết và phân công tại: [PROJECT_PLAN.md](docs/PROJECT_PLAN.md)
+- Xem đặc tả yêu cầu và quy tắc kiểm thử tại: [SPEC.md](docs/SPEC.md)
+- Xem mô hình kinh tế và phân quyền tại: [ECONOMIC_RULES.md](docs/ECONOMIC_RULES.md)
+- Xem nhật ký tương tác và kiểm soát AI tại: [AI_JOURNAL.md](docs/AI_JOURNAL.md)

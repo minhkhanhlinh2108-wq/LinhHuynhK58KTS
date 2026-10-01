@@ -1,0 +1,22 @@
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Foundry / Hardhat build output
+cache/
+out/
+artifacts/
+typechain/
+typechain-types/
+broadcast/
+
+# IDE / System
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log

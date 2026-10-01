@@ -3,7 +3,7 @@
 > **Dự án:** TrustScholar — Giải ngân học bổng minh bạch trên Blockchain  
 > **Phiên bản:** v1.0 (Đặc tả nghiệp vụ giải ngân học bổng theo mốc)  
 > **Repository:** [LinhHuynhK58KTS](https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS.git)  
-> **Tài liệu liên quan:** [PROJECT_PLAN.md](file:///d:/crypto-smart-contract-2026/LinhHuynhK58KTS/docs/PROJECT_PLAN.md) | [ECONOMIC_RULES.md](file:///d:/crypto-smart-contract-2026/LinhHuynhK58KTS/docs/ECONOMIC_RULES.md) | [AI_JOURNAL.md](file:///d:/crypto-smart-contract-2026/LinhHuynhK58KTS/docs/AI_JOURNAL.md)
+> **Tài liệu liên quan:** [PROJECT_PLAN.md](PROJECT_PLAN.md) | [ECONOMIC_RULES.md](ECONOMIC_RULES.md) | [AI_JOURNAL.md](AI_JOURNAL.md)
 
 ---
 
