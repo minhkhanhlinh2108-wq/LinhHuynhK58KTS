@@ -14,8 +14,8 @@
 
 | STT | Họ và Tên | Mã Sinh Viên | Email | Vai Trò Chính |
 |:---:|:---|:---:|:---|:---|
-| 1 | Nguyễn Minh Khánh Linh | 24K4320024 | 24k4320024@hce.edu.vn | Nhóm trưởng |
-| 2 | Trần Thị Như Huỳnh | 24K4320010 | 24K4320010@hce.edu.vn | Thành viên |
+| 1 | Nguyễn Minh Khánh Linh | 24K4320024 | 24k4320024@hce.edu.vn | Nhóm trưởng *(Business/SPEC + Smart Contract/Security)* |
+| 2 | Trần Thị Như Huỳnh | 24K4320010 | 24K4320010@hce.edu.vn | Thành viên *(Testing + DApp + Audit)* |
 
 ---
 
@@ -24,7 +24,7 @@
 .
 ├── README.md                  # Giới thiệu tổng quan và thông tin nhóm
 ├── docs/                      # Tài liệu kỹ thuật và quản trị đồ án
-│   ├── PROJECT_PLAN.md        # Phân công vai trò, đối tượng & lộ trình mốc Lab 8–15
+│   ├── PROJECT_PLAN.md        # Phân công vai trò, đối tượng & lộ trình mốc Lab 08–15
 │   ├── SPEC.md                # Đặc tả nghiệp vụ v1.0 với bộ 10 quy tắc R1–R10
 │   ├── ECONOMIC_RULES.md      # Quy tắc kinh tế, dòng tiền, hạn mức & chống lạm dụng
 │   └── AI_JOURNAL.md          # Nhật ký ứng dụng AI xuyên suốt các bài Lab
@@ -42,4 +42,3 @@
 
 ---
 > 🔗 **Liên kết nhanh:** [Trang chủ](README.md) • [Kế hoạch đồ án](docs/PROJECT_PLAN.md) • [Đặc tả nghiệp vụ](docs/SPEC.md) • [Quy tắc kinh tế](docs/ECONOMIC_RULES.md) • [Nhật ký AI](docs/AI_JOURNAL.md) • [GitHub Repo](https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS)
-
