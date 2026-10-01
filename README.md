@@ -25,7 +25,7 @@
 ├── README.md                  # Giới thiệu tổng quan và thông tin nhóm
 ├── docs/                      # Tài liệu kỹ thuật và quản trị đồ án
 │   ├── PROJECT_PLAN.md        # Phân công vai trò, đối tượng & lộ trình mốc Lab 8–15
-│   ├── SPEC.md                # Đặc tả kỹ thuật v0.1 với 4 quy tắc kiểm thử
+│   ├── SPEC.md                # Đặc tả nghiệp vụ v1.0 với bộ 10 quy tắc R1–R10
 │   ├── ECONOMIC_RULES.md      # Quy tắc kinh tế, dòng tiền, hạn mức & chống lạm dụng
 │   └── AI_JOURNAL.md          # Nhật ký ứng dụng AI xuyên suốt các bài Lab
 └── (Các thư mục mã nguồn sẽ được khởi tạo trong các Lab tiếp theo: contracts/, test/, frontend/...)
