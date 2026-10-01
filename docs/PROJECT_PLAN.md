@@ -1,6 +1,9 @@
 # Kế Hoạch Đồ Án (Project Plan) - TrustScholar
 
-Nền tảng giải ngân học bổng minh bạch, phi tập trung và chống gian lận trên Blockchain.
+> **Dự án:** TrustScholar — Giải ngân học bổng minh bạch trên Blockchain  
+> **Repository GitHub:** [minhkhanhlinh2108-wq/LinhHuynhK58KTS](https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS)  
+> **Điều hướng nhanh:** [Trang chủ README](../README.md) | [Đặc Tả Nghiệp Vụ (SPEC.md)](SPEC.md) | [Quy Tắc Kinh Tế (ECONOMIC_RULES.md)](ECONOMIC_RULES.md) | [Nhật Ký AI (AI_JOURNAL.md)](AI_JOURNAL.md)  
+> **Mục tiêu:** Nền tảng giải ngân học bổng minh bạch, phi tập trung và chống gian lận trên Blockchain.
 
 ---
 
@@ -64,3 +67,7 @@ Lộ trình thực hiện chi tiết theo quy chuẩn đồ án môn học Web3:
 | **Lab 13** | **Tích Hợp Testnet & Xử Lý Giao Dịch** | • Triển khai (Deploy) Smart Contract lên mạng thử nghiệm (Sepolia / Arbitrum Sepolia).<br>• Verify mã nguồn hợp đồng trên Etherscan.<br>• Kết nối Frontend với Contract đã deploy trên Testnet. | • Địa chỉ contract đã được verify trên Testnet Explorer.<br>• dApp thực hiện được luồng nạp quỹ và claim thật trên Testnet. |
 | **Lab 14** | **Kiểm Thử E2E, Tối Ưu Gas & UAT** | • Thực hiện kiểm thử toàn trình từ nạp tiền, duyệt hồ sơ đến sinh viên rút tiền.<br>• Phân tích Gas Reporter và tối ưu hóa chi phí thực thi hợp đồng.<br>• Thử nghiệm với người dùng thật (User Acceptance Testing). | • Bảng đối chuẩn chi phí Gas trước và sau tối ưu.<br>• Biên bản UAT và danh sách các lỗi đã vá. |
 | **Lab 15** | **Đóng Gói dApp, Hoàn Thiện Tài Liệu & Báo Cáo** | • Chuẩn bị bài thuyết trình slide demo và video giới thiệu.<br>• Hoàn thiện toàn bộ tài liệu kỹ thuật, cập nhật [README.md](../README.md) & [AI_JOURNAL.md](AI_JOURNAL.md).<br>• Đóng gói source code và deploy phiên bản live dApp. | • Bản ghi hình Demo / Live URL dApp.<br>• Bộ tài liệu nghiệm thu hoàn chỉnh phục vụ bảo vệ đồ án. |
+
+---
+> 🔗 **Liên kết nhanh:** [Trang chủ README](../README.md) • [Kế hoạch đồ án](PROJECT_PLAN.md) • [Đặc tả nghiệp vụ](SPEC.md) • [Quy tắc kinh tế](ECONOMIC_RULES.md) • [Nhật ký AI](AI_JOURNAL.md) • [GitHub Repo](https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS)
+

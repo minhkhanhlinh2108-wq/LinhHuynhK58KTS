@@ -1,6 +1,9 @@
 # Quy Tắc Kinh Tế & Kiểm Soát Rủi Ro (Economic Rules) - TrustScholar
 
-Tài liệu này xác định mô hình kinh tế, cơ chế khuyến khích, phân định quyền hạn và các phương án giảm thiểu rủi ro tài chính cho nền tảng giải ngân học bổng TrustScholar.
+> **Dự án:** TrustScholar — Giải ngân học bổng minh bạch trên Blockchain  
+> **Repository GitHub:** [minhkhanhlinh2108-wq/LinhHuynhK58KTS](https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS)  
+> **Điều hướng nhanh:** [Trang chủ README](../README.md) | [Đặc Tả Nghiệp Vụ (SPEC.md)](SPEC.md) | [Kế Hoạch Đồ Án (PROJECT_PLAN.md)](PROJECT_PLAN.md) | [Nhật Ký AI (AI_JOURNAL.md)](AI_JOURNAL.md)  
+> **Mô tả:** Tài liệu này xác định mô hình kinh tế, cơ chế khuyến khích, phân định quyền hạn và các phương án giảm thiểu rủi ro tài chính cho nền tảng giải ngân học bổng TrustScholar.
 
 ---
 
@@ -73,3 +76,7 @@ Hệ thống áp dụng mô hình phân quyền chặt chẽ theo chuẩn `Acces
 | **3. Nhà tài trợ rút tiền sớm (Rug-pull / Backing out)** | Sinh viên | Nhà tài trợ đổi ý, cố tình hủy quỹ khi sinh viên đã hoàn thành xuất sắc kỳ học nhưng chưa kịp gọi hàm `claim`. | • Khóa quỹ bắt buộc (Timelock/Commitment Lock): Tiền đã cam kết cho sinh viên (`committedAmount`) sẽ bị khóa bất khả xâm phạm. Nhà tài trợ **chỉ** được hoàn tiền sau khi quá hạn ân hạn (`expiryTime + GRACE_PERIOD`) mà sinh viên không nhận. |
 | **4. Đơn vị xác thực bỏ bê / Chậm duyệt (Verifier Inaction)** | Sinh viên & Nhà tài trợ | Trường hoặc bên thẩm định chậm trễ hoặc từ chối xử lý hồ sơ khiến quỹ bị treo quá hạn. | • Cơ chế Fallback / Timeout: Nếu Verifier không duyệt đúng hạn, quyền duyệt được trao trả tạm thời cho chính Nhà tài trợ để can thiệp trực tiếp hoặc hoàn tiền cho Nhà tài trợ để chuyển sang quỹ khác. |
 | **5. Sinh viên không đủ Gas fee để claim** | Sinh viên | Ví sinh viên chỉ có địa chỉ nhận nhưng không có ETH làm phí giao dịch mạng để thực hiện giao dịch `claim`. | • Trong lộ trình Lab 13–14, tích hợp cơ chế tài trợ gas (Account Abstraction ERC-4337 / Biconomy Gasless Paymaster) để trừ thẳng gas vào phần thưởng hoặc cho phép Nhà tài trợ tài trợ phí rút cho sinh viên. |
+
+---
+> 🔗 **Liên kết nhanh:** [Trang chủ README](../README.md) • [Kế hoạch đồ án](PROJECT_PLAN.md) • [Đặc tả nghiệp vụ](SPEC.md) • [Quy tắc kinh tế](ECONOMIC_RULES.md) • [Nhật ký AI](AI_JOURNAL.md) • [GitHub Repo](https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS)
+

@@ -2,8 +2,8 @@
 
 > **Dự án:** TrustScholar — Giải ngân học bổng minh bạch trên Blockchain  
 > **Phiên bản:** v1.0 (Đặc tả nghiệp vụ giải ngân học bổng theo mốc)  
-> **Repository:** [LinhHuynhK58KTS](https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS.git)  
-> **Tài liệu liên quan:** [PROJECT_PLAN.md](PROJECT_PLAN.md) | [ECONOMIC_RULES.md](ECONOMIC_RULES.md) | [AI_JOURNAL.md](AI_JOURNAL.md)
+> **Repository GitHub:** [minhkhanhlinh2108-wq/LinhHuynhK58KTS](https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS)  
+> **Điều hướng nhanh:** [Trang chủ README](../README.md) | [Kế hoạch đồ án (PROJECT_PLAN.md)](PROJECT_PLAN.md) | [Quy tắc kinh tế (ECONOMIC_RULES.md)](ECONOMIC_RULES.md) | [Nhật ký AI (AI_JOURNAL.md)](AI_JOURNAL.md)
 
 ---
 
@@ -227,3 +227,6 @@ Nhằm chuẩn bị tốt cho giai đoạn triển khai hợp đồng và viết
    - Nếu sinh viên quá hạn không nộp minh chứng hoặc mốc bị từ chối vĩnh viễn, Nhà tài trợ sẽ được quyền rút lại số tiền còn thừa của các mốc chưa giải ngân theo điều kiện thời gian nào?
 4. **Độ dài và định dạng của `proofHash`:**
    - Sử dụng `string` (chứa chuỗi IPFS CID dạng `Qm...` hoặc `bafy...`) hay chuyển sang dạng `bytes32` tối ưu gas?
+
+---
+> 🔗 **Liên kết nhanh:** [Trang chủ README](../README.md) • [Kế hoạch đồ án](PROJECT_PLAN.md) • [Đặc tả nghiệp vụ](SPEC.md) • [Quy tắc kinh tế](ECONOMIC_RULES.md) • [Nhật ký AI](AI_JOURNAL.md) • [GitHub Repo](https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS)

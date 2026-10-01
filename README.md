@@ -1,6 +1,9 @@
 # TrustScholar - Nền Tảng Giải Ngân Học Bổng Minh Bạch Trên Blockchain
 
-> Nhóm xây dựng nền tảng TrustScholar cho nhà tài trợ và sinh viên để đảm bảo giải ngân học bổng tự động, minh bạch và chống sai đối tượng.
+> **Dự án:** TrustScholar — Giải ngân học bổng minh bạch trên Blockchain  
+> **Repository GitHub:** [minhkhanhlinh2108-wq/LinhHuynhK58KTS](https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS)  
+> **Điều hướng nhanh:** [Kế Hoạch Đồ Án](docs/PROJECT_PLAN.md) | [Đặc Tả Nghiệp Vụ](docs/SPEC.md) | [Quy Tắc Kinh Tế](docs/ECONOMIC_RULES.md) | [Nhật Ký AI](docs/AI_JOURNAL.md)  
+> **Slogan:** *Nhóm xây dựng nền tảng TrustScholar cho nhà tài trợ và sinh viên để đảm bảo giải ngân học bổng tự động, minh bạch và chống sai đối tượng.*
 
 ---
 
@@ -30,8 +33,13 @@
 
 ---
 
-## 3. Điều Hướng Tài Liệu
-- Xem kế hoạch chi tiết và phân công tại: [PROJECT_PLAN.md](docs/PROJECT_PLAN.md)
-- Xem đặc tả yêu cầu và quy tắc kiểm thử tại: [SPEC.md](docs/SPEC.md)
-- Xem mô hình kinh tế và phân quyền tại: [ECONOMIC_RULES.md](docs/ECONOMIC_RULES.md)
-- Xem nhật ký tương tác và kiểm soát AI tại: [AI_JOURNAL.md](docs/AI_JOURNAL.md)
+## 3. Điều Hướng Tài Liệu & Kho Lưu Trữ
+- 🌐 **Mã nguồn GitHub:** [https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS](https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS)
+- 📋 **Kế hoạch & Phân công vai trò:** [PROJECT_PLAN.md](docs/PROJECT_PLAN.md)
+- 📐 **Đặc tả nghiệp vụ & 10 Quy tắc R1–R10:** [SPEC.md](docs/SPEC.md)
+- 💰 **Quy tắc kinh tế & Chống lạm dụng:** [ECONOMIC_RULES.md](docs/ECONOMIC_RULES.md)
+- 🤖 **Nhật ký ứng dụng AI xuyên suốt:** [AI_JOURNAL.md](docs/AI_JOURNAL.md)
+
+---
+> 🔗 **Liên kết nhanh:** [Trang chủ](README.md) • [Kế hoạch đồ án](docs/PROJECT_PLAN.md) • [Đặc tả nghiệp vụ](docs/SPEC.md) • [Quy tắc kinh tế](docs/ECONOMIC_RULES.md) • [Nhật ký AI](docs/AI_JOURNAL.md) • [GitHub Repo](https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS)
+
