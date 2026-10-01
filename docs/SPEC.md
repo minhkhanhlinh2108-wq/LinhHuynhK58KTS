@@ -213,7 +213,7 @@ struct Scholarship {
 
 ---
 
-## 11. Các Điểm Cần Người 2 Kiểm Tra & Đóng Góp Ý Kiến (Review Checklist for Peer 2)
+## 11. Các Điểm Cần Như Huỳnh Kiểm Tra & Đóng Góp Ý Kiến (Review Checklist for Peer 2)
 
 Nhằm chuẩn bị tốt cho giai đoạn triển khai hợp đồng và viết test suite (Lab 09 - Lab 11), Thành viên 2 (**Trần Thị Như Huỳnh - QA & Testing**) cần rà soát và xác nhận các nội dung sau:
 
