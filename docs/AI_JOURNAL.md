@@ -61,9 +61,36 @@ Mỗi phiên làm việc có sử dụng AI cần được ghi chép theo cấu 
 
 ---
 
-### Lab 09: Thiết Kế Kiến Trúc & Interface Hợp Đồng
+### Chuyên Đề Economic Rules & Phân Tích Rủi Ro Lạm Dụng (Lab 08 Hoàn Thiện)
+
+- **Ngày thực hiện:** 01/10/2026
+- **Nhiệm vụ:**
+  1. Tạo và chuẩn hóa tài liệu [ECONOMIC_RULES.md](ECONOMIC_RULES.md) cho TrustScholar: Làm rõ dòng tiền/quyền lợi (nạp ETH testnet, khóa theo suất, sinh viên nhận tiền đúng điều kiện, tiền về đúng ví), 4 giới hạn chống lạm dụng, 3 câu hỏi quyền quản trị, và 4 tình huống người dùng bị thiệt kèm phương án phòng ngừa.
+  2. Cập nhật [PROJECT_PLAN.md](PROJECT_PLAN.md): Phân vai trách nhiệm chi tiết (Khánh Linh: Business/SPEC + Smart Contract/Security; Như Huỳnh: Testing + DApp + Audit) và chuẩn hóa lộ trình 7 mốc bắt buộc (Lab 09: ProjectCore biên dịch được; Lab 10: audit và sửa lỗi; Lab 11: economic rules chạy đúng; Lab 12: Gate Review; Lab 13: security experiment; Lab 14: cross-audit; Lab 15: public DApp).
+  3. Đóng vai người dùng thận trọng (Adversary/Auditor), phân tích 5 kịch bản có thể lạm dụng TrustScholar dựa trên SPEC và ECONOMIC_RULES; chỉ ra rule liên quan, đánh giá độ chặt và đề xuất cải tiến rule.
+  4. Tuân thủ tuyệt đối quy tắc không tự ý sinh mã Smart Contract (`.sol`) ở Lab 08.
+- **Prompt sử dụng:**
+  > *"TrustScholar. Repository: https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS.git. Trước tiên hãy đọc: docs/SPEC.md, README.md, docs/AI_JOURNAL.md. Không sửa SPEC.md ngay. Hãy review SPEC trước. Thực hiện: Tạo docs/ECONOMIC_RULES.md (Dòng tiền/quyền lợi, Giới hạn chống lạm dụng, Quyền quản trị, Tình huống người dùng bị thiệt)... Tạo/cập nhật docs/PROJECT_PLAN.md (Phân vai Khánh Linh và Như Huỳnh; 7 Mốc Lab 09-15)... Đóng vai người dùng thận trọng và đưa ra 5 cách có thể lạm dụng TrustScholar... Không viết code... Cập nhật docs/AI_JOURNAL.md. Không tự ý tạo Smart Contract ở Lab 08. Cuối cùng báo cáo: File đã tạo/sửa, 5 rủi ro, Các điểm SPEC cần Thành viên 1 xem lại."*
+- **Phản hồi & Thiếu sót của AI phát hiện được:**
+  1. *Thiên vị kiểm tra cú pháp thay vì tư duy bảo mật nghịch đảo (Adversarial mindset):* Ban đầu AI cho rằng bộ 10 quy tắc R1-R10 trong SPEC v1.0 đã "hoàn hảo". Tuy nhiên khi nhóm đóng vai người dùng thận trọng / kẻ trục lợi, AI đã bộc lộ 5 điểm hở chết người:
+     - R4 chỉ kiểm tra đủ quỹ ở thời điểm gọi giải ngân, không ép buộc nạp đủ 100% trước khi mở mốc cho sinh viên nộp bài (Underfunding exploit).
+     - R6 trao quyền tuyệt đối cho 01 Verifier mà không có thời gian thử thách (Challenge Period / Timelock) hay cơ chế đa chữ ký cho mốc lớn, dẫn đến nguy cơ Verifier thông đồng duyệt minh chứng giả.
+     - R9 quy định chuyển tiền đúng ví sinh viên nhưng SPEC chưa chốt cơ chế Pull hay Push, tiềm ẩn nguy cơ DoS làm kẹt tiền toàn bộ hệ thống nếu ví sinh viên từ chối nhận ETH.
+     - R2 gắn cứng ví sinh viên nhưng chưa có cơ chế khôi phục khẩn cấp an toàn nếu sinh viên mất private key.
+     - Thiếu quy tắc ràng buộc việc Nhà tài trợ rút tiền (Refund Front-running) khi sinh viên đã hoàn thành nghĩa vụ.
+  2. *Lẫn lộn mô hình kinh tế:* AI có xu hướng áp đặt mô hình pool token ERC-20 và các thông số giả định (như 2.000 USDC/kỳ), không sát với cấu trúc suất học bổng theo mốc nạp ETH testnet của TrustScholar.
+  3. *Nguy cơ vi phạm quy trình:* AI định viết sẵn code Solidity cho Lab 09 để "thể hiện", nhưng nhóm đã kiên quyết chặn lại để giữ đúng phạm vi Lab 08.
+- **Quyết định sửa chữa của nhóm:**
+  - Viết lại toàn diện [ECONOMIC_RULES.md](ECONOMIC_RULES.md) tập trung chuẩn xác vào mô hình Escrow theo từng suất bằng ETH testnet, giải quyết triệt để 4 câu hỏi chống lạm dụng và 4 tình huống thiệt hại.
+  - Cập nhật chuẩn xác [PROJECT_PLAN.md](PROJECT_PLAN.md) theo 2 vai trò chuyên môn hóa và 7 mốc kỹ thuật chuẩn (từ Lab 09 đến Lab 15).
+  - Đóng gói 5 rủi ro kèm kiến nghị sửa đổi rule để chuyển giao cho Thành viên 1 (Khánh Linh) rà soát lại SPEC v1.0 trước khi thiết kế Interface tại Lab 09.
+- **Kết quả đạt được:** Hoàn thành cập nhật [ECONOMIC_RULES.md](ECONOMIC_RULES.md), [PROJECT_PLAN.md](PROJECT_PLAN.md) và [AI_JOURNAL.md](AI_JOURNAL.md); giữ nguyên [SPEC.md](SPEC.md) để chuyển giao phản biện cho Khánh Linh; không phát sinh code `.sol`.
+
+---
+
+### Lab 09: ProjectCore Biên Dịch Được
 - **Ngày thực hiện:** [Chưa thực hiện]
-- **Nhiệm vụ:** Thiết kế interface `IScholarshipPool.sol` và cấu trúc dữ liệu lưu trữ (Storage Layout).
+- **Nhiệm vụ:** Thiết kế interface `IScholarshipPool.sol`, định nghĩa struct/enum, lập trình khung xương hợp đồng `ProjectCore.sol` và đảm bảo biên dịch thành công.
 - **Prompt sử dụng:** *(Sẽ cập nhật khi triển khai Lab 9)*
 - **Phản hồi & Lỗi của AI:** *(Sẽ ghi chú các thiếu sót về kiểu dữ liệu, đóng gói gas struct khi AI gợi ý)*
 - **Quyết định sửa chữa của nhóm:** *(Sẽ cập nhật)*
@@ -71,9 +98,9 @@ Mỗi phiên làm việc có sử dụng AI cần được ghi chép theo cấu 
 
 ---
 
-### Lab 10: Hiện Thực Hóa Core Smart Contracts
+### Lab 10: Audit Và Sửa Lỗi
 - **Ngày thực hiện:** [Chưa thực hiện]
-- **Nhiệm vụ:** Viết mã nguồn Solidity cho logic nạp quỹ, phê duyệt sinh viên và giải ngân tự động.
+- **Nhiệm vụ:** Rà soát an ninh nội bộ vòng 1, kiểm tra phân quyền RBAC, kiểm tra ReentrancyGuard, CEI pattern và vá triệt để các lỗi phát hiện được.
 - **Prompt sử dụng:** *(Sẽ cập nhật khi triển khai Lab 10)*
 - **Phản hồi & Lỗi của AI:** *(Sẽ kiểm tra các lỗi reentrancy, check-effects-interactions do AI sinh ra)*
 - **Quyết định sửa chữa của nhóm:** *(Sẽ cập nhật)*
@@ -81,9 +108,9 @@ Mỗi phiên làm việc có sử dụng AI cần được ghi chép theo cấu 
 
 ---
 
-### Lab 11: Unit Test, Fuzzing & Kiểm Thử Bảo Mật Nội Bộ
+### Lab 11: Economic Rules Chạy Đúng
 - **Ngày thực hiện:** [Chưa thực hiện]
-- **Nhiệm vụ:** Xây dựng test suite tự động (Foundry/Hardhat), kiểm thử biên và quét phân tích tĩnh Slither.
+- **Nhiệm vụ:** Xây dựng test suite tự động kiểm chứng 100% các quy tắc kinh tế trong ECONOMIC_RULES.md và bộ quy tắc R1–R10 trong SPEC.md, đạt độ bao phủ coverage > 90%.
 - **Prompt sử dụng:** *(Sẽ cập nhật khi triển khai Lab 11)*
 - **Phản hồi & Lỗi của AI:** *(Sẽ ghi chép các test cases bị AI bỏ sót hoặc mock sai ngữ cảnh)*
 - **Quyết định sửa chữa của nhóm:** *(Sẽ cập nhật)*
@@ -91,29 +118,29 @@ Mỗi phiên làm việc có sử dụng AI cần được ghi chép theo cấu 
 
 ---
 
-### Lab 12: Phát Triển Giao Diện Web3 dApp
+### Lab 12: Gate Review
 - **Ngày thực hiện:** [Chưa thực hiện]
-- **Nhiệm vụ:** Khởi tạo Frontend Dashboard cho Nhà tài trợ và Sinh viên, tích hợp kết nối ví Web3.
+- **Nhiệm vụ:** Đánh giá cột mốc chất lượng toàn diện (Gate Review), rà soát sự đồng bộ giữa SPEC, Hợp đồng và Test suite; tiến hành Code Freeze tầng smart contract.
 - **Prompt sử dụng:** *(Sẽ cập nhật khi triển khai Lab 12)*
-- **Phản hồi & Lỗi của AI:** *(Sẽ ghi chép các lỗi tương thích RPC, xử lý state asynchronous trong React)*
+- **Phản hồi & Lỗi của AI:** *(Sẽ ghi chép các đánh giá chủ quan của AI khi thẩm định)*
 - **Quyết định sửa chữa của nhóm:** *(Sẽ cập nhật)*
 - **Kết quả đạt được:** *(Sẽ cập nhật)*
 
 ---
 
-### Lab 13: Tích Hợp Hợp Đồng & Triển Khai Lên Testnet
+### Lab 13: Security Experiment
 - **Ngày thực hiện:** [Chưa thực hiện]
-- **Nhiệm vụ:** Deploy Smart Contract lên Sepolia/Arbitrum Testnet, verify contract và kết nối dApp.
+- **Nhiệm vụ:** Thực nghiệm bảo mật nâng cao (Security Experiment): Mô phỏng tấn công reentrancy, tấn công DoS chuyển tiền, và stress testing.
 - **Prompt sử dụng:** *(Sẽ cập nhật khi triển khai Lab 13)*
-- **Phản hồi & Lỗi của AI:** *(Sẽ ghi chép lỗi cấu hình script deploy, quản lý biến môi trường)*
+- **Phản hồi & Lỗi của AI:** *(Sẽ ghi chép các thiếu sót khi AI dựng kịch bản tấn công giả lập)*
 - **Quyết định sửa chữa của nhóm:** *(Sẽ cập nhật)*
 - **Kết quả đạt được:** *(Sẽ cập nhật)*
 
 ---
 
-### Lab 14: Kiểm Thử Toàn Trình (E2E), Tối Ưu Gas & UAT
+### Lab 14: Cross-Audit
 - **Ngày thực hiện:** [Chưa thực hiện]
-- **Nhiệm vụ:** Chạy kịch bản E2E toàn diện, đo lường chi phí Gas và tiến hành UAT với người dùng thử nghiệm.
+- **Nhiệm vụ:** Tiến hành kiểm toán chéo (Cross-audit) độc lập giữa 2 thành viên, chạy phân tích tĩnh Slither, tối ưu hóa gas và kiểm thử tích hợp E2E.
 - **Prompt sử dụng:** *(Sẽ cập nhật khi triển khai Lab 14)*
 - **Phản hồi & Lỗi của AI:** *(Sẽ ghi chép các gợi ý tối ưu gas không hiệu quả hoặc làm giảm tính dễ đọc)*
 - **Quyết định sửa chữa của nhóm:** *(Sẽ cập nhật)*
@@ -121,9 +148,9 @@ Mỗi phiên làm việc có sử dụng AI cần được ghi chép theo cấu 
 
 ---
 
-### Lab 15: Hoàn Thiện Đóng Gói, Tài Liệu Hóa & Báo Cáo Nghiệm Thu
+### Lab 15: Public DApp
 - **Ngày thực hiện:** [Chưa thực hiện]
-- **Nhiệm vụ:** Đóng gói toàn bộ sản phẩm dApp, làm video demo, chuẩn bị slide và hoàn thiện tài liệu báo cáo.
+- **Nhiệm vụ:** Triển khai Smart Contract lên Sepolia/Arbitrum Sepolia Testnet, deploy Frontend Web3 DApp lên hosting công khai, quay video demo và nghiệm thu đồ án.
 - **Prompt sử dụng:** *(Sẽ cập nhật khi triển khai Lab 15)*
 - **Phản hồi & Lỗi của AI:** *(Sẽ ghi chép các nội dung slide/kịch bản thuyết trình được AI hỗ trợ)*
 - **Quyết định sửa chữa của nhóm:** *(Sẽ cập nhật)*

@@ -1,73 +1,73 @@
 # Kế Hoạch Đồ Án (Project Plan) - TrustScholar
 
-> **Dự án:** TrustScholar — Giải ngân học bổng minh bạch trên Blockchain  
+> **Dự án:** TrustScholar — Nền tảng giải ngân học bổng minh bạch trên Blockchain  
+> **Phiên bản:** v1.0 (Kế hoạch phân vai & Lộ trình thực hiện Lab 08 – Lab 15)  
 > **Repository GitHub:** [minhkhanhlinh2108-wq/LinhHuynhK58KTS](https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS)  
 > **Điều hướng nhanh:** [Trang chủ README](../README.md) | [Đặc Tả Nghiệp Vụ (SPEC.md)](SPEC.md) | [Quy Tắc Kinh Tế (ECONOMIC_RULES.md)](ECONOMIC_RULES.md) | [Nhật Ký AI (AI_JOURNAL.md)](AI_JOURNAL.md)  
 > **Mục tiêu:** Nền tảng giải ngân học bổng minh bạch, phi tập trung và chống gian lận trên Blockchain.
 
 ---
 
-## 1. Thành Viên và Vai Trò
+## 1. Thành Viên & Phân Vai Trách Nhiệm (Team Members & Role Allocation)
 
-Dự án gồm **02 thành viên**. Toàn bộ quy trình phát triển chia thành **4 vai trò kỹ thuật chính**:
-1. **Đặc tả (Specification & Architecture):** Phân tích nghiệp vụ, mô hình dữ liệu, viết tài liệu đặc tả logic hệ thống.
-2. **Hợp đồng (Smart Contract Engineering):** Hiện thực hóa logic trên smart contract (Solidity), xử lý tối ưu gas và cấu trúc lưu trữ.
-3. **Giao diện (Frontend & Web3 Integration):** Xây dựng giao diện tương tác người dùng dApp, kết nối ví và tương tác RPC.
-4. **Kiểm thử (QA, Testing & Security Audit):** Viết unit tests, fuzz testing, kịch bản E2E và kiểm tra bảo mật (reentrancy, access control).
+Dự án **TrustScholar** được phát triển bởi nhóm **02 thành viên**, phân chia trách nhiệm chuyên môn hóa sâu theo 2 khối kỹ thuật cốt lõi:
 
-Để đảm bảo cả 2 thành viên đều nắm vững toàn diện kiến thức Full-stack Web3, các vai trò được **luân phiên** qua 2 giai đoạn:
-
-### Bảng Phân Công Vai Trò Luân Phiên
-
-| Giai Đoạn | Phạm Vi Lab | Thành Viên 1: Nguyễn Minh Khánh Linh (24K4320024) | Thành Viên 2: Trần Thị Như Huỳnh (24K4320010) |
-|:---|:---:|:---|:---|
-| **Giai đoạn 1: Core Contract & Verification** | **Lab 08 – Lab 11** | **Chủ trì: Hợp đồng & Đặc tả**<br>• Phân tích đặc tả v0.1 & mô hình hóa hợp đồng.<br>• Viết mã nguồn Smart Contract cốt lõi (Fund & Claim logic). | **Chủ trì: Kiểm thử & Giao diện chuẩn bị**<br>• Thiết lập test suite (Foundry/Hardhat), viết Unit Test & Fuzz Test.<br>• Phác thảo wireframe giao diện Web3. |
-| **Giai đoạn 2: Frontend dApp & Integration** | **Lab 12 – Lab 15** | **Chủ trì: Kiểm thử E2E & Tối ưu hóa**<br>• Kiểm thử tích hợp Testnet, audit bảo mật nội bộ.<br>• Tối ưu chi phí Gas & hoàn thiện tài liệu nghiệm thu. | **Chủ trì: Giao diện & Kết nối Web3**<br>• Phát triển dApp UI hoàn chỉnh (React/Vite).<br>• Tích hợp thư viện kết nối ví (Wagmi/Viem/Ethers) với Smart Contract. |
+| STT | Thành Viên | Mã Sinh Viên | Khối Trách Nhiệm Chuyên Môn | Nhiệm Vụ Cụ Thể |
+|:---:|:---|:---:|:---|:---|
+| 1 | **Nguyễn Minh Khánh Linh**<br>*(Nhóm trưởng)* | 24K4320024 | **Business/SPEC + Smart Contract/Security** | • Chủ trì phân tích nghiệp vụ, mô hình dữ liệu và cập nhật tài liệu đặc tả [SPEC.md](SPEC.md), [ECONOMIC_RULES.md](ECONOMIC_RULES.md).<br>• Trực tiếp thiết kế kiến trúc và lập trình mã nguồn Smart Contract lõi (`ProjectCore.sol`, Escrow logic, RBAC).<br>• Thiết lập các cơ chế phòng vệ an ninh on-chain (Checks-Effects-Interactions, `ReentrancyGuard`, ngăn chặn rút quá quỹ, bẫy DoS).<br>• Phân tích mô hình mối đe dọa (Threat Modeling) và xử lý các lỗi bảo mật phát hiện trong quá trình phát triển. |
+| 2 | **Trần Thị Như Huỳnh**<br>*(Thành viên)* | 24K4320010 | **Testing + DApp + Audit** | • Xây dựng hệ thống kiểm thử tự động (Unit Test, Fuzz Testing, Edge Case Testing cho toàn bộ quy tắc R1–R10).<br>• Thiết kế và lập trình giao diện người dùng Web3 DApp (React/Vite, kết nối ví MetaMask/WalletConnect qua Wagmi/Viem).<br>• Thực hiện kiểm toán độc lập (Audit), chạy công cụ phân tích tĩnh (Slither) và thực nghiệm bảo mật (Security Experiments).<br>• Phụ trách kiểm thử toàn trình (E2E Integration Test), tối ưu chi phí Gas và triển khai (Deploy) công khai lên Testnet/Web hosting. |
 
 ---
 
-## 2. Người Dùng và Vấn Đề
+## 2. Người Dùng Và Vấn Đề Giải Quyết (Problem & Target Users)
 
-### 2.1. Người Dùng Chính (Target Users)
+### 2.1. Đối Tượng Sử Dụng Mục Tiêu
 1. **Nhà tài trợ (Sponsors / Donors):**
-   - Các tổ chức giáo dục, cựu sinh viên thành đạt, quỹ thiện nguyện, doanh nghiệp.
-   - **Mục tiêu:** Muốn đóng góp quỹ học bổng và trực tiếp giám sát dòng tiền minh bạch; đảm bảo tiền nạp vào được giải ngân đúng người, đúng lộ trình và không bị thất thoát qua khâu trung gian.
-2. **Sinh viên (Students / Beneficiaries):**
-   - Sinh viên có hoàn cảnh khó khăn hoặc có thành tích học tập, nghiên cứu xuất sắc.
-   - **Mục tiêu:** Nhận học bổng đúng hạn, quy trình xét duyệt công khai, không bị cắt xén, không phụ thuộc vào sự chậm trễ hay cảm tính của các thủ tục hành chính truyền thống.
-3. **Đơn vị xác thực (Verifiers / Academic Admins - Bên thứ ba bổ trợ):**
-   - Phòng Đào tạo / Công tác sinh viên xác thực GPA, tư cách sinh viên và hồ sơ minh chứng thông qua chữ ký số / cấp chứng thực.
+   - Các doanh nghiệp, tổ chức phi chính phủ, quỹ thiện nguyện cá nhân hoặc cựu sinh viên.
+   - **Mục tiêu:** Ký quỹ ETH minh bạch, theo dõi tiến độ giải ngân từng mốc, đảm bảo tiền chuyển trực tiếp đến đúng sinh viên mà không bị thất thoát qua khâu trung gian.
+2. **Sinh viên thụ hưởng (Students / Beneficiaries):**
+   - Sinh viên vượt khó, sinh viên có thành tích học tập và nghiên cứu xuất sắc được tuyển chọn nhận học bổng.
+   - **Mục tiêu:** Nộp minh chứng hoàn thành mốc học tập minh bạch, nhận tiền giải ngân nhanh chóng, đúng hạn và đúng số tiền cam kết về ví cá nhân.
+3. **Người thẩm định / Xác thực (Verifiers / Evaluators):**
+   - Đại diện Phòng Đào tạo, Phòng Công tác sinh viên hoặc Hội đồng chuyên môn của Nhà tài trợ.
+   - **Mục tiêu:** Thẩm định tính xác thực của minh chứng ngoại tuyến và phê duyệt mốc on-chain mà không cần xử lý tiền mặt thủ công.
+4. **Cộng đồng & Kiểm toán viên (Public Observers):**
+   - Giám sát toàn bộ dòng tiền và trạng thái giải ngân công khai theo thời gian thực trên blockchain.
 
-### 2.2. Vấn Đề Cần Giải Quyết (Problem Statement)
-- **Thiếu tính minh bạch và kiểm toán dòng tiền:** Các quỹ học bổng truyền thống thường tập trung tiền về một tài khoản ngân hàng trung gian, việc báo cáo thu chi diễn ra thủ công, tiềm ẩn rủi ro lạm dụng hoặc thiếu minh bạch.
-- **Rủi ro cấp sai đối tượng (Nepotism / Fraud):** Tình trạng làm giả hồ sơ hoặc phê duyệt cảm tính làm mất cơ hội của những sinh viên thực sự xứng đáng.
-- **Chậm trễ trong khâu giải ngân:** Quy trình phê duyệt qua nhiều tầng nấc giấy tờ thủ công khiến sinh viên thường nhận được tiền trễ hơn nhiều so với thời hạn đóng học phí.
-- **Không có cơ chế hoàn tiền khi học bổng không có người nhận:** Tiền quỹ bị treo vô thời hạn nếu không tìm được người thỏa mãn điều kiện.
-
-### 2.3. Sản Phẩm Cuối (Final Deliverable)
-- **Hệ thống dApp TrustScholar hoàn chỉnh:**
-  - **Smart Contract Layer (EVM):** Quản lý hồ bơi học bổng (Scholarship Pools), cơ chế khóa quỹ và giải ngân tự động theo mốc thời gian/điều kiện, phân quyền đa vai trò (Role-Based Access Control) và cơ chế hoàn tiền (Refund).
-  - **Frontend dApp (Web3):**
-    - Cổng Nhà tài trợ: Tạo quỹ mới, cấu hình tiêu chí, nạp tiền, theo dõi tiến độ giải ngân on-chain.
-    - Cổng Sinh viên: Kết nối ví, tra cứu danh sách học bổng đủ điều kiện, ký giao dịch rút tiền trực tiếp về ví cá nhân.
-    - Bảng thông tin minh bạch công cộng (Public Explorer): Bất kỳ ai cũng có thể tra cứu toàn bộ giao dịch giải ngân theo thời gian thực.
+### 2.2. Vấn Đề Cần Giải Quyết
+- **Thủ tục rườm rà & Chậm giải ngân:** Quy trình giải ngân truyền thống qua nhiều tầng trung gian mất từ vài tuần đến vài tháng, làm ảnh hưởng đến thời hạn nộp học phí của sinh viên.
+- **Rủi ro thất thoát & Phê duyệt cảm tính:** Tiền mặt gửi qua tài khoản trung gian thiếu cơ chế kiểm toán tức thời, tiềm ẩn nguy cơ cấp sai đối tượng.
+- **Thiếu cam kết quỹ dài hạn:** Sinh viên nỗ lực hoàn thành học kỳ nhưng có nguy cơ không nhận được tiền nếu nhà tài trợ đổi ý hoặc quỹ bị phân bổ sai mục đích.
 
 ---
 
-## 3. Mốc Bắt Buộc (Milestones Lab 9 – Lab 15)
+## 3. Lộ Trình Phát Triển Mốc Bắt Buộc (Milestones Lab 09 – Lab 15)
 
-Lộ trình thực hiện chi tiết theo quy chuẩn đồ án môn học Web3:
+Dự án bám sát 7 mốc triển khai kỹ thuật tuần tự, đảm bảo mỗi bài Lab đều có đầu ra rõ ràng và được kiểm chứng nghiêm ngặt:
 
-| Mốc | Tên Mốc / Bài Lab | Nội Dung Triển Khai Chi Tiết | Sản Phẩm Đầu Ra (Deliverables) |
-|:---:|:---|:---|:---|
-| **Lab 09** | **Kiến Trúc & Interface Hợp Đồng** | • Thiết kế kiến trúc tổng thể Smart Contract (quản lý quỹ, danh sách sinh viên).<br>• Định nghĩa Interface (`IScholarshipPool`, `IScholarshipVerifier`).<br>• Mô hình hóa trạng thái dữ liệu (Storage layout, Events, Custom Errors). | • Tệp interface `.sol` hoàn chỉnh.<br>• Sơ đồ kiến trúc & luồng dữ liệu hệ thống. |
-| **Lab 10** | **Hiện Thực Hóa Core Smart Contracts** | • Viết logic nạp tiền (`deposit`), ghi nhận quỹ.<br>• Hiện thực hàm phê duyệt (`approveRecipient`) và mở khóa giải ngân (`claim`).<br>• Cài đặt phân quyền OpenZeppelin `AccessControl` và bảo vệ chống tấn công `ReentrancyGuard`. | • Hợp đồng `ScholarshipPool.sol` biên dịch không lỗi.<br>• Triển khai mock token/ETH để kiểm thử nội bộ. |
-| **Lab 11** | **Unit Test & Kiểm Thử Bảo Mật Nội Bộ** | • Viết bộ kiểm thử tự động đạt độ bao phủ (coverage) > 90%.<br>• Kiểm thử các tình huống biên (Edge cases: hết hạn, số dư 0, rút quá hạn mức).<br>• Chạy Fuzz testing và quét lỗ hổng tĩnh (Slither). | • Báo cáo Test Coverage đầy đủ.<br>• Báo cáo đánh giá an ninh mã nguồn v1. |
-| **Lab 12** | **Xây Dựng Giao Diện Web3 dApp** | • Khởi tạo ứng dụng Frontend (React/Vite).<br>• Xây dựng giao diện Dashboard Nhà tài trợ & Sinh viên.<br>• Tích hợp kết nối ví Web3 (MetaMask/WalletConnect qua Wagmi hoặc Viem). | • Mã nguồn Frontend dApp có thể chạy cục bộ.<br>• Giao diện trực quan, hỗ trợ chuyển đổi mạng. |
-| **Lab 13** | **Tích Hợp Testnet & Xử Lý Giao Dịch** | • Triển khai (Deploy) Smart Contract lên mạng thử nghiệm (Sepolia / Arbitrum Sepolia).<br>• Verify mã nguồn hợp đồng trên Etherscan.<br>• Kết nối Frontend với Contract đã deploy trên Testnet. | • Địa chỉ contract đã được verify trên Testnet Explorer.<br>• dApp thực hiện được luồng nạp quỹ và claim thật trên Testnet. |
-| **Lab 14** | **Kiểm Thử E2E, Tối Ưu Gas & UAT** | • Thực hiện kiểm thử toàn trình từ nạp tiền, duyệt hồ sơ đến sinh viên rút tiền.<br>• Phân tích Gas Reporter và tối ưu hóa chi phí thực thi hợp đồng.<br>• Thử nghiệm với người dùng thật (User Acceptance Testing). | • Bảng đối chuẩn chi phí Gas trước và sau tối ưu.<br>• Biên bản UAT và danh sách các lỗi đã vá. |
-| **Lab 15** | **Đóng Gói dApp, Hoàn Thiện Tài Liệu & Báo Cáo** | • Chuẩn bị bài thuyết trình slide demo và video giới thiệu.<br>• Hoàn thiện toàn bộ tài liệu kỹ thuật, cập nhật [README.md](../README.md) & [AI_JOURNAL.md](AI_JOURNAL.md).<br>• Đóng gói source code và deploy phiên bản live dApp. | • Bản ghi hình Demo / Live URL dApp.<br>• Bộ tài liệu nghiệm thu hoàn chỉnh phục vụ bảo vệ đồ án. |
+```mermaid
+timeline
+    title Lộ Trình Mốc Kỹ Thuật TrustScholar (Lab 09 – Lab 15)
+    Lab 09 : ProjectCore biên dịch được : Interface & Data Structures
+    Lab 10 : Audit và sửa lỗi : Rà soát an ninh nội bộ & Vá lỗ hổng
+    Lab 11 : Economic rules chạy đúng : Bộ test suite R1-R10 pass 100%
+    Lab 12 : Gate Review : Đánh giá toàn diện & Code Freeze
+    Lab 13 : Security experiment : Tấn công giả lập & Stress testing
+    Lab 14 : Cross-audit : Kiểm toán chéo & Tối ưu hóa gas
+    Lab 15 : Public DApp : Deploy Testnet & Ra mắt DApp công khai
+```
+
+### Bảng Chi Tiết Mốc Triển Khai:
+
+| Mốc | Tên Mốc Chuẩn | Trách Nhiệm Chính | Mục Tiêu & Nội Dung Triển Khai | Tiêu Chí Nghiệm Thu (Acceptance Criteria) |
+|:---:|:---|:---:|:---|:---|
+| **Lab 09** | **ProjectCore biên dịch được** | **Khánh Linh** *(Chủ trì)*<br>Như Huỳnh *(Phối hợp)* | • Định nghĩa Interface (`IScholarshipPool`, `IScholarshipVerifier`).<br>• Xây dựng cấu trúc dữ liệu (`struct Scholarship`, `struct Milestone`, `enum MilestoneStatus`).<br>• Lập trình khung xương hợp đồng `ProjectCore.sol` gồm khai báo State Variables, Mappings, Custom Errors và Events.<br>• Thiết lập môi trường dự án (Foundry/Hardhat). | • Lệnh biên dịch (`forge build` hoặc `npx hardhat compile`) thành công 100%, 0 warning nghiêm trọng.<br>• Tệp ABI và bytecode được tạo thành công. |
+| **Lab 10** | **Audit và sửa lỗi** | **Như Huỳnh** *(Audit)*<br>**Khánh Linh** *(Sửa lỗi)* | • Rà soát an ninh mã nguồn nội bộ vòng 1.<br>• Kiểm tra phân quyền truy cập (`AccessControl`), bẫy địa chỉ rỗng (`address(0)`), và mẫu Checks-Effects-Interactions (CEI).<br>• Tích hợp khóa chống tái nhập (`ReentrancyGuard`) cho các hàm dòng tiền.<br>• Khắc phục triệt để các cảnh báo bảo mật được chỉ ra. | • Báo cáo Internal Audit v1 ghi nhận toàn bộ điểm nghi vấn.<br>• Mã nguồn được cập nhật, vá hết các lỗ hổng tìm thấy. |
+| **Lab 11** | **Economic rules chạy đúng** | **Như Huỳnh** *(Viết test)*<br>**Khánh Linh** *(Hỗ trợ)* | • Viết bộ Unit Test và Integration Test tự động kiểm chứng toàn bộ quy tắc kinh tế trong [ECONOMIC_RULES.md](ECONOMIC_RULES.md) và bộ quy tắc R1–R10 trong [SPEC.md](SPEC.md).<br>• Kiểm thử các điều kiện biên: nạp ETH testnet, khóa theo suất, sinh viên nhận tiền đúng điều kiện, tiền về đúng ví, chống giải ngân 2 lần, chống giải ngân vượt quỹ, phân quyền verifier. | • 100% test cases pass màu xanh.<br>• Test coverage đạt trên 90% cho logic giải ngân cốt lõi. |
+| **Lab 12** | **Gate Review** | **Khánh Linh & Như Huỳnh** *(Đồng chủ trì)* | • Tổ chức phiên thẩm định chất lượng toàn diện (Milestone Gate Review).<br>• Đánh giá chéo sự ăn khớp giữa SPEC, Economic Rules và Smart Contract.<br>• Phân tích mô hình mối đe dọa (Threat Model) và rà soát các giả định bảo mật.<br>• Thực hiện "Code Freeze" tầng hợp đồng thông minh để chuẩn bị cho giai đoạn DApp & Testnet. | • Biên bản Gate Review có chữ ký xác nhận của 2 thành viên.<br>• Danh mục nghiệm thu (Go/No-Go Checklist) đạt chuẩn để chuyển giai đoạn. |
+| **Lab 13** | **Security experiment** | **Như Huỳnh** *(Thực nghiệm)*<br>**Khánh Linh** *(Bảo mật)* | • Xây dựng các kịch bản tấn công giả lập on-chain (Security Experiments): Thử nghiệm Reentrancy Attack bằng contract độc hại, thử nghiệm Denial of Service (DoS) khi ví sinh viên là contract revert, thử nghiệm Front-running khi nạp/rút quỹ.<br>• Đo lường khả năng chống chịu của hệ thống trước hành vi người dùng thận trọng / kẻ tấn công. | • Báo cáo thực nghiệm an ninh (Security Experiment Report) chi tiết kèm bằng chứng PoC (Proof of Concept).<br>• Các cơ chế phòng vệ (Pull pattern, Timelock) được kiểm chứng hiệu quả. |
+| **Lab 14** | **Cross-audit** | **Khánh Linh & Như Huỳnh** *(Kiểm toán chéo)* | • Hai thành viên đổi vai kiểm toán độc lập mã nguồn và giao diện.<br>• Chạy công cụ phân tích tĩnh chuyên sâu (Slither, Mythril) để phát hiện lỗ hổng tiềm ẩn.<br>• Bật `hardhat-gas-reporter` / `forge snapshot` để phân tích chi phí gas và thực hiện tối ưu hóa cấu trúc lưu trữ (Storage packing).<br>• Kiểm thử toàn trình (E2E Integration Test) giữa hợp đồng và Web3 provider. | • Báo cáo Cross-Audit Report hoàn chỉnh.<br>• Bảng đối chuẩn chi phí Gas trước và sau khi tối ưu hóa. |
+| **Lab 15** | **Public DApp** | **Như Huỳnh** *(Frontend & Deploy)*<br>**Khánh Linh** *(Docs & Demo)* | • Triển khai (Deploy) hợp đồng lên mạng thử nghiệm công khai (Sepolia / Arbitrum Sepolia Testnet).<br>• Verify mã nguồn công khai trên Etherscan.<br>• Đóng gói và phát hành ứng dụng Frontend Web3 DApp hoàn chỉnh lên hosting công cộng (Vercel/Netlify).<br>• Thực hiện đầy đủ luồng tương tác thực tế bằng ví MetaMask (Tạo suất, Nạp ETH testnet, Nộp minh chứng, Duyệt mốc, Giải ngân).<br>• Hoàn thiện bộ slide thuyết trình, video demo và nghiệm thu đồ án. | • Smart Contract đã verify trên Testnet Explorer.<br>• Live DApp URL hoạt động ổn định và kết nối ví thành công.<br>• Video demo và toàn bộ tài liệu nghiệm thu sẵn sàng bảo vệ đồ án. |
 
 ---
 > 🔗 **Liên kết nhanh:** [Trang chủ README](../README.md) • [Kế hoạch đồ án](PROJECT_PLAN.md) • [Đặc tả nghiệp vụ](SPEC.md) • [Quy tắc kinh tế](ECONOMIC_RULES.md) • [Nhật ký AI](AI_JOURNAL.md) • [GitHub Repo](https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS)
-
