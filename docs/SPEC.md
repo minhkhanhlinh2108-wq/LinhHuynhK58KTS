@@ -124,18 +124,18 @@ sequenceDiagram
 
 Hệ thống bắt buộc phải thỏa mãn 10 quy tắc sau đây để đảm bảo an toàn tuyệt đối và tính kiểm thử độc lập:
 
-| Quy Tắc | Mã Quy Tắc | Tên Quy Tắc | Nội Dung Chi Tiết & Ràng Buộc Kỹ Thuật |
-|:---:|:---:|:---|:---|
-| **R1** | `RULE_SPONSOR_ONLY` | Quyền tạo suất | Chỉ Nhà tài trợ sở hữu quyền hạn hợp lệ (`SPONSOR_ROLE` hoặc bất kỳ nhà tài trợ được ủy quyền) mới được phép tạo suất học bổng mới. |
-| **R2** | `RULE_VALID_STUDENT_ADDR` | Địa chỉ sinh viên hợp lệ | Địa chỉ ví sinh viên nhận học bổng tuyệt đối không được là địa chỉ rỗng: `studentAddress != address(0)`. |
-| **R3** | `RULE_POSITIVE_AMOUNT` | Số tiền học bổng lớn hơn 0 | Tổng số tiền học bổng và số tiền phân bổ cho từng mốc bắt buộc phải lớn hơn 0: `totalAmount > 0` và `milestoneAmounts[i] > 0`. |
-| **R4** | `RULE_SUFFICIENT_POOL_FUND` | Quỹ đủ thanh khoản trước giải ngân | Trước khi thực hiện giải ngân bất kỳ mốc nào, số dư ký quỹ thực tế trong hợp đồng phải lớn hơn hoặc bằng số tiền của mốc đó: `scholarship.fundedAmount >= scholarship.disbursedAmount + milestoneAmount`. |
-| **R5** | `RULE_STUDENT_SUBMIT_ONLY` | Chỉ sinh viên chỉ định được nộp minh chứng | Chỉ đúng địa chỉ ví sinh viên đã được đăng ký cho suất học bổng đó mới có quyền gọi hàm nộp minh chứng: `msg.sender == scholarship.studentAddress`. |
-| **R6** | `RULE_VALID_MILESTONE_VERIFY` | Mốc hợp lệ mới được xác nhận | Người xác thực chỉ được phê duyệt mốc khi mốc đó thuộc về suất học bổng hợp lệ, mốc đang ở trạng thái đã nộp minh chứng (`Submitted`) và chưa từng được duyệt trước đó. |
-| **R7** | `RULE_NO_UNAPPROVED_DISBURSE` | Không giải ngân khi mốc chưa duyệt | Smart Contract tuyệt đối không cho phép giải ngân nếu mốc tương ứng chưa chuyển sang trạng thái đã xác nhận hợp lệ: `milestone.isApproved == true`. |
-| **R8** | `RULE_NO_DOUBLE_DISBURSE` | Chống giải ngân trùng lặp | Một mốc học bổng đã giải ngân thành công thì không bao giờ được giải ngân lần thứ hai: `milestone.isDisbursed == false` (bật cờ `true` ngay trước khi chuyển tiền theo mẫu Check-Effects-Interactions). |
-| **R9** | `RULE_EXACT_STUDENT_WALLET` | Chuyển đúng ví sinh viên đã đăng ký | Tiền giải ngân của mốc phải được chuyển trực tiếp vào chính xác địa chỉ ví sinh viên đã lưu trữ trong suất học bổng (`scholarship.studentAddress`), không được chuyển qua ví trung gian hay ví của người gọi lệnh. |
-| **R10** | `RULE_EMIT_TRACEABLE_EVENTS` | Phát sinh sự kiện đầy đủ để truy vết | Mọi thao tác trọng yếu (tạo suất, nạp quỹ, nộp minh chứng, xác nhận mốc, giải ngân) bắt buộc phải phát sinh (emit) sự kiện on-chain tương ứng chứa đầy đủ các trường `indexed` cần thiết phục vụ kiểm toán và giám sát. |
+| Quy Tắc | Tên Quy Tắc (Quy Định Tối Thiểu) | Mã Hằng Số Đề Xuất | Nội Dung Chi Tiết & Ràng Buộc Kỹ Thuật |
+|:---:|:---|:---:|:---|
+| **R1** | **Chỉ nhà tài trợ/người có quyền mới được tạo suất** | `RULE_SPONSOR_ONLY` | Chỉ Nhà tài trợ sở hữu quyền hạn hợp lệ (`SPONSOR_ROLE` hoặc nhà tài trợ được ủy quyền) mới được phép tạo suất học bổng mới. |
+| **R2** | **Địa chỉ sinh viên không được là address(0)** | `RULE_VALID_STUDENT_ADDR` | Địa chỉ ví sinh viên nhận học bổng tuyệt đối không được là địa chỉ rỗng: `studentAddress != address(0)`. |
+| **R3** | **Số tiền học bổng phải lớn hơn 0** | `RULE_POSITIVE_AMOUNT` | Tổng số tiền học bổng và số tiền phân bổ cho từng mốc bắt buộc phải lớn hơn 0: `totalAmount > 0` và `milestoneAmounts[i] > 0`. |
+| **R4** | **Phải có đủ tiền trong quỹ trước khi giải ngân** | `RULE_SUFFICIENT_POOL_FUND` | Trước khi thực hiện giải ngân bất kỳ mốc nào, số dư ký quỹ thực tế trong hợp đồng phải lớn hơn hoặc bằng số tiền của mốc đó: `scholarship.fundedAmount >= scholarship.disbursedAmount + milestoneAmount`. |
+| **R5** | **Chỉ sinh viên được đăng ký cho suất mới được nộp minh chứng** | `RULE_STUDENT_SUBMIT_ONLY` | Chỉ đúng địa chỉ ví sinh viên đã được đăng ký cho suất học bổng đó mới có quyền gọi hàm nộp minh chứng: `msg.sender == scholarship.studentAddress`. |
+| **R6** | **Chỉ mốc hợp lệ của suất đó mới được xác nhận** | `RULE_VALID_MILESTONE_VERIFY` | Người xác thực chỉ được phê duyệt mốc khi mốc đó thuộc về suất học bổng hợp lệ, mốc đang ở trạng thái đã nộp minh chứng (`Submitted`) và chưa từng được duyệt trước đó. |
+| **R7** | **Không được giải ngân khi mốc chưa được xác nhận** | `RULE_NO_UNAPPROVED_DISBURSE` | Smart Contract tuyệt đối không cho phép giải ngân nếu mốc tương ứng chưa chuyển sang trạng thái đã xác nhận hợp lệ: `milestone.isApproved == true`. |
+| **R8** | **Một mốc không được giải ngân hai lần** | `RULE_NO_DOUBLE_DISBURSE` | Một mốc học bổng đã giải ngân thành công thì không bao giờ được giải ngân lần thứ hai: `milestone.isDisbursed == false` (bật cờ `true` ngay trước khi chuyển tiền theo mẫu Check-Effects-Interactions). |
+| **R9** | **Tiền giải ngân phải đến đúng ví sinh viên đã đăng ký** | `RULE_EXACT_STUDENT_WALLET` | Tiền giải ngân của mốc phải được chuyển trực tiếp vào chính xác địa chỉ ví sinh viên đã lưu trữ trong suất học bổng (`scholarship.studentAddress`), không được chuyển qua ví trung gian hay ví của người gọi lệnh. |
+| **R10** | **Các thao tác tạo suất, nạp quỹ, nộp minh chứng, xác nhận mốc và giải ngân phải phát sinh event phù hợp** | `RULE_EMIT_TRACEABLE_EVENTS` | Mọi thao tác trọng yếu (tạo suất, nạp quỹ, nộp minh chứng, xác nhận mốc, giải ngân) bắt buộc phải phát sinh (emit) sự kiện on-chain tương ứng chứa đầy đủ các trường `indexed` cần thiết phục vụ kiểm toán và giám sát (`ScholarshipCreated`, `FundDeposited`, `ProofSubmitted`, `MilestoneApproved`, `ScholarshipDisbursed`). |
 
 ---
 
@@ -147,7 +147,7 @@ Hệ thống bắt buộc phải thỏa mãn 10 quy tắc sau đây để đảm
 |:---:|:---|:---|:---|:---|
 | 1 | **Người gọi không có quyền** | Tài khoản không có `SPONSOR_ROLE` gọi tạo suất, hoặc không có `VERIFIER_ROLE` gọi duyệt mốc. | `UnauthorizedCaller(address caller, bytes32 requiredRole)` | Revert giao dịch, bảo vệ phân quyền. |
 | 2 | **Sai sinh viên** | Địa chỉ ví gọi hàm `submitProof` khác với địa chỉ sinh viên được đăng ký trong suất học bổng. | `NotAssignedStudent(uint256 scholarshipId, address caller, address expectedStudent)` | Revert giao dịch, chống nộp thay/can thiệp minh chứng. |
-| 3 | **Địa chỉ sinh viên là `address(0)`** | Khi tạo suất học bổng, tham số `studentAddress` truyền vào là `0x0000...0000`. | `ZeroAddressNotAllowed()` | Revert giao dịch ngay tại bước khởi tạo. |
+| 3 | **address(0)** | Khi tạo suất học bổng, tham số `studentAddress` truyền vào là `address(0)` (`0x0000...0000`). | `ZeroAddressNotAllowed()` | Revert giao dịch ngay tại bước khởi tạo. |
 | 4 | **Số tiền bằng 0** | Khởi tạo suất học bổng với `totalAmount == 0` hoặc nạp quỹ với `amount == 0`. | `ZeroAmountNotAllowed()` | Revert giao dịch, tránh tạo dữ liệu rác. |
 | 5 | **Không đủ quỹ** | Gọi giải ngân khi số dư hợp đồng hoặc số tiền nạp cho suất nhỏ hơn số tiền cần chi trả cho mốc. | `InsufficientScholarshipFund(uint256 available, uint256 requiredAmount)` | Revert giao dịch, bảo vệ toàn vẹn sổ cái quỹ. |
 | 6 | **Mốc chưa được duyệt** | Cố gắng gọi giải ngân khi người thẩm định chưa gọi `verifyMilestone`. | `MilestoneNotApprovedYet(uint256 scholarshipId, uint256 milestoneIndex)` | Revert giao dịch, ngăn chặn rút tiền trái phép. |
