@@ -89,12 +89,24 @@ Mỗi phiên làm việc có sử dụng AI cần được ghi chép theo cấu 
 ---
 
 ### Lab 09: ProjectCore Biên Dịch Được
-- **Ngày thực hiện:** [Chưa thực hiện]
-- **Nhiệm vụ:** Thiết kế interface `IScholarshipPool.sol`, định nghĩa struct/enum, lập trình khung xương hợp đồng `ProjectCore.sol` và đảm bảo biên dịch thành công.
-- **Prompt sử dụng:** *(Sẽ cập nhật khi triển khai Lab 9)*
-- **Phản hồi & Lỗi của AI:** *(Sẽ ghi chú các thiếu sót về kiểu dữ liệu, đóng gói gas struct khi AI gợi ý)*
-- **Quyết định sửa chữa của nhóm:** *(Sẽ cập nhật)*
-- **Kết quả đạt được:** *(Sẽ cập nhật)*
+
+- **Ngày thực hiện:** 02/10/2026
+- **Nhiệm vụ:** Thiết lập môi trường dự án Hardhat với Solidity `^0.8.20`, lập trình hợp đồng thông minh lõi `contracts/project/ProjectCore.sol` mô phỏng đầy đủ luồng nghiệp vụ TrustScholar (Tạo suất → Nạp quỹ → Nộp minh chứng → Xác nhận mốc → Giải ngân), tuân thủ Checks-Effects-Interactions (CEI), ngăn ngừa reentrancy, kiểm soát chặt chẽ quyền của từng actor, phát sinh đầy đủ events và custom errors, biên dịch thành công 100%.
+- **Prompt sử dụng:**
+  > *"Thực hiện lab09. Đọc trước: docs/SPEC.md, docs/ECONOMIC_RULES.md, docs/PROJECT_PLAN.md, docs/AI_JOURNAL.md, AGENTS.md, toàn bộ contracts hiện tại. Không thiết kế lại nghiệp vụ nếu SPEC đã có. Tạo: contracts/project/ProjectCore.sol. Dùng Solidity ^0.8.20. ProjectCore phải mô phỏng đúng luồng: Tạo suất → Nạp quỹ → Nộp minh chứng → Xác nhận mốc → Giải ngân. Thiết kế tối thiểu các chức năng: createScholarship(...), fundScholarship(...), submitMilestone(...), approveMilestone(...), releaseMilestone(...), getScholarship(...), getMilestoneStatus(...). Cần có dữ liệu: scholarshipId, sponsor, student, totalAmount, fundedAmount, releasedAmount, milestone information, trạng thái milestone. Events tối thiểu: ScholarshipCreated, ScholarshipFunded, MilestoneSubmitted, MilestoneApproved, ScholarshipReleased. Custom errors phù hợp: NotSponsor, NotStudent, InvalidAddress, InvalidAmount, ScholarshipNotFound, MilestoneNotFound, MilestoneNotApproved, AlreadyReleased, InsufficientFunds, TransferFailed. Bắt buộc: Không dùng tx.origin; Hàm nhạy cảm phải kiểm tra quyền; Dùng Checks-Effects-Interactions; Khi chuyển ETH bằng call phải kiểm tra bool success; Không để tiền chuyển ra ngoài trước khi cập nhật trạng thái; Không cho giải ngân sai sinh viên; Không cho giải ngân hai lần; Không cho giải ngân khi chưa được approve; Không cho giải ngân khi thiếu quỹ; Không dùng private key/secret trong code. Sau khi viết: 1. Compile. 2. Sửa lỗi compile. 3. Không thêm tính năng ngoài SPEC. 4. Cập nhật docs/AI_JOURNAL.md với prompt, lỗi gặp phải và cách sửa. Chưa cần làm giao diện web. Báo cáo: Contract đã có những function nào, Quyền của từng actor, Các event, Các custom errors, Kết quả compile."*
+- **Phản hồi & Lỗi gặp phải:**
+  1. *Lỗi cấu hình Hardhat ESM:* Khi chạy `npx hardhat compile`, phiên bản Hardhat 3.18.1 yêu cầu dự án phải được thiết lập ESM (`Hardhat only supports ESM projects`). Cần cấu hình `"type": "module"` trong `package.json` và chuyển `hardhat.config.js` sang cú pháp ES Module (`export default`).
+  2. *Lỗi PowerShell Execution Policy trên Windows:* Windows chặn chạy tệp script PowerShell `npm.ps1` (`PSSecurityException`). Khắc phục bằng cách sử dụng `npm.cmd` và `npx.cmd`.
+  3. *Nguy cơ vi phạm Checks-Effects-Interactions (CEI):* AI ban đầu có xu hướng thực hiện transfer ETH trước khi cập nhật trạng thái milestone và biến tổng giải ngân `releasedAmount`, tạo điều kiện cho tấn công tái nhập (reentrancy). Nhóm lập tức chuẩn hóa cập nhật trạng thái trước (`m.status = MilestoneStatus.Disbursed; s.releasedAmount += amountToRelease`), sau đó mới gọi external transfer qua `call{value: ...}("")` và kiểm tra biến `bool success`. Đồng thời tích hợp cơ chế khóa tái nhập `nonReentrant`.
+  4. *Đảm bảo nguyên tắc chuyển tiền đúng ví sinh viên (R9):* Trong hàm `releaseMilestone`, địa chỉ nhận tiền được lấy trực tiếp từ trường lưu trữ `s.student` đã xác lập từ bước tạo suất, tuyệt đối không cho phép truyền địa chỉ ví tùy ý qua tham số hàm để ngăn chặn tấn công tráo đổi ví người nhận.
+- **Quyết định sửa chữa của nhóm:**
+  - Khởi tạo `package.json` với `"type": "module"` và tệp `hardhat.config.js` hỗ trợ Solidity compiler `0.8.20` cùng optimizer 200 runs.
+  - Viết hợp đồng `contracts/project/ProjectCore.sol` tự chứa (self-contained), sạch sẽ, đầy đủ 10 custom errors, 5 sự kiện, các hàm nghiệp vụ đúng theo luồng đặc tả trong [SPEC.md](SPEC.md) và [ECONOMIC_RULES.md](ECONOMIC_RULES.md).
+  - Tích hợp 2 overload cho `createScholarship` (hỗ trợ cả khai báo kèm `totalAmount` lẫn tự động cộng dồn mảng mốc) nhằm tối đa hóa tính linh hoạt cho test suite.
+  - Biên dịch kiểm thử thành công bằng lệnh `npx.cmd hardhat compile`.
+- **Kết quả đạt được:**
+  - Tệp `contracts/project/ProjectCore.sol` biên dịch thành công 100% không cảnh báo (`Compiled 1 Solidity file with solc 0.8.20 (evm target: shanghai)`).
+  - Tệp ABI và bytecode được sinh ra đầy đủ tại `artifacts/contracts/project/ProjectCore.sol/ProjectCore.json`.
 
 ---
 

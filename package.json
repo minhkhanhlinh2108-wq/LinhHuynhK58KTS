@@ -1,0 +1,28 @@
+{
+  "name": "linhhuynhk58kts",
+  "version": "1.0.0",
+  "description": "> **Dự án:** TrustScholar — Giải ngân học bổng minh bạch trên Blockchain  \r > **Repository GitHub:** [minhkhanhlinh2108-wq/LinhHuynhK58KTS](https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS)  \r > **Điều hướng nhanh:** [Kế Hoạch Đồ Án](docs/PROJECT_PLAN.md) | [Đặc Tả Nghiệp Vụ](docs/SPEC.md) | [Quy Tắc Kinh Tế](docs/ECONOMIC_RULES.md) | [Nhật Ký AI](docs/AI_JOURNAL.md)  \r > **Slogan:** *Nhóm xây dựng nền tảng TrustScholar cho nhà tài trợ và sinh viên để đảm bảo giải ngân học bổng tự động, minh bạch và chống sai đối tượng.*",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS/issues"
+  },
+  "homepage": "https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS#readme",
+  "devDependencies": {
+    "hardhat": "^3.18.1"
+  }
+}
