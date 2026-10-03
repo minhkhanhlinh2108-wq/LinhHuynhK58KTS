@@ -406,3 +406,229 @@ Nhóm thống nhất giữ nguyên hiện trạng mã nguồn `contracts/project
 
 ---
 > 🔗 **Điều hướng nhanh:** [Trang chủ README](../README.md) • [Đặc tả nghiệp vụ (SPEC.md)](SPEC.md) • [Quy tắc kinh tế (ECONOMIC_RULES.md)](ECONOMIC_RULES.md) • [Nhật ký AI (AI_JOURNAL.md)](AI_JOURNAL.md) • [Kết quả test Lab 09](../evidence/lab-09/TEST_RESULTS.md)
+
+---
+
+## 5. Kết Quả Kiểm Chứng Findings (Lab 10 Verification Round)
+
+> **Ngày kiểm chứng:** 03/10/2026  
+> **Phương pháp:** Viết test case Solidity (Foundry-style) tái hiện từng finding trong [`test/Lab10_Verify.t.sol`](../test/Lab10_Verify.t.sol)  
+> **Công cụ:** Hardhat 3 Solidity Tests — `npx hardhat test`  
+> **Kết quả tổng:** **30/30 PASS** (13 verification tests + 17 regression tests từ Lab 09)
+
+### 5.1. Bảng Tổng Hợp Kết Quả Kiểm Chứng
+
+| ID | Severity | Tên Finding | Test Kiểm Chứng | Kết Quả | Trạng Thái |
+|:---:|:---:|:---|:---|:---:|:---:|
+| **SEC-01** | 🟡 Medium | Sponsor tự duyệt mốc | `test_VERIFY_SEC01_SponsorSelfApprove_EXISTS` | ✅ PASS | **🔴 CONFIRMED** |
+| **SEC-02** | 🟡 Medium | State Regression Approved→Submitted | `test_VERIFY_SEC02_StateRegression_EXISTS` | ✅ PASS | **🔴 CONFIRMED** |
+| **SEC-03** | 🟠 High | Fund Locking — thiếu refund | `test_VERIFY_SEC03_FundLocking_EXISTS` | ✅ PASS | **🔴 CONFIRMED** |
+| **SEC-04** | 🔵 Low | Bất kỳ ai tạo được scholarship | `test_VERIFY_SEC04_AnyoneCreateScholarship_EXISTS` | ✅ PASS | **🔴 CONFIRMED** |
+| **SEC-05** | 🔵 Low | Submit/Approve khi fundedAmount=0 | `test_VERIFY_SEC05_SubmitApproveWithZeroFund_EXISTS` | ✅ PASS | **🔴 CONFIRMED** |
+| **SEC-06** | 🟡 Medium | DoS ví sinh viên từ chối ETH | `test_VERIFY_SEC06_DoS_MaliciousStudentWallet_EXISTS` + `test_VERIFY_SEC06_DoS_NoReceiveWallet_EXISTS` | ✅ PASS | **🔴 CONFIRMED** |
+| **SEC-07** | 🔵 Low | setVerifier báo sai lỗi NotSponsor | `test_VERIFY_SEC07_WrongErrorCode_EXISTS` | ✅ PASS | **🔴 CONFIRMED** |
+| **SEC-08** | ⚪ Info | Bất nhất tên Event/Error SPEC↔Contract | `test_VERIFY_SEC08_EventNameMismatch_INFO` | ✅ PASS | **🔴 CONFIRMED** |
+| **Nhóm 2** | — | Wrong Recipient | `test_VERIFY_WrongRecipient_SAFE` | ✅ PASS | **🟢 AN TOÀN** |
+| **Nhóm 5** | — | Double Release | `test_VERIFY_DoubleRelease_SAFE` | ✅ PASS | **🟢 AN TOÀN** |
+| **Nhóm 6** | — | Release Before Approval | `test_VERIFY_ReleaseBeforeApproval_SAFE` | ✅ PASS | **🟢 AN TOÀN** |
+| **Nhóm 3+4** | — | Reentrancy + CEI Pattern | `test_VERIFY_ReentrancyAndCEI_SAFE` | ✅ PASS | **🟢 AN TOÀN** |
+
+---
+
+### 5.2. Chi Tiết Kiểm Chứng Từng Finding
+
+#### SEC-01 — Sponsor Tự Phê Duyệt Mốc ✅ CONFIRMED
+
+**Bằng chứng dòng mã nguồn (dòng 207):**
+```solidity
+if (msg.sender != s.sponsor && msg.sender != verifier) revert NotSponsor();
+```
+
+**Cơ chế khai thác được tái hiện:**
+```
+Sponsor (0x1111) tạo suất → Student nộp minh chứng →
+Sponsor gọi approveMilestone() → PASS (không revert) →
+getMilestoneStatus() == Approved (2) ← TÁI HIỆN THÀNH CÔNG
+```
+
+**Kết luận:** Finding **THỰC SỰ TỒN TẠI**. Luồng bypass Verifier hoạt động hoàn toàn. Đây là lỗi nghiệp vụ nghiêm trọng vi phạm nguyên tắc "hai tay ký" (dual control) trong thẩm định học bổng.
+
+---
+
+#### SEC-02 — State Regression (Approved → Submitted) ✅ CONFIRMED
+
+**Bằng chứng dòng mã nguồn (dòng 189):**
+```solidity
+if (m.status == MilestoneStatus.Disbursed) revert AlreadyReleased();
+// Chỉ chặn Disbursed, KHÔNG chặn Approved!
+m.status = MilestoneStatus.Submitted; // Ghi đè trạng thái không an toàn
+```
+
+**Cơ chế khai thác được tái hiện:**
+```
+Submit "QmRealProof_v1" → Approved (status=2) →
+Submit "QmFakeProof_Overwrite" → KHÔNG revert →
+getMilestoneStatus() == Submitted (1) ← ĐÃO NGƯỢC TRẠNG THÁI
+releaseMilestone() → revert MilestoneNotApproved ← GIẢ PHÓNG BỊ CHẶN
+```
+
+**Kết luận:** Finding **THỰC SỰ TỒN TẠI**. Test tái hiện đầy đủ cả hai tình huống:
+1. Trạng thái bị kéo lùi từ `Approved` về `Submitted`
+2. Giải ngân sau đó thất bại do mốc không còn ở trạng thái `Approved`
+
+**Finding này được chọn để sửa trong giai đoạn Refactor** (sửa đơn giản, impact cao):
+```solidity
+// Sửa đề xuất tại dòng 189:
+if (m.status != MilestoneStatus.Pending) revert InvalidMilestoneStatus();
+```
+
+---
+
+#### SEC-03 — Fund Locking (Thiếu Refund) ✅ CONFIRMED
+
+**Bằng chứng phân tích code:** Toàn bộ hợp đồng `ProjectCore.sol` (352 dòng) không có bất kỳ hàm nào mang chữ ký khả dụng để rút tiền dư ra ngoài ngoài `releaseMilestone` (chỉ gọi được khi mốc `Approved`).
+
+**Cơ chế khai thác được tái hiện:**
+```
+Sponsor nạp 1 ETH → Mốc 0 giải ngân 0.5 ETH thành công →
+Student bỏ học → Mốc 1 ở Pending mãi mãi →
+address(core).balance == 0.5 ether ← ETH BỊ KẸT VĨNH VIỄN
+Không có hàm nào để Sponsor rút 0.5 ETH còn lại ← CONFIRMED
+```
+
+**Lý do giữ nguyên finding dù khó sửa:** Không xóa finding dù việc triển khai `refundUnclaimedFunds` đòi hỏi cân nhắc kỹ về điều kiện hủy suất (cần thêm `GRACE_PERIOD`, event `ScholarshipCancelled`, kiểm tra đồng thuận Verifier). Rủi ro mất quỹ vĩnh viễn là **High** và đã được tái hiện thực tế.
+
+---
+
+#### SEC-04 — Bất Kỳ Ai Tạo Scholarship ✅ CONFIRMED
+
+**Bằng chứng dòng mã nguồn (dòng 127-132):**
+```solidity
+function createScholarship(address student, uint256[] calldata milestoneAmounts)
+    external returns (uint256) {
+    return _createScholarship(student, milestoneAmounts); // Không có kiểm tra quyền
+}
+```
+
+**Cơ chế khai thác được tái hiện:**
+```
+Stranger (0x3333) gọi createScholarship() → PASS (không revert) →
+s.sponsor == stranger ← STRANGER TRỞ THÀNH SPONSOR
+```
+
+**Nhận xét:** Finding tồn tại nhưng mức độ impact phụ thuộc vào thiết kế: nếu hệ thống muốn permissionless thì đây là tính năng, không phải lỗi. Audit ghi nhận sai lệch với SPEC R1.
+
+---
+
+#### SEC-05 — Submit/Approve Khi fundedAmount = 0 ✅ CONFIRMED
+
+**Cơ chế khai thác được tái hiện:**
+```
+createScholarship (fundedAmount=0) →
+submitMilestone() → PASS (không revert) →
+approveMilestone() → PASS (không revert) →
+getMilestoneStatus() == Approved (2) ← DUYỆT KHI CHƯA CÓ TIỀN
+releaseMilestone() → revert InsufficientFunds ← GAS CỦA STUDENT/VERIFIER ĐÃ TIÊU
+```
+
+---
+
+#### SEC-06 — DoS Ví Sinh Viên Từ Chối ETH ✅ CONFIRMED (2 biến thể)
+
+**Biến thể 1 — MaliciousStudentWallet (revert trong receive()):**
+```
+createScholarship(maliciousStudent) → fundScholarship →
+submitMilestone → approveMilestone →
+releaseMilestone() → call thất bại →
+revert TransferFailed() ← TÁI HIỆN THÀNH CÔNG
+```
+
+**Biến thể 2 — NoReceiveStudentWallet (không có receive/fallback):**
+```
+Tương tự biến thể 1 →
+revert TransferFailed() ← TÁI HIỆN THÀNH CÔNG
+```
+
+**Nhận xét kỹ thuật quan trọng:** Không xóa finding này dù "khó sửa". Giải pháp Pull-over-Push (claim pattern) là chuẩn best-practice cho ETH distribution. Rủi ro DoS kẹt tiền là **thực tế** khi triển khai trên mainnet với Account Abstraction wallet.
+
+---
+
+#### SEC-07 — setVerifier Báo Sai Lỗi ✅ CONFIRMED
+
+**Bằng chứng dòng mã nguồn (dòng 306):**
+```solidity
+if (msg.sender != verifier) revert NotSponsor(); // <-- Sai: nên là NotVerifier()
+```
+
+**Cơ chế khai thác được tái hiện:**
+```
+Stranger gọi setVerifier() →
+revert NotSponsor() ← MÃ LỖI SAI NGỮ NGHĨA
+```
+
+**Nhận xét:** Finding nhỏ nhưng gây nhầm lẫn debug. Sửa 1 dòng code + thêm event.
+
+---
+
+#### SEC-08 — Bất Nhất Tên Event/Error (SPEC ↔ Contract) ✅ CONFIRMED
+
+**Bảng sai lệch thực tế:**
+
+| SPEC định nghĩa | Contract phát ra | Khớp? |
+|:---|:---|:---:|
+| `FundDeposited` | `ScholarshipFunded` | ❌ |
+| `ProofSubmitted` | `MilestoneSubmitted` | ❌ |
+| `MilestoneApproved` | `MilestoneApproved` | ✅ |
+| `ScholarshipDisbursed` | `ScholarshipReleased` | ❌ |
+| `ZeroAddressNotAllowed()` | `InvalidAddress()` | ❌ |
+| `MilestoneAlreadyDisbursed()` | `AlreadyReleased()` | ❌ |
+
+**Kết luận:** 3/4 events và 2/2 custom errors không khớp SPEC. Finding tồn tại.
+
+---
+
+#### Các Nhóm AN TOÀN — Xác Nhận Không Có Lỗi
+
+| Nhóm | Cơ Chế Bảo Vệ | Test | Kết Quả |
+|:---|:---|:---|:---:|
+| **Giải ngân sai ví** | `s.student` bất biến, không truyền địa chỉ qua tham số | `test_VERIFY_WrongRecipient_SAFE` | ✅ AN TOÀN |
+| **Giải ngân hai lần** | `m.status == Disbursed` → `revert AlreadyReleased()` | `test_VERIFY_DoubleRelease_SAFE` | ✅ AN TOÀN |
+| **Release trước Approval** | `m.status != Approved` → `revert MilestoneNotApproved()` | `test_VERIFY_ReleaseBeforeApproval_SAFE` | ✅ AN TOÀN |
+| **Reentrancy** | `nonReentrant` mutex + CEI pattern (`m.status = Disbursed` trước `call`) | `test_VERIFY_ReentrancyAndCEI_SAFE` | ✅ AN TOÀN |
+| **Chuyển ETH thất bại** | Đã bắt `!success` → `revert TransferFailed()` (là feature, không phải lỗi) | Được bao phủ bởi SEC-06 | ✅ XỬ LÝ ĐÚNG |
+
+---
+
+### 5.3. Finding Được Chọn Để Sửa Ưu Tiên
+
+> **Finding được chọn: SEC-02 — State Regression (Approved → Submitted)**
+
+**Lý do chọn:**
+1. **Tác động nghiêm trọng:** Phá vỡ bất biến máy trạng thái một chiều, gây tắc nghẽn giải ngân hoàn toàn.
+2. **Dễ tái hiện** và đã có test case tự động xác nhận.
+3. **Sửa đơn giản, ít rủi ro phụ tác dụng:** Thay đổi 1 dòng điều kiện trong `submitMilestone`.
+4. **Không cần thay đổi kiến trúc** hay thêm cơ chế mới.
+
+**Đề xuất sửa cụ thể:**
+```diff
+  Milestone storage m = _milestones[scholarshipId][milestoneIndex];
+- if (m.status == MilestoneStatus.Disbursed) revert AlreadyReleased();
++ if (m.status != MilestoneStatus.Pending) revert AlreadyReleased();
+```
+*(Hoặc định nghĩa thêm `error InvalidMilestoneStatus()` để phân biệt rõ hơn ngữ nghĩa lỗi)*
+
+---
+
+### 5.4. Nhận Xét Kiểm Toán Viên (Post-Verification Notes)
+
+1. **SEC-01 (Medium):** Sponsor tự duyệt là **lỗi nghiệp vụ thực sự**. Tuy nhiên SPEC.md Mục 6 bước 4 có ghi "Người có quyền (`VERIFIER_ROLE` **hoặc Sponsor**)" — điều này cho thấy SPEC có mâu thuẫn nội tại giữa Mục 5 (Sponsor không được tự duyệt) và Mục 6 (Sponsor được phép). Contract phản ánh Mục 6, nhưng vi phạm tinh thần Mục 5 và ECONOMIC_RULES Mục 2.4. Cần team thống nhất ý định thiết kế.
+
+2. **SEC-03 (High):** Kẹt quỹ là rủi ro **thực tế** nhất khi triển khai trên mainnet. Không sửa ở bước này nhưng **bắt buộc phải giải quyết trước khi deploy production**.
+
+3. **SEC-06 (Medium):** DoS ví đã được kiểm chứng bằng 2 biến thể contract khác nhau. Cơ chế Pull-over-Push là giải pháp chuẩn ngành. Đây là **finding thực sự có thể dẫn đến mất quỹ** trên môi trường thực tế với Smart Contract Wallet.
+
+4. **Về reentrancy và CEI:** Contract **hoàn toàn an toàn** ở hai góc độ này. Việc audit không phát hiện lỗi là kết luận chính xác, không phải bỏ sót.
+
+---
+> 🔗 **Điều hướng nhanh:** [Trang chủ README](../README.md) • [Đặc tả nghiệp vụ (SPEC.md)](SPEC.md) • [Quy tắc kinh tế (ECONOMIC_RULES.md)](ECONOMIC_RULES.md) • [Nhật ký AI (AI_JOURNAL.md)](AI_JOURNAL.md) • [Kết quả test Lab 09](../evidence/lab-09/TEST_RESULTS.md) • [Test kiểm chứng Lab 10](../test/Lab10_Verify.t.sol)
+

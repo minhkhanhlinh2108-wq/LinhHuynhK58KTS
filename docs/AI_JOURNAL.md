@@ -149,6 +149,46 @@ Mỗi phiên làm việc có sử dụng AI cần được ghi chép theo cấu 
 
 ---
 
+### Lab 10 — Vòng Kiểm Chứng Findings (Verification Round)
+
+- **Ngày thực hiện:** 03/10/2026
+- **Nhiệm vụ:** Kiểm chứng độc lập từng finding trong [`docs/LAB10_AUDIT.md`](LAB10_AUDIT.md) bằng cách:
+  1. Phân tích lại mã nguồn [`contracts/project/ProjectCore.sol`](../contracts/project/ProjectCore.sol) tại từng dòng liên quan.
+  2. Viết test case Solidity tái hiện lỗi (với convention `test_VERIFY_SEC*_EXISTS`) hoặc chứng minh an toàn (với `test_VERIFY_*_SAFE`).
+  3. Chạy toàn bộ test suite và lấy bằng chứng thực thi.
+  4. Cập nhật báo cáo kiểm toán với Mục 5 (Kết Quả Kiểm Chứng) và xác định 1 finding ưu tiên sửa.
+- **Prompt sử dụng:**
+  > *"Đọc: docs/LAB10_AUDIT.md, contracts/project/ProjectCore.sol, test/, docs/SPEC.md. Với từng finding trong audit: Kiểm tra lại xem finding có thực sự tồn tại không. Nếu có thể, tạo test tái hiện lỗi. Nếu finding không chính xác, ghi rõ lý do. Chọn ít nhất một lỗi THỰC SỰ có thể sửa. Không tự sửa code ở bước kiểm chứng. Đặc biệt kiểm tra: giải ngân sai ví; giải ngân hai lần; release trước approval; thiếu quyền; chuyển ETH thất bại; reentrancy. Cập nhật docs/LAB10_AUDIT.md với kết quả kiểm chứng. Cập nhật docs/AI_JOURNAL.md. Không xóa finding chỉ vì nó khó sửa; phải giải thích bằng chứng."*
+- **Phương pháp kiểm chứng được áp dụng:**
+  1. **Phân tích tĩnh (Static Analysis):** Đọc lại từng dòng mã nguồn liên quan đến finding, đối chiếu với SPEC.md và ECONOMIC_RULES.md.
+  2. **Test tái hiện động (Dynamic Reproduction):** Viết helper contracts (`MaliciousStudentWallet`, `NoReceiveStudentWallet`) và 13 test case Foundry-style trong [`test/Lab10_Verify.t.sol`](../test/Lab10_Verify.t.sol).
+  3. **Chạy trực tiếp:** `npx hardhat test` → **30/30 PASS** (bao gồm 13 verification tests mới + 17 regression tests Lab 09).
+- **Kết quả kiểm chứng từng finding:**
+  - **SEC-01** ✅ CONFIRMED: Sponsor tự duyệt mốc thực sự hoạt động (không revert tại dòng 207).
+  - **SEC-02** ✅ CONFIRMED: State regression Approved→Submitted được tái hiện hoàn toàn; hậu quả releaseMilestone bị chặn MilestoneNotApproved.
+  - **SEC-03** ✅ CONFIRMED: ETH bị kẹt thực tế sau khi student bỏ học; `address(core).balance == 0.5 ether` và không có cách rút ra.
+  - **SEC-04** ✅ CONFIRMED: Stranger tạo scholarship thành công và trở thành Sponsor.
+  - **SEC-05** ✅ CONFIRMED: Submit và Approve mốc thành công khi fundedAmount=0; chỉ releaseMilestone mới revert.
+  - **SEC-06** ✅ CONFIRMED (2 biến thể): MaliciousStudentWallet (revert trong receive) và NoReceiveStudentWallet (không có receive) đều gây `TransferFailed`.
+  - **SEC-07** ✅ CONFIRMED: `setVerifier` trả về `NotSponsor()` dù người gọi không phải Sponsor, chỉ không phải Verifier.
+  - **SEC-08** ✅ CONFIRMED: 3/4 events và 2/2 custom errors không khớp tên SPEC.
+  - **Nhóm AN TOÀN** ✅ XÁC NHẬN ĐÚNG: Wrong Recipient, Double Release, Release Before Approval, Reentrancy+CEI đều an toàn.
+- **Phản hồi & Lỗi của AI trong vòng kiểm chứng:**
+  1. *Quan sát về mâu thuẫn SPEC nội tại (SEC-01):* Khi phân tích SEC-01, AI phát hiện SPEC.md có mâu thuẫn giữa Mục 5 (Sponsor không được duyệt) và Mục 6, bước 4 (ghi "VERIFIER_ROLE **hoặc Sponsor**"). Contract phản ánh Mục 6. Đây không phải lỗi bịa đặt mà là quan sát thực tế về sự không nhất quán giữa các phần SPEC — cần team thống nhất ý định thiết kế.
+  2. *Phân biệt "finding tồn tại" và "finding đúng severity":* SEC-04 tồn tại về mặt kỹ thuật nhưng severity phụ thuộc thiết kế kinh doanh (permissionless vs permissioned). AI ghi nhận finding như sai lệch SPEC R1, không tự nâng severity.
+  3. *SEC-06 không phải lỗi bị bỏ sót mà là finding khó sửa nhưng thực sự nguy hiểm:* AI xác nhận finding này qua 2 biến thể contract helper. Không xóa dù giải pháp Pull-over-Push đòi hỏi tái cấu trúc đáng kể.
+- **Quyết định của nhóm:**
+  - Không sửa code `ProjectCore.sol` trong vòng kiểm chứng này.
+  - Chọn **SEC-02** (State Regression) là finding ưu tiên sửa đầu tiên trong giai đoạn Refactor: 1 dòng sửa, impact cao, không phụ tác dụng.
+  - Toàn bộ 8 finding được giữ nguyên trong báo cáo — không xóa finding nào, đặc biệt không xóa SEC-03 và SEC-06 dù chúng khó sửa.
+- **Kết quả đạt được:**
+  - Tệp [`test/Lab10_Verify.t.sol`](../test/Lab10_Verify.t.sol) với 13 test case kiểm chứng: **13/13 PASS**.
+  - Bộ test đầy đủ: **30/30 PASS** (bao gồm regression tests Lab 09).
+  - [`docs/LAB10_AUDIT.md`](LAB10_AUDIT.md) được cập nhật với Mục 5 (Kết Quả Kiểm Chứng) đầy đủ, bao gồm bảng tổng hợp, chi tiết từng finding, và nhận xét hậu kiểm chứng.
+  - Mã nguồn `contracts/project/ProjectCore.sol` giữ nguyên — sẵn sàng cho giai đoạn Refactor.
+
+
+
 ### Lab 11: Economic Rules Chạy Đúng
 - **Ngày thực hiện:** [Chưa thực hiện]
 - **Nhiệm vụ:** Xây dựng test suite tự động kiểm chứng 100% các quy tắc kinh tế trong ECONOMIC_RULES.md và bộ quy tắc R1–R10 trong SPEC.md, đạt độ bao phủ coverage > 90%.
