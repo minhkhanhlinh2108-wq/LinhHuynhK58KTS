@@ -72,7 +72,25 @@ Mỗi phiên làm việc có sử dụng AI cần được ghi chép theo cấu 
 - **Prompt sử dụng:**
   > *"TrustScholar. Repository: https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS.git. Trước tiên hãy đọc: docs/SPEC.md, README.md, docs/AI_JOURNAL.md. Không sửa SPEC.md ngay. Hãy review SPEC trước. Thực hiện: Tạo docs/ECONOMIC_RULES.md (Dòng tiền/quyền lợi, Giới hạn chống lạm dụng, Quyền quản trị, Tình huống người dùng bị thiệt)... Tạo/cập nhật docs/PROJECT_PLAN.md (Phân vai Khánh Linh và Như Huỳnh; 7 Mốc Lab 09-15)... Đóng vai người dùng thận trọng và đưa ra 5 cách có thể lạm dụng TrustScholar... Không viết code... Cập nhật docs/AI_JOURNAL.md. Không tự ý tạo Smart Contract ở Lab 08. Cuối cùng báo cáo: File đã tạo/sửa, 5 rủi ro, Các điểm SPEC cần Thành viên 1 xem lại."*
 - **Phản hồi & Thiếu sót của AI phát hiện được:**
-  1. *Thiên vị kiểm tra cú pháp thay vì tư duy bảo mật nghịch đảo (Adversarial mindset):* Ban ### Lab 09 — Phần A: ProjectCore Biên Dịch Được (Smart Contract)
+  1. *Thiên vị kiểm tra cú pháp thay vì tư duy bảo mật nghịch đảo (Adversarial mindset):* Ban đầu AI cho rằng bộ 10 quy tắc R1-R10 trong SPEC v1.0 đã "hoàn hảo". Tuy nhiên khi nhóm đóng vai người dùng thận trọng / kẻ trục lợi, AI đã bộc lộ 5 điểm hở chết người:
+     - R4 chỉ kiểm tra đủ quỹ ở thời điểm gọi giải ngân, không ép buộc nạp đủ 100% trước khi mở mốc cho sinh viên nộp bài (Underfunding exploit).
+     - R6 trao quyền tuyệt đối cho 01 Verifier mà không có thời gian thử thách (Challenge Period / Timelock) hay cơ chế đa chữ ký cho mốc lớn, dẫn đến nguy cơ Verifier thông đồng duyệt minh chứng giả.
+     - R9 quy định chuyển tiền đúng ví sinh viên nhưng SPEC chưa chốt cơ chế Pull hay Push, tiềm ẩn nguy cơ DoS làm kẹt tiền toàn bộ hệ thống nếu ví sinh viên từ chối nhận ETH.
+     - R2 gắn cứng ví sinh viên nhưng chưa có cơ chế khôi phục khẩn cấp an toàn nếu sinh viên mất private key.
+     - Thiếu quy tắc ràng buộc việc Nhà tài trợ rút tiền (Refund Front-running) khi sinh viên đã hoàn thành nghĩa vụ.
+  2. *Lẫn lộn mô hình kinh tế:* AI có xu hướng áp đặt mô hình pool token ERC-20 và các thông số giả định (như 2.000 USDC/kỳ), không sát với cấu trúc suất học bổng theo mốc nạp ETH testnet của TrustScholar.
+  3. *Nguy cơ vi phạm quy trình:* AI định viết sẵn code Solidity cho Lab 09 để "thể hiện", nhưng nhóm đã kiên quyết chặn lại để giữ đúng phạm vi Lab 08.
+- **Quyết định sửa chữa của nhóm:**
+  - Viết lại toàn diện [ECONOMIC_RULES.md](ECONOMIC_RULES.md) tập trung chuẩn xác vào mô hình Escrow theo từng suất bằng ETH testnet, giải quyết triệt để 4 câu hỏi chống lạm dụng và 4 tình huống thiệt hại.
+  - Cập nhật chuẩn xác [PROJECT_PLAN.md](PROJECT_PLAN.md) theo 2 vai trò chuyên môn hóa và 7 mốc kỹ thuật chuẩn (từ Lab 09 đến Lab 15).
+  - Đóng gói 5 rủi ro kèm kiến nghị sửa đổi rule để chuyển giao cho Thành viên 1 (Khánh Linh) rà soát lại SPEC v1.0 trước khi thiết kế Interface tại Lab 09.
+- **Kết quả đạt được:** Hoàn thành cập nhật [ECONOMIC_RULES.md](ECONOMIC_RULES.md), [PROJECT_PLAN.md](PROJECT_PLAN.md) và [AI_JOURNAL.md](AI_JOURNAL.md); giữ nguyên [SPEC.md](SPEC.md) để chuyển giao phản biện cho Khánh Linh; không phát sinh code `.sol`.
+
+---
+
+### Lab 09: ProjectCore Biên Dịch Được & Kiểm Thử (Smart Contract & Test Suite)
+
+#### Phần A: Lập Trình & Biên Dịch ProjectCore (Smart Contract)
 
 - **Ngày thực hiện:** 02/10/2026
 - **Nhiệm vụ:** Thiết lập môi trường dự án Hardhat với Solidity `^0.8.20`, lập trình hợp đồng thông minh lõi `contracts/project/ProjectCore.sol` mô phỏng đầy đủ luồng nghiệp vụ TrustScholar (Tạo suất → Nạp quỹ → Nộp minh chứng → Xác nhận mốc → Giải ngân), tuân thủ Checks-Effects-Interactions (CEI), ngăn ngừa reentrancy, kiểm soát chặt chẽ quyền của từng actor, phát sinh đầy đủ events và custom errors, biên dịch thành công 100%.
@@ -94,7 +112,7 @@ Mỗi phiên làm việc có sử dụng AI cần được ghi chép theo cấu 
 
 ---
 
-### Lab 09 — Phần B: Kiểm Thử ProjectCore (Test Suite)
+#### Phần B: Kiểm Thử ProjectCore (Test Suite)
 
 - **Ngày thực hiện:** 03/10/2026
 - **Nhiệm vụ:** Xây dựng và chạy test suite đầy đủ 13 trường hợp bắt buộc (6 SUCCESS + 7 FAIL) cho `ProjectCore.sol` theo API thực tế của contract, sử dụng Hardhat 3 Solidity tests (Foundry-style). Ghi nhận sai lệch giữa SPEC và contract thực tế. Lưu bằng chứng vào `evidence/lab-09/`.
