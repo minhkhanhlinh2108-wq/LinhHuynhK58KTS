@@ -249,13 +249,38 @@ Mỗi phiên làm việc có sử dụng AI cần được ghi chép theo cấu 
 
 ---
 
-### Lab 12: Gate Review
-- **Ngày thực hiện:** [Chưa thực hiện]
-- **Nhiệm vụ:** Đánh giá cột mốc chất lượng toàn diện (Gate Review), rà soát sự đồng bộ giữa SPEC, Hợp đồng và Test suite; tiến hành Code Freeze tầng smart contract.
-- **Prompt sử dụng:** *(Sẽ cập nhật khi triển khai Lab 12)*
-- **Phản hồi & Lỗi của AI:** *(Sẽ ghi chép các đánh giá chủ quan của AI khi thẩm định)*
-- **Quyết định sửa chữa của nhóm:** *(Sẽ cập nhật)*
-- **Kết quả đạt được:** *(Sẽ cập nhật)*
+### Lab 12: Gate Review 1 (Đánh Giá Toàn Diện & Code Freeze Smart Contract)
+
+- **Ngày thực hiện:** 04/10/2026
+- **Nhiệm vụ:**
+  1. Tiến hành thẩm định cột mốc chất lượng toàn diện (Gate Review 1) cho đồ án TrustScholar trước khi chuyển giao sang giai đoạn Web3 DApp & Testnet.
+  2. Rà soát nghiêm ngặt 8 tiêu chí kỹ thuật:
+     - `ProjectCore.sol` biên dịch sạch sẽ (0 warning/error).
+     - Core flow hoạt động trơn tru (Tạo suất $\rightarrow$ Nạp quỹ $\rightarrow$ Nộp minh chứng $\rightarrow$ Thẩm định $\rightarrow$ Giải ngân).
+     - Đầy đủ case hợp lệ (vòng đời, sinh viên nhận đủ 100% ETH không mất phí, hạch toán đa mốc).
+     - Đầy đủ case vi phạm bị chặn (giải ngân trước duyệt, giải ngân 2 lần, sai sinh viên, thiếu quỹ, vượt hạn mức, kẻ lạ can thiệp).
+     - Access control chặt chẽ (RBAC, phi lưu ký, không backdoor).
+     - Checks-Effects-Interactions (CEI) và chống Reentrancy chuẩn mực.
+     - Phát sinh đầy đủ 6 events on-chain có `indexed`.
+     - Documentation đồng bộ hoàn toàn với mã nguồn thực tế.
+  3. Lập biên bản thẩm định [`docs/GATE_REVIEW_1.md`](GATE_REVIEW_1.md).
+  4. Tuân thủ tuyệt đối quy định: Phần kết luận KHÔNG tự ghi "Đạt", giữ nguyên `[CHỜ GIẢNG VIÊN XÁC NHẬN]`.
+  5. Xây dựng kịch bản thuyết trình và demo kỹ thuật 3 phút chuẩn chỉnh (30s vấn đề, 30s quy tắc quan trọng, 60s luồng thành công, 30s luồng vi phạm bị chặn, 30s việc tiếp theo).
+  6. Thực hiện Code Freeze cho tầng Smart Contract, tuyệt đối không thêm feature mới tùy tiện.
+- **Prompt sử dụng:**
+  > *"thực hành lab12. Kiểm tra toàn bộ: README.md, docs/PROJECT_PLAN.md, docs/SPEC.md, docs/ECONOMIC_RULES.md, docs/AI_JOURNAL.md, contracts/project/ProjectCore.sol, test/, evidence/lab-08 đến lab-11. Kiểm tra: 1. ProjectCore compile được; 2. Core flow hoạt động; 3. Có case hợp lệ; 4. Có case vi phạm bị chặn; 5. Access control đúng; 6. CEI đúng; 7. Events có đủ; 8. Documentation khớp code. Tạo: docs/GATE_REVIEW_1.md. Phần kết luận KHÔNG tự ghi "Đạt". Để: [CHỜ GIẢNG VIÊN XÁC NHẬN]. Chuẩn bị nội dung demo 3 phút: 30s vấn đề, 30s quy tắc quan trọng, 60s luồng thành công, 30s luồng vi phạm bị chặn, 30s việc tiếp theo. Không thêm feature mới."*
+- **Phản hồi & Lỗi của AI phát hiện được:**
+  1. *Nguy cơ tự mãn và tự ý ghi nhận kết quả "Đạt":* Mô hình AI có xu hướng mặc định điền trạng thái "Đạt" hoặc "Approved" cho toàn bộ đồ án. Nhóm đã chủ động can thiệp, yêu cầu giữ nguyên trạng thái `[CHỜ GIẢNG VIÊN XÁC NHẬN]` tại phần kết luận để đảm bảo tính khách quan và thẩm quyền của Giảng viên hướng dẫn.
+  2. *Cám dỗ bổ sung tính năng mới (Feature Creep):* AI thường gợi ý thêm các hàm hủy suất học bổng (`cancelScholarship`), hàm rút khẩn cấp (`emergencyRefund`) hoặc tích hợp token ERC-20. Nhóm đã bác bỏ dứt khoát vì mốc Lab 12 là mốc Code Freeze; việc thêm feature mới tại thời điểm này sẽ phá vỡ tính ổn định của API và vi phạm yêu cầu "Không thêm feature mới".
+  3. *Tối ưu hóa thời lượng kịch bản thuyết trình demo:* Ban đầu AI soạn kịch bản demo quá dài (trên 5 phút). Nhóm đã cô đọng lại chính xác thành 5 khối 30s–60s để bám sát khung thời gian 3 phút (180 giây) bảo vệ trước Hội đồng.
+- **Quyết định sửa chữa của nhóm:**
+  - Giữ nguyên trạng thái `[CHỜ GIẢNG VIÊN XÁC NHẬN]` tại biên bản `docs/GATE_REVIEW_1.md`.
+  - Duy trì Code Freeze tuyệt đối cho `contracts/project/ProjectCore.sol`.
+  - Bổ sung và chuẩn hóa đồng bộ tài liệu bằng chứng cho toàn bộ chuỗi từ Lab 08 đến Lab 11 (`evidence/lab-08/LAB08_EVIDENCE.md`, `evidence/lab-09/TEST_RESULTS.md`, `evidence/lab-10/LAB10_EVIDENCE.md`, `evidence/lab-11/ECONOMIC_RULES_EVIDENCE.md`).
+  - Kiểm tra và xác nhận 100% test suite đạt 64/64 tests pass.
+- **Kết quả đạt được:**
+  - Hoàn thành biên bản thẩm định [`docs/GATE_REVIEW_1.md`](GATE_REVIEW_1.md) đầy đủ 8 tiêu chí, bảng ma trận 64/64 tests và kịch bản demo 3 phút.
+  - Chuỗi hồ sơ dự án từ Lab 08 đến Lab 11 đồng bộ, sẵn sàng cho phiên bảo vệ Gate Review 1 với Giảng viên.
 
 ---
 
