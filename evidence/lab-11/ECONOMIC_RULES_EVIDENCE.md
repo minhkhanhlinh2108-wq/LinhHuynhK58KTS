@@ -19,7 +19,7 @@ npx.cmd hardhat test
 
 ### Kết quả đầu ra terminal:
 ```text
-Compiled 3 Solidity files with solc 0.8.20 (evm target: shanghai)
+Compiled 1 Solidity file with solc 0.8.20 (evm target: shanghai)
 
 Running Solidity tests
 
@@ -42,22 +42,14 @@ Running Solidity tests
     ✔ test_02_SponsorFundScholarship()
     ✔ test_01_SponsorCreateScholarship()
 
-  test/Lab10_Verify.t.sol:Lab10VerifyTest
-    ✔ test_VERIFY_WrongRecipient_SAFE()
-    ✔ test_VERIFY_SEC08_EventNameMismatch_INFO()
-    ✔ test_VERIFY_SEC07_WrongErrorCode_EXISTS()
-    ✔ test_VERIFY_SEC06_DoS_NoReceiveWallet_EXISTS()
-    ✔ test_VERIFY_SEC06_DoS_MaliciousStudentWallet_EXISTS()
-    ✔ test_VERIFY_SEC05_SubmitApproveWithZeroFund_EXISTS()
-    ✔ test_VERIFY_SEC04_AnyoneCreateScholarship_EXISTS()
-    ✔ test_VERIFY_SEC03_FundLocking_EXISTS()
-    ✔ test_VERIFY_SEC02_StateRegression_EXISTS()
-    ✔ test_VERIFY_SEC01_SponsorSelfApprove_EXISTS()
-    ✔ test_VERIFY_ReleaseBeforeApproval_SAFE()
-    ✔ test_VERIFY_ReentrancyAndCEI_SAFE()
-    ✔ test_VERIFY_DoubleRelease_SAFE()
-
   test/Lab11_EconomicRules.t.sol:Lab11EconomicRulesTest
+    ✔ test_VIOLATION_WrongStudent_Reverts()
+    ✔ test_VIOLATION_UnauthorizedCaller_Reverts()
+    ✔ test_VIOLATION_ReleaseBeforeApprove_Reverts()
+    ✔ test_VIOLATION_InsufficientFund_Reverts()
+    ✔ test_VIOLATION_DoubleRelease_Reverts()
+    ✔ test_VALID_StudentReceivesExactAmount()
+    ✔ test_VALID_ScholarshipLifecycle_Success()
     ✔ test_ECO_R8_02_VerifierUpdatedLifecycle()
     ✔ test_ECO_R8_01_PureNativeETHLifecycle()
     ✔ test_ECO_R7_02_CrossScholarshipFundIsolation()
@@ -86,7 +78,22 @@ Running Solidity tests
     ✔ test_ECO_R1_02_NonSponsorCannotFundScholarship()
     ✔ test_ECO_R1_01_SponsorCreatesAndOwnsScholarship()
 
-57 passing (57 solidity)
+  test/Lab10_Verify.t.sol:Lab10VerifyTest
+    ✔ test_VERIFY_WrongRecipient_SAFE()
+    ✔ test_VERIFY_SEC08_EventNameMismatch_INFO()
+    ✔ test_VERIFY_SEC07_WrongErrorCode_EXISTS()
+    ✔ test_VERIFY_SEC06_DoS_NoReceiveWallet_EXISTS()
+    ✔ test_VERIFY_SEC06_DoS_MaliciousStudentWallet_EXISTS()
+    ✔ test_VERIFY_SEC05_SubmitApproveWithZeroFund_EXISTS()
+    ✔ test_VERIFY_SEC04_AnyoneCreateScholarship_EXISTS()
+    ✔ test_VERIFY_SEC03_FundLocking_EXISTS()
+    ✔ test_VERIFY_SEC02_StateRegression_EXISTS()
+    ✔ test_VERIFY_SEC01_SponsorSelfApprove_EXISTS()
+    ✔ test_VERIFY_ReleaseBeforeApproval_SAFE()
+    ✔ test_VERIFY_ReentrancyAndCEI_SAFE()
+    ✔ test_VERIFY_DoubleRelease_SAFE()
+
+64 passing (64 solidity)
 ```
 
 ---
@@ -106,6 +113,40 @@ Running Solidity tests
 
 ---
 
-## 3. Tổng Kết Về Loại Tiền Tệ
+## 3. Bảng Kiểm Tra Ca Hợp Lệ & Ca Vi Phạm Theo Yêu Cầu
+
+### 3.1. Ca Hợp Lệ (Valid Test Cases)
+
+| Kịch Bản Kiểm Thử | Kỳ Vọng Kỹ Thuật | Tên Hàm Test | Kết Quả Thực Nghiệm |
+|:---|:---|:---|:---:|
+| **1. Tạo scholarship $\rightarrow$ Fund $\rightarrow$ Submit milestone $\rightarrow$ Approve $\rightarrow$ Release thành công** | Suất tạo thành công, nạp 1.0 ETH, nộp minh chứng IPFS CID, Verifier duyệt mốc, giải ngân chuyển trạng thái `Disbursed`, `releasedAmount` tăng đúng 0.5 ETH | `test_VALID_ScholarshipLifecycle_Success`<br>`test_05_ReleaseMilestoneSuccess`<br>`test_ECO_R8_01_PureNativeETHLifecycle` | 🟢 **PASS** |
+| **2. Kiểm tra student nhận đúng số tiền** | Số dư ví sinh viên tăng chính xác đúng bằng số tiền mốc (`0.5 ether`), hợp đồng bị trừ đúng `0.5 ether`, không có phí nền tảng nào bị khấu trừ | `test_VALID_StudentReceivesExactAmount`<br>`test_06_FundsReachStudentWallet`<br>`test_ECO_R3_01_FundsReachStudentWhenVerifierCallsRelease`<br>`test_ECO_R3_02_FundsReachStudentWhenSponsorCallsRelease`<br>`test_ECO_R3_03_ZeroPlatformFeeFullAmountReceived` | 🟢 **PASS** |
+
+### 3.2. Ca Vi Phạm (Violation & Revert Test Cases)
+
+| Kịch Bản Kiểm Thử | Kỳ Vọng Kỹ Thuật | Tên Hàm Test | Kết Quả Thực Nghiệm |
+|:---|:---|:---|:---:|
+| **1. Release trước approve $\rightarrow$ REVERT** | • Mốc `Pending` (chưa nộp bài) $\rightarrow$ Revert `MilestoneNotApproved()`<br>• Mốc `Submitted` (đã nộp nhưng chưa duyệt) $\rightarrow$ Revert `MilestoneNotApproved()` | `test_VIOLATION_ReleaseBeforeApprove_Reverts`<br>`test_09_ReleaseBeforeApproveReverts`<br>`test_ECO_R4_01_ReleasePendingMilestoneReverts`<br>`test_ECO_R4_02_ReleaseSubmittedMilestoneReverts` | 🟢 **PASS** |
+| **2. Release hai lần $\rightarrow$ REVERT** | Sau khi mốc đã `Disbursed`, mọi lệnh gọi `releaseMilestone` tiếp theo từ sinh viên hoặc sponsor đều bị đảo ngược với lỗi `AlreadyReleased()` | `test_VIOLATION_DoubleRelease_Reverts`<br>`test_10_DoubleReleaseReverts`<br>`test_ECO_R5_01_DoubleReleaseReverts` | 🟢 **PASS** |
+| **3. Wrong student $\rightarrow$ REVERT** | • Sinh viên khác (`studentB`) nộp minh chứng $\rightarrow$ Revert `NotStudent()`<br>• Sinh viên khác gọi giải ngân $\rightarrow$ Revert `NotStudent()`<br>• Tạo suất với `student == address(0)` $\rightarrow$ Revert `InvalidAddress()`<br>• Tạo suất với `student == address(core)` $\rightarrow$ Revert `InvalidAddress()` | `test_VIOLATION_WrongStudent_Reverts`<br>`test_ECO_R1_04_NonStudentCannotSubmitProof`<br>`test_12_ZeroAddressStudentReverts` | 🟢 **PASS** |
+| **4. Insufficient fund $\rightarrow$ REVERT** | • Suất chưa nạp tiền (`fundedAmount == 0`) $\rightarrow$ Revert `InsufficientFunds()`<br>• Suất nạp thiếu (`fundedAmount < milestoneAmount`) $\rightarrow$ Revert `InsufficientFunds()`<br>• Rút lẹm sang số dư suất khác $\rightarrow$ Revert `InsufficientFunds()` | `test_VIOLATION_InsufficientFund_Reverts`<br>`test_11_ReleaseWithInsufficientFundsReverts`<br>`test_ECO_R2_01_ReleaseZeroFundReverts`<br>`test_ECO_R2_02_ReleaseUnderfundedReverts`<br>`test_ECO_R7_02_CrossScholarshipFundIsolation` | 🟢 **PASS** |
+| **5. Unauthorized caller $\rightarrow$ REVERT** | • Kẻ lạ nạp quỹ $\rightarrow$ Revert `NotSponsor()`<br>• Kẻ lạ nộp minh chứng $\rightarrow$ Revert `NotStudent()`<br>• Sponsor nộp thay sinh viên $\rightarrow$ Revert `NotStudent()`<br>• Kẻ lạ/Sinh viên tự duyệt mốc $\rightarrow$ Revert `NotSponsor()`<br>• Kẻ lạ gọi giải ngân $\rightarrow$ Revert `NotStudent()`<br>• Kẻ lạ/Sinh viên đổi verifier $\rightarrow$ Revert `NotSponsor()` | `test_VIOLATION_UnauthorizedCaller_Reverts`<br>`test_07_StrangerCannotApproveMilestone`<br>`test_08_StrangerCannotSubmitMilestone`<br>`test_ECO_R1_02_NonSponsorCannotFundScholarship`<br>`test_ECO_R1_05_StrangerCannotApproveMilestone`<br>`test_ECO_R1_06_StudentCannotSelfApprove`<br>`test_ECO_R1_09_StrangerCannotTriggerRelease`<br>`test_ECO_R1_10_NonVerifierCannotUpdateVerifier` | 🟢 **PASS** |
+
+---
+
+## 4. Đánh Giá Hợp Đồng Thông Minh (Contract Conformance Evaluation)
+
+- **Nguyên tắc đối chiếu:** Kiểm tra xem có bất kỳ hành vi nào của contract vi phạm `docs/SPEC.md` và `docs/ECONOMIC_RULES.md` hay không.
+- **Kết luận:**
+  - Toàn bộ **64/64 test cases đều PASS 100%**.
+  - Không có test case nào thất bại.
+  - Hợp đồng [`contracts/project/ProjectCore.sol`](../../contracts/project/ProjectCore.sol) tuân thủ tuyệt đối quy định nghiệp vụ và mô hình kinh tế phi lưu ký.
+  - **Không phát hiện lỗi contract vi phạm SPEC/ECONOMIC_RULES**.
+  - Tuân thủ nguyên tắc: *"Không sửa contract trừ khi test chứng minh contract vi phạm SPEC/ECONOMIC_RULES"*.
+
+---
+
+## 5. Tổng Kết Về Loại Tiền Tệ
 - **Chính thức:** Hệ thống vận hành bằng **100% Native ETH testnet** (Sepolia / Arbitrum Sepolia).
 - **Không sử dụng token ERC-20:** Không cần mock ERC-20, không phụ thuộc thư viện token ngoại vi, tối ưu hóa gas và loại trừ rủi ro từ chuẩn token bên ngoài.
+

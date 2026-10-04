@@ -593,4 +593,221 @@ contract Lab11EconomicRulesTest {
         core.approveMilestone(id, 0);
         assert(uint8(core.getMilestoneStatus(id, 0)) == 2);
     }
+
+    // ============================================================
+    // 9. DEDICATED CORE TEST SUITE (CA HỢP LỆ & CA VI PHẠM)
+    // ============================================================
+
+    // [CA HỢP LỆ 1] Tạo scholarship -> fund -> submit milestone -> approve -> release thành công
+    function test_VALID_ScholarshipLifecycle_Success() public {
+        // Bước 1: Tạo scholarship
+        vm.prank(sponsorA);
+        uint256 id = core.createScholarship(studentA, twoMilestones);
+        assert(id == 1);
+        assert(core.getScholarship(id).totalAmount == 1.0 ether);
+
+        // Bước 2: Fund scholarship
+        vm.prank(sponsorA);
+        core.fundScholarship{value: 1.0 ether}(id);
+        assert(core.getScholarship(id).fundedAmount == 1.0 ether);
+
+        // Bước 3: Submit milestone
+        vm.prank(studentA);
+        core.submitMilestone(id, 0, "QmValidProofCIDv1");
+        assert(uint8(core.getMilestoneStatus(id, 0)) == 1); // Submitted
+
+        // Bước 4: Approve milestone
+        core.approveMilestone(id, 0); // verifier_ = address(this)
+        assert(uint8(core.getMilestoneStatus(id, 0)) == 2); // Approved
+
+        // Bước 5: Release milestone thành công
+        vm.prank(studentA);
+        core.releaseMilestone(id, 0);
+        assert(uint8(core.getMilestoneStatus(id, 0)) == 3); // Disbursed
+        assert(core.getScholarship(id).releasedAmount == 0.5 ether);
+    }
+
+    // [CA HỢP LỆ 2] Kiểm tra student nhận đúng số tiền
+    function test_VALID_StudentReceivesExactAmount() public {
+        vm.prank(sponsorA);
+        uint256 id = core.createScholarship(studentA, twoMilestones);
+        vm.prank(sponsorA);
+        core.fundScholarship{value: 1.0 ether}(id);
+
+        vm.prank(studentA);
+        core.submitMilestone(id, 0, "QmProofM0");
+        core.approveMilestone(id, 0);
+
+        uint256 studentBalBefore = studentA.balance;
+        uint256 contractBalBefore = address(core).balance;
+
+        // Sinh viên gọi giải ngân
+        vm.prank(studentA);
+        core.releaseMilestone(id, 0);
+
+        // Sinh viên nhận chính xác 0.5 ether (không hoa hồng, không phí ẩn)
+        assert(studentA.balance == studentBalBefore + 0.5 ether);
+        assert(address(core).balance == contractBalBefore - 0.5 ether);
+    }
+
+    // [CA VI PHẠM 1] Release trước approve -> REVERT (MilestoneNotApproved)
+    function test_VIOLATION_ReleaseBeforeApprove_Reverts() public {
+        vm.prank(sponsorA);
+        uint256 id = core.createScholarship(studentA, twoMilestones);
+        vm.prank(sponsorA);
+        core.fundScholarship{value: 1.0 ether}(id);
+
+        // Case 1a: Mốc ở trạng thái Pending (chưa submit) -> REVERT
+        vm.prank(studentA);
+        vm.expectRevert(abi.encodeWithSelector(ProjectCore.MilestoneNotApproved.selector));
+        core.releaseMilestone(id, 0);
+
+        // Case 1b: Mốc ở trạng thái Submitted (chưa approve) -> REVERT
+        vm.prank(studentA);
+        core.submitMilestone(id, 0, "QmPendingApprovalProof");
+
+        vm.prank(studentA);
+        vm.expectRevert(abi.encodeWithSelector(ProjectCore.MilestoneNotApproved.selector));
+        core.releaseMilestone(id, 0);
+    }
+
+    // [CA VI PHẠM 2] Release hai lần -> REVERT (AlreadyReleased)
+    function test_VIOLATION_DoubleRelease_Reverts() public {
+        vm.prank(sponsorA);
+        uint256 id = core.createScholarship(studentA, twoMilestones);
+        vm.prank(sponsorA);
+        core.fundScholarship{value: 1.0 ether}(id);
+
+        vm.prank(studentA);
+        core.submitMilestone(id, 0, "QmProof");
+        core.approveMilestone(id, 0);
+
+        // Lần 1: Giải ngân thành công
+        vm.prank(studentA);
+        core.releaseMilestone(id, 0);
+        assert(uint8(core.getMilestoneStatus(id, 0)) == 3);
+
+        // Lần 2: Sinh viên gọi lại -> REVERT AlreadyReleased
+        vm.prank(studentA);
+        vm.expectRevert(abi.encodeWithSelector(ProjectCore.AlreadyReleased.selector));
+        core.releaseMilestone(id, 0);
+
+        // Lần 2b: Sponsor gọi lại -> REVERT AlreadyReleased
+        vm.prank(sponsorA);
+        vm.expectRevert(abi.encodeWithSelector(ProjectCore.AlreadyReleased.selector));
+        core.releaseMilestone(id, 0);
+    }
+
+    // [CA VI PHẠM 3] Wrong student -> REVERT (NotStudent / InvalidAddress)
+    function test_VIOLATION_WrongStudent_Reverts() public {
+        vm.prank(sponsorA);
+        uint256 id = core.createScholarship(studentA, twoMilestones);
+        vm.prank(sponsorA);
+        core.fundScholarship{value: 1.0 ether}(id);
+
+        // Case 3a: Sinh viên khác (studentB) cố nộp minh chứng cho suất của studentA -> REVERT NotStudent
+        vm.prank(studentB);
+        vm.expectRevert(abi.encodeWithSelector(ProjectCore.NotStudent.selector));
+        core.submitMilestone(id, 0, "QmImposterProof");
+
+        // Sinh viên chính chủ submit và verifier approve
+        vm.prank(studentA);
+        core.submitMilestone(id, 0, "QmLegitProof");
+        core.approveMilestone(id, 0);
+
+        // Case 3b: Sinh viên khác (studentB) cố gọi release mốc của studentA -> REVERT NotStudent
+        vm.prank(studentB);
+        vm.expectRevert(abi.encodeWithSelector(ProjectCore.NotStudent.selector));
+        core.releaseMilestone(id, 0);
+
+        // Case 3c: Khởi tạo với địa chỉ sinh viên rỗng address(0) -> REVERT InvalidAddress
+        vm.prank(sponsorA);
+        vm.expectRevert(abi.encodeWithSelector(ProjectCore.InvalidAddress.selector));
+        core.createScholarship(address(0), twoMilestones);
+
+        // Case 3d: Khởi tạo với địa chỉ hợp đồng address(core) -> REVERT InvalidAddress
+        vm.prank(sponsorA);
+        vm.expectRevert(abi.encodeWithSelector(ProjectCore.InvalidAddress.selector));
+        core.createScholarship(address(core), twoMilestones);
+    }
+
+    // [CA VI PHẠM 4] Insufficient fund -> REVERT (InsufficientFunds)
+    function test_VIOLATION_InsufficientFund_Reverts() public {
+        vm.prank(sponsorA);
+        uint256 id = core.createScholarship(studentA, twoMilestones); // 2 mốc x 0.5 ETH
+
+        vm.prank(studentA);
+        core.submitMilestone(id, 0, "QmProof");
+        core.approveMilestone(id, 0);
+
+        // Case 4a: Hoàn toàn chưa nạp quỹ (fundedAmount = 0) -> REVERT InsufficientFunds
+        vm.prank(studentA);
+        vm.expectRevert(abi.encodeWithSelector(ProjectCore.InsufficientFunds.selector));
+        core.releaseMilestone(id, 0);
+
+        // Case 4b: Nạp thiếu (0.2 ETH < 0.5 ETH cần cho mốc 0) -> REVERT InsufficientFunds
+        vm.prank(sponsorA);
+        core.fundScholarship{value: 0.2 ether}(id);
+
+        vm.prank(studentA);
+        vm.expectRevert(abi.encodeWithSelector(ProjectCore.InsufficientFunds.selector));
+        core.releaseMilestone(id, 0);
+    }
+
+    // [CA VI PHẠM 5] Unauthorized caller -> REVERT (NotSponsor / NotStudent)
+    function test_VIOLATION_UnauthorizedCaller_Reverts() public {
+        vm.prank(sponsorA);
+        uint256 id = core.createScholarship(studentA, twoMilestones);
+
+        // Case 5a: Kẻ lạ nạp quỹ -> REVERT NotSponsor
+        vm.prank(stranger);
+        vm.expectRevert(abi.encodeWithSelector(ProjectCore.NotSponsor.selector));
+        core.fundScholarship{value: 1.0 ether}(id);
+
+        // Sponsor nạp quỹ hợp lệ
+        vm.prank(sponsorA);
+        core.fundScholarship{value: 1.0 ether}(id);
+
+        // Case 5b: Kẻ lạ nộp minh chứng -> REVERT NotStudent
+        vm.prank(stranger);
+        vm.expectRevert(abi.encodeWithSelector(ProjectCore.NotStudent.selector));
+        core.submitMilestone(id, 0, "QmStrangerProof");
+
+        // Case 5c: Sponsor nộp minh chứng thay sinh viên -> REVERT NotStudent
+        vm.prank(sponsorA);
+        vm.expectRevert(abi.encodeWithSelector(ProjectCore.NotStudent.selector));
+        core.submitMilestone(id, 0, "QmSponsorProof");
+
+        // Sinh viên nộp minh chứng hợp lệ
+        vm.prank(studentA);
+        core.submitMilestone(id, 0, "QmStudentProof");
+
+        // Case 5d: Kẻ lạ duyệt mốc -> REVERT NotSponsor
+        vm.prank(stranger);
+        vm.expectRevert(abi.encodeWithSelector(ProjectCore.NotSponsor.selector));
+        core.approveMilestone(id, 0);
+
+        // Case 5e: Sinh viên tự duyệt mốc của chính mình -> REVERT NotSponsor
+        vm.prank(studentA);
+        vm.expectRevert(abi.encodeWithSelector(ProjectCore.NotSponsor.selector));
+        core.approveMilestone(id, 0);
+
+        // Verifier duyệt hợp lệ
+        core.approveMilestone(id, 0);
+
+        // Case 5f: Kẻ lạ gọi giải ngân -> REVERT NotStudent
+        vm.prank(stranger);
+        vm.expectRevert(abi.encodeWithSelector(ProjectCore.NotStudent.selector));
+        core.releaseMilestone(id, 0);
+
+        // Case 5g: Kẻ lạ hoặc sinh viên thay đổi Verifier -> REVERT NotSponsor
+        vm.prank(stranger);
+        vm.expectRevert(abi.encodeWithSelector(ProjectCore.NotSponsor.selector));
+        core.setVerifier(address(0x7777));
+
+        vm.prank(studentA);
+        vm.expectRevert(abi.encodeWithSelector(ProjectCore.NotSponsor.selector));
+        core.setVerifier(address(0x7777));
+    }
 }
+

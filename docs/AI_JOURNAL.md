@@ -238,11 +238,13 @@ Mỗi phiên làm việc có sử dụng AI cần được ghi chép theo cấu 
   - *Ưu tiên SPEC R4 về nạp quỹ:* Giữ nguyên logic linh hoạt: Cho phép sinh viên nộp minh chứng và được thẩm định theo kỳ học; quỹ bắt buộc phải nạp đủ trước khi gọi `releaseMilestone` (`s.fundedAmount >= s.releasedAmount + amountToRelease`). Cập nhật `ECONOMIC_RULES.md` mục 4.3.
   - *Bổ sung Event on-chain:* Thêm `event VerifierUpdated(address indexed previousVerifier, address indexed newVerifier)` vào `contracts/project/ProjectCore.sol` và emit trong `setVerifier`.
   - *Chốt 100% Native ETH:* Cập nhật mục 11 trong `docs/SPEC.md` và mục 1.1 trong `docs/ECONOMIC_RULES.md` xác nhận không sử dụng ERC-20.
-  - *Không thêm tính năng mới:* Giữ vững cam kết phi lưu ký (Non-custodial Escrow), bảo toàn trọn vẹn số tiền học bổng đã nạp cho sinh viên.
-  - *Xây dựng test suite toàn diện:* Lập trình tệp [`test/Lab11_EconomicRules.t.sol`](../test/Lab11_EconomicRules.t.sol) gồm 27 test cases chuyên sâu phủ kín 8 yêu cầu kinh tế và kiểm thử bất biến số dư đa mốc (Multi-milestone solvency invariant).
+  - *Xây dựng & hoàn thiện test suite toàn diện:* Lập trình tệp [`test/Lab11_EconomicRules.t.sol`](../test/Lab11_EconomicRules.t.sol) với 34 test cases chuyên sâu phủ kín 8 yêu cầu kinh tế, kiểm thử bất biến số dư đa mốc (Multi-milestone solvency invariant), và bổ sung Mục 9 kiểm thử chuyên biệt:
+    - **Ca Hợp Lệ:** Tạo scholarship $\rightarrow$ fund $\rightarrow$ submit milestone $\rightarrow$ approve $\rightarrow$ release thành công (`test_VALID_ScholarshipLifecycle_Success`); kiểm tra sinh viên nhận chính xác 100% số tiền không bị trừ phí (`test_VALID_StudentReceivesExactAmount`).
+    - **Ca Vi Phạm:** Release trước khi approve $\rightarrow$ REVERT `MilestoneNotApproved` (`test_VIOLATION_ReleaseBeforeApprove_Reverts`); Release 2 lần một mốc $\rightarrow$ REVERT `AlreadyReleased` (`test_VIOLATION_DoubleRelease_Reverts`); Sai sinh viên $\rightarrow$ REVERT `NotStudent`/`InvalidAddress` (`test_VIOLATION_WrongStudent_Reverts`); Quỹ không đủ hoặc chưa nạp $\rightarrow$ REVERT `InsufficientFunds` (`test_VIOLATION_InsufficientFund_Reverts`); Người gọi không có quyền $\rightarrow$ REVERT `NotSponsor`/`NotStudent` (`test_VIOLATION_UnauthorizedCaller_Reverts`).
 - **Kết quả đạt được:**
-  - Tệp [`contracts/project/ProjectCore.sol`](../contracts/project/ProjectCore.sol) được bổ sung `event VerifierUpdated`, biên dịch sạch sẽ.
-  - Toàn bộ test suite dự án chạy lệnh `npx.cmd hardhat test`: **57/57 tests PASS** (30 test từ Lab 09-10 + 27 test chuyên sâu Lab 11).
+  - Hợp đồng [`contracts/project/ProjectCore.sol`](../contracts/project/ProjectCore.sol) biên dịch sạch sẽ, không cần sửa đổi thêm vì đã hoàn toàn tuân thủ đúng theo [`docs/SPEC.md`](SPEC.md) và [`docs/ECONOMIC_RULES.md`](ECONOMIC_RULES.md).
+  - Toàn bộ test suite dự án chạy lệnh `npx.cmd hardhat test`: **64/64 tests PASS (100%)**, 0 fail.
+  - Không có trường hợp "TEST FAIL $\rightarrow$ CONTRACT ISSUE" nào xảy ra (mọi invariant kinh tế đều được hợp đồng bảo đảm an toàn).
   - Hoàn thiện tài liệu đối chiếu và bằng chứng thực nghiệm: [`docs/SPEC.md`](SPEC.md), [`docs/ECONOMIC_RULES.md`](ECONOMIC_RULES.md), [`evidence/lab-11/ECONOMIC_RULES_EVIDENCE.md`](../evidence/lab-11/ECONOMIC_RULES_EVIDENCE.md).
 
 ---
