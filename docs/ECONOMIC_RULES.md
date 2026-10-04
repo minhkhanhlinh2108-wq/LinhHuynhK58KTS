@@ -130,30 +130,44 @@ Hệ thống nhận diện 4 tình huống người dùng có nguy cơ bị thi�
         revert InsufficientScholarshipFund(scholarship.fundedAmount, scholarship.disbursedAmount + milestone.amount);
     }
     ```
-  - *Yêu cầu nạp đủ 100% trước khi kích hoạt mốc:* Suất học bổng chỉ cho phép sinh viên nộp minh chứng khi `fundedAmount == totalAmount`.
+  - *Quỹ phải được nạp đủ trước khi giải ngân từng mốc (Funded Before Release):* Ưu tiên đặc tả SPEC R4 (`RULE_SUFFICIENT_POOL_FUND`), Smart Contract bắt buộc kiểm tra số dư đã nạp của suất đủ chi trả cho mốc cần giải ngân (`s.fundedAmount >= s.releasedAmount + milestone.amount`). Cho phép Nhà tài trợ nạp theo từng đợt nhưng tuyệt đối không giải ngân nếu số dư nạp chưa đủ bù đắp mốc đó.
 
 ### 4.4. Tình Huống 4: Người Không Có Quyền Can Thiệp (Unauthorized Intervention)
 - **Kịch bản rủi ro:** Hacker, bên thứ ba lạ mặt, hoặc thậm chí là Quản trị viên/Nhà tài trợ lạm quyền gọi các lệnh can thiệp như duyệt mốc, rút trộm tiền, hoặc hủy ngang suất học bổng khi sinh viên đang học.
 - **Thiệt hại:** Sinh viên bị tước đoạt học bổng bất công; dòng tiền bị chuyển hướng trái phép.
 - **Giải pháp phòng ngừa:**
-  - *Kiểm soát truy cập chuẩn OpenZeppelin `AccessControl`:* Mọi hàm thay đổi trạng thái đều được bảo vệ bởi các modifier tương ứng (`onlyRole(VERIFIER_ROLE)`, kiểm tra `msg.sender == scholarship.student`, kiểm tra `msg.sender == scholarship.sponsor`).
-  - *Ngăn chặn rút quỹ tùy tiện (Commitment Lock):* Nhà tài trợ không được quyền rút lại tiền của các mốc đang trong quá trình xét duyệt (`Submitted` hoặc `Approved`). Quyền rút tiền thừa (`refund`) chỉ mở ra khi mốc đã quá hạn chót kèm theo thời gian ân hạn (`GRACE_PERIOD`) mà sinh viên không nộp minh chứng.
-  - *Hợp đồng không có backdoor rút tiền:* Không lập trình bất kỳ hàm "rút khẩn cấp" (`emergencyWithdraw`) nào cho phép Admin chuyển toàn bộ số dư hợp đồng về ví cá nhân.
+  - *Kiểm soát truy cập chuẩn vai trò (`RBAC`):* Mọi hàm thay đổi trạng thái đều được bảo vệ nghiêm ngặt:
+    - Duyệt mốc (`approveMilestone`): Chỉ `verifier` (người thẩm định độc lập) được thực thi (`revert NotVerifier()`), Sponsor không được tự ý duyệt mốc của mình.
+    - Đổi người thẩm định (`setVerifier`): Chỉ `verifier` hiện tại được chuyển giao quyền (`revert NotVerifier()`), phát event `VerifierUpdated`.
+    - Nộp minh chứng (`submitMilestone`): Chỉ đúng `s.student` được gọi, chỉ mốc `Pending` mới được nộp (`revert InvalidMilestoneStatus()`), ngăn ngừa State Regression.
+    - Nạp quỹ (`fundScholarship`): Chỉ `s.sponsor` mới được nạp tiền vào suất của mình (`revert NotSponsor()`).
+  - *Hợp đồng không có backdoor rút tiền:* Không lập trình bất kỳ hàm rút tiền tùy tiện nào làm trái cam kết học bổng. Toàn bộ tiền giải ngân chỉ được chuyển thẳng đến đúng địa chỉ ví sinh viên `s.student` sau khi mốc đã được phê duyệt hợp lệ.
 
 ---
 
-## 5. Bảng Ánh Xạ Giữa Economic Rules Và Quy Tắc Kỹ Thuật (SPEC Rules R1–R10)
+## 5. Bảng Ánh Xạ Giữa Economic Rules Và Quy Tắc Kỹ Thuật (SPEC Rules R1–R10 & Code)
 
-| Quy Tắc Kinh Tế | Quy Tắc SPEC Tương Ứng | Mã Định Danh Lỗi Kỹ Thuật |
-|:---|:---:|:---|
-| Nhà tài trợ tạo suất hợp lệ | **R1, R3** | `UnauthorizedCaller`, `ZeroAmountNotAllowed` |
-| Ví sinh viên hợp lệ, không rỗng | **R2, R9** | `ZeroAddressNotAllowed`, `NotAssignedStudent` |
-| Tiền ký quỹ đủ trước khi giải ngân | **R4** | `InsufficientScholarshipFund` |
-| Sinh viên chính chủ nộp minh chứng | **R5** | `NotAssignedStudent`, `InvalidMilestoneStatus` |
-| Người có quyền mới được duyệt mốc | **R6** | `UnauthorizedCaller`, `InvalidMilestoneStatus` |
-| Không giải ngân khi chưa duyệt | **R7** | `MilestoneNotApprovedYet` |
-| Không giải ngân 2 lần một mốc | **R8** | `MilestoneAlreadyDisbursed` |
-| Tiền về đúng ví sinh viên, phát sinh event | **R9, R10** | `RULE_EXACT_STUDENT_WALLET`, `RULE_EMIT_TRACEABLE_EVENTS` |
+| Quy Tắc Kinh Tế | Quy Tắc SPEC Tương Ứng | Hàm Code Trong `ProjectCore.sol` | Custom Error / Event Kỹ Thuật Thực Tế |
+|:---|:---:|:---|:---|
+| Nhà tài trợ tạo suất hợp lệ | **R1, R3** | `createScholarship(...)` | `InvalidAddress`, `InvalidAmount` / Event `ScholarshipCreated` |
+| Ví sinh viên hợp lệ, không rỗng | **R2, R9** | `_createScholarship(...)` | `InvalidAddress` (chặn `address(0)` & `address(this)`) |
+| Tiền ký quỹ đủ trước khi giải ngân | **R4** | `releaseMilestone(...)` | `InsufficientFunds` |
+| Sinh viên chính chủ nộp minh chứng | **R5** | `submitMilestone(...)` | `NotStudent`, `InvalidMilestoneStatus` / Event `MilestoneSubmitted` |
+| Chỉ Verifier độc lập được duyệt mốc | **R6** | `approveMilestone(...)` | `NotVerifier`, `InvalidMilestoneStatus` / Event `MilestoneApproved` |
+| Không giải ngân khi chưa duyệt | **R7** | `releaseMilestone(...)` | `MilestoneNotApproved` |
+| Không giải ngân 2 lần một mốc | **R8** | `releaseMilestone(...)` | `AlreadyReleased` |
+| Tiền về đúng ví sinh viên, phát event | **R9, R10** | `releaseMilestone(...)` | Chuyển `s.student` / Event `ScholarshipReleased` |
+| Cập nhật Verifier có kiểm soát | **R6, R10** | `setVerifier(...)` | `NotVerifier`, `InvalidAddress` / Event `VerifierUpdated` |
+
+---
+
+## 6. Ghi Chú Đồng Bộ Mâu Thuẫn (Conflict Resolution Notes)
+
+Sau khi đối chiếu chi tiết giữa `ECONOMIC_RULES.md`, `SPEC.md` và `ProjectCore.sol`, nhóm đã thống nhất:
+1. **Quyền duyệt mốc (Milestone Approval):** Ưu tiên SPEC Mục 5, Quy tắc R6 và ECONOMIC_RULES 2.4 — **Chỉ Verifier độc lập** được quyền duyệt mốc (`approveMilestone`), loại bỏ hoàn toàn khả năng Sponsor tự duyệt mốc của chính mình nhằm triệt tiêu lỗ hổng thông đồng SEC-01.
+2. **Thời điểm nạp tiền (Fund Timing):** Ưu tiên SPEC R4 — Quỹ phải được nạp **trước khi giải ngân** (`releaseMilestone`), không ép buộc phải nạp đủ 100% toàn bộ học bổng mới cho phép sinh viên nộp bài.
+3. **Máy trạng thái một chiều (Strict State Machine):** Chặn đứng hiện tượng thụt lùi trạng thái (State Regression SEC-02) bằng cách chỉ cho phép gọi `submitMilestone` khi mốc đang ở trạng thái `Pending`.
+4. **Phạm vi bảo mật quỹ:** Tuyệt đối không thêm backdoor hoặc tính năng rút tiền tùy tiện ngoài phạm vi học bổng cam kết. Tiền giải ngân chỉ đi về đúng ví sinh viên `s.student`.
 
 ---
 > 🔗 **Liên kết nhanh:** [Trang chủ README](../README.md) • [Kế hoạch đồ án](PROJECT_PLAN.md) • [Đặc tả nghiệp vụ](SPEC.md) • [Quy tắc kinh tế](ECONOMIC_RULES.md) • [Nhật ký AI](AI_JOURNAL.md) • [GitHub Repo](https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS)

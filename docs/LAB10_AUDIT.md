@@ -16,14 +16,14 @@
 
 ### 1.1. Thống kê phân loại phát hiện (Vulnerability Severity Breakdown)
 
-| Mức Độ Nghiêm Trọng (Severity) | Số Lượng Phát Hiện | Tình Trạng Hiện Tại |
-|:---|:---:|:---:|
-| 🔴 **Critical** | **0** | Không có lỗ hổng gây thất thoát quỹ tức thì |
-| 🟠 **High** | **1** | Cần xử lý trước khi đóng băng code (SEC-03: Kẹt quỹ vĩnh viễn do thiếu Refund) |
-| 🟡 **Medium** | **3** | Rủi ro logic nghiệp vụ và DoS (SEC-01, SEC-02, SEC-06) |
-| 🔵 **Low** | **3** | Lệch chuẩn truy vết, thiếu event & RBAC mở (SEC-04, SEC-05, SEC-07) |
-| ⚪ **Informational** | **1** | Sai lệch đặt tên Event/Error giữa Spec và Contract (SEC-08) |
-| **TỔNG CỘNG** | **8** | **Được ghi nhận chi tiết, chưa sửa code tại bước này** |
+| Mức Độ Nghiêm Trọng (Severity) | Số Lượng Phát Hiện | Tình Trạng Hiện Tại (Sau Refactor) |
+|:---|:---:|:---|
+| 🔴 **Critical** | **0** | Không phát hiện lỗ hổng gây thất thoát quỹ tức thì |
+| 🟠 **High** | **1** | Ghi nhận theo dõi cho Mainnet (SEC-03: Kẹt quỹ nếu thiếu Refund) |
+| 🟡 **Medium** | **3** | **Đã sửa 2/3** (SEC-01, SEC-02 đã vá; SEC-06 ghi nhận DoS ví) |
+| 🔵 **Low** | **3** | **Đã sửa 1/3** (SEC-07 đã vá; SEC-04, SEC-05 đã đồng bộ theo SPEC R4) |
+| ⚪ **Informational** | **1** | Đã đồng bộ danh mục trong tài liệu [ECONOMIC_RULES.md](ECONOMIC_RULES.md) |
+| **TỔNG CỘNG** | **8** | **Đã vá triệt để 3 lỗi kỹ thuật cốt lõi (SEC-01, SEC-02, SEC-07)** |
 
 ### 1.2. Đánh giá tổng thể kiến trúc
 - **Điểm mạnh:**
@@ -376,16 +376,16 @@
 
 ## 3. Ma Trận Bảng Tổng Hợp Các Phát Hiện (Audit Findings Matrix)
 
-| ID | Nhóm Phân Loại | Mức Độ | Hàm Liên Quan | Dòng Mã Nguồn | Tóm Tắt Lỗ Hổng / Vấn Đề | Người Phát Hiện |
-|:---:|:---|:---:|:---|:---:|:---|:---:|
-| **SEC-01** | Access Control | 🟡 Medium | `approveMilestone` | 207 | Sponsor có quyền tự duyệt mốc, vượt qua Verifier độc lập | AI & Sinh viên |
-| **SEC-02** | Business Logic | 🟡 Medium | `submitMilestone` | 188-193 | Sinh viên có thể nộp lại minh chứng, đảo ngược mốc từ `Approved` về `Submitted` | AI |
-| **SEC-03** | Business Logic / Funds | 🟠 High | Toàn hợp đồng | N/A | Thiếu hàm `refund` / `cancel`, có nguy cơ kẹt quỹ vĩnh viễn khi sinh viên bỏ học | Sinh viên & AI |
-| **SEC-04** | Access Control | 🔵 Low | `createScholarship` | 127-152 | Bất kỳ ai cũng có thể tạo suất học bổng (thiếu `SPONSOR_ROLE` theo SPEC R1) | Sinh viên |
-| **SEC-05** | Insufficient Fund | 🔵 Low | `submitMilestone`, `approveMilestone` | 177, 203 | Cho phép nộp và duyệt mốc trên suất chưa hề được nạp quỹ | AI |
-| **SEC-06** | External ETH Call | 🟡 Medium | `releaseMilestone` | 254-255 | Tiềm ẩn DoS kẹt tiền nếu ví sinh viên từ chối nhận Native ETH | AI |
-| **SEC-07** | Events / Access Control | 🔵 Low | `setVerifier` | 305-309 | Không phát event khi đổi Verifier; báo nhầm lỗi `NotSponsor` | AI & Sinh viên |
-| **SEC-08** | Events & Errors | ⚪ Info | Toàn hợp đồng | 39-86 | Bất nhất danh mục tên Event và Custom Error giữa SPEC và Contract | Sinh viên |
+| ID | Nhóm Phân Loại | Mức Độ | Hàm Liên Quan | Dòng Mã Nguồn | Tóm Tắt Lỗ Hổng / Vấn Đề | Trạng Thái Khắc Phục | Người Phát Hiện |
+|:---:|:---|:---:|:---|:---:|:---|:---:|:---:|
+| **SEC-01** | Access Control | 🟡 Medium | `approveMilestone` | 207 | Sponsor có quyền tự duyệt mốc, vượt qua Verifier độc lập | ✅ **ĐÃ VÁ** (Chỉ Verifier được duyệt, revert `NotVerifier`) | AI & Sinh viên |
+| **SEC-02** | Business Logic | 🟡 Medium | `submitMilestone` | 188-193 | Sinh viên có thể nộp lại minh chứng, đảo ngược mốc từ `Approved` về `Submitted` | ✅ **ĐÃ VÁ** (Chặn bằng `InvalidMilestoneStatus`) | AI |
+| **SEC-03** | Business Logic / Funds | 🟠 High | Toàn hợp đồng | N/A | Thiếu hàm `refund` / `cancel`, có nguy cơ kẹt quỹ vĩnh viễn khi sinh viên bỏ học | 📋 Ghi nhận theo dõi Mainnet (không tự ý thêm tính năng) | Sinh viên & AI |
+| **SEC-04** | Access Control | 🔵 Low | `createScholarship` | 127-152 | Bất kỳ ai cũng có thể tạo suất học bổng (thiếu `SPONSOR_ROLE` theo SPEC R1) | 🔄 Thiết kế mở: Caller là Sponsor của suất đó | Sinh viên |
+| **SEC-05** | Insufficient Fund | 🔵 Low | `submitMilestone`, `approveMilestone` | 177, 203 | Cho phép nộp và duyệt mốc trên suất chưa hề được nạp quỹ | 🔄 Đồng bộ: Thống nhất theo SPEC R4 (Fund before release) | AI |
+| **SEC-06** | External ETH Call | 🟡 Medium | `releaseMilestone` | 254-255 | Tiềm ẩn DoS kẹt tiền nếu ví sinh viên từ chối nhận Native ETH | 📋 Ghi nhận cải tiến Pull Pattern cho Lab 13/14 | AI |
+| **SEC-07** | Events / Access Control | 🔵 Low | `setVerifier` | 305-309 | Không phát event khi đổi Verifier; báo nhầm lỗi `NotSponsor` | ✅ **ĐÃ VÁ** (revert `NotVerifier`, emit `VerifierUpdated`) | AI & Sinh viên |
+| **SEC-08** | Events & Errors | ⚪ Info | Toàn hợp đồng | 39-86 | Bất nhất danh mục tên Event và Custom Error giữa SPEC và Contract | 🔄 Đã đồng bộ qua Bảng ánh xạ Section 5 [ECONOMIC_RULES.md](ECONOMIC_RULES.md) | Sinh viên |
 
 ---
 
@@ -627,7 +627,118 @@ revert NotSponsor() ← MÃ LỖI SAI NGỮ NGHĨA
 
 3. **SEC-06 (Medium):** DoS ví đã được kiểm chứng bằng 2 biến thể contract khác nhau. Cơ chế Pull-over-Push là giải pháp chuẩn ngành. Đây là **finding thực sự có thể dẫn đến mất quỹ** trên môi trường thực tế với Smart Contract Wallet.
 
-4. **Về reentrancy và CEI:** Contract **hoàn toàn an toàn** ở hai góc độ này. Việc audit không phát hiện lỗi là kết luận chính xác, không phải bỏ sót.
+---
+
+## 6. Kết Quả Sửa Lỗi & Hậu Kiểm (Remediation & Regression Test Results)
+
+> **Ngày thực hiện:** 04/10/2026  
+> **Người thực hiện:** Huỳnh Thị Khánh Linh (Smart Contract & Security) phối hợp cùng Trần Thị Như Huỳnh (Testing & QA)  
+> **Mục tiêu:** Khắc phục triệt để các lỗ hổng thực tế đã được xác nhận (SEC-02, SEC-01, SEC-07), bảo đảm các kịch bản khai thác trước đây đều bị chặn đứng, và đạt 100% test suite pass.
+
+### 6.1. Chi Tiết Các Lỗ Hổng Đã Được Vá
+
+#### 1. Sửa Lỗi Ưu Tiên: SEC-02 — Chặn Đứng Thụt Lùi Trạng Thái (State Regression)
+- **Vấn đề trước đây:** Sinh viên có thể gọi `submitMilestone` khi mốc đã ở trạng thái `Approved`, ghi đè mã băm minh chứng và kéo lùi trạng thái về `Submitted`, làm tắc nghẽn quá trình giải ngân (`releaseMilestone` revert `MilestoneNotApproved`).
+- **Mã nguồn đã sửa tại `contracts/project/ProjectCore.sol`:**
+  ```solidity
+  Milestone storage m = _milestones[scholarshipId][milestoneIndex];
+  if (m.status == MilestoneStatus.Disbursed) revert AlreadyReleased();
+  if (m.status != MilestoneStatus.Pending) revert InvalidMilestoneStatus();
+  ```
+- **Kết quả hậu kiểm:** Test case `test_VERIFY_SEC02_StateRegression_FIXED` và `test_Extra_E_StudentCannotResubmitApprovedMilestone` xác nhận:
+  - Khi sinh viên cố gắng nộp lại minh chứng cho mốc đã `Approved`, giao dịch lập tức bị **CHẶN ĐỨNG** và revert với mã lỗi `InvalidMilestoneStatus()`.
+  - Trạng thái `Approved` được bảo toàn nguyên vẹn, giải ngân `releaseMilestone` tiếp tục thành công bình thường.
+
+#### 2. Khắc Phục SEC-01 — Giới Hạn Duy Nhất Verifier Duyệt Mốc (Sponsor Self-Approve)
+- **Vấn đề trước đây:** Dòng 207 cho phép cả `s.sponsor` duyệt mốc, vi phạm nguyên tắc kiểm định độc lập và tạo kịch bản thông đồng giữa Nhà tài trợ và Sinh viên.
+- **Mã nguồn đã sửa tại `contracts/project/ProjectCore.sol`:**
+  ```solidity
+  if (msg.sender != verifier) revert NotVerifier();
+  if (milestoneIndex >= s.milestoneCount) revert MilestoneNotFound();
+
+  Milestone storage m = _milestones[scholarshipId][milestoneIndex];
+  if (m.status == MilestoneStatus.Disbursed) revert AlreadyReleased();
+  if (m.status != MilestoneStatus.Submitted) revert InvalidMilestoneStatus();
+  ```
+- **Kết quả hậu kiểm:** Test case `test_VERIFY_SEC01_SponsorSelfApprove_FIXED` và `test_Extra_C_SponsorCannotApproveMilestone` xác nhận:
+  - Khi Sponsor gọi `approveMilestone`, giao dịch bị **CHẶN ĐỨNG** và revert với `NotVerifier()`.
+  - Chỉ duy nhất tài khoản `verifier` hợp lệ mới có thể phê duyệt mốc.
+
+#### 3. Khắc Phục SEC-07 — Chuẩn Hóa Lỗi & Phát Event Cho `setVerifier`
+- **Vấn đề trước đây:** Hàm `setVerifier` kiểm tra `msg.sender != verifier` nhưng revert nhầm `NotSponsor()`, đồng thời thiếu event on-chain khi thay đổi người thẩm định.
+- **Mã nguồn đã sửa tại `contracts/project/ProjectCore.sol`:**
+  ```solidity
+  function setVerifier(address newVerifier) external {
+      if (msg.sender != verifier) revert NotVerifier();
+      if (newVerifier == address(0) || newVerifier == address(this)) revert InvalidAddress();
+      address previousVerifier = verifier;
+      verifier = newVerifier;
+      emit VerifierUpdated(previousVerifier, newVerifier);
+  }
+  ```
+- **Kết quả hậu kiểm:** Test case `test_VERIFY_SEC07_WrongErrorCode_FIXED` và `test_Extra_F_SetVerifierAccessControl` xác nhận:
+  - Người lạ gọi `setVerifier` bị **CHẶN ĐỨNG** với đúng mã lỗi `NotVerifier()`.
+  - Verifier hiện tại cập nhật thành công và phát ra sự kiện `VerifierUpdated(previousVerifier, newVerifier)`.
+
+---
+
+### 6.2. Bảng Đối Soát Hành Vi Trước Và Sau Khi Vá Lỗi
+
+| Lỗ Hổng / Kịch Bản | Hành Vi Trước Sửa (Lab 10 Verify) | Hành Vi Sau Sửa (Lab 10 Remediation) | Trạng Thái Kỹ Thuật |
+|:---|:---|:---|:---:|
+| **SEC-02: Nộp lại khi Approved** | ✅ Nộp thành công, status bị hạ về `Submitted`, release bị lỗi | ❌ **Bị chặn đứng:** Revert `InvalidMilestoneStatus()`, giữ nguyên `Approved` | **VÁ THÀNH CÔNG** |
+| **SEC-01: Sponsor tự duyệt mốc** | ✅ Sponsor tự duyệt thành công, bypass Verifier độc lập | ❌ **Bị chặn đứng:** Revert `NotVerifier()`, chỉ Verifier được duyệt | **VÁ THÀNH CÔNG** |
+| **SEC-07: Người lạ đổi Verifier** | ❌ Revert sai mã lỗi `NotSponsor()`, thiếu Event | ❌ **Bị chặn đứng:** Revert đúng `NotVerifier()`, emit `VerifierUpdated` | **VÁ THÀNH CÔNG** |
+
+---
+
+### 6.3. Bằng Chứng Kiểm Thử Tự Động Toàn Trình (Full Regression Test Suite)
+
+- **Lệnh thực thi:** `npx hardhat test`
+- **Compiler:** `solc 0.8.20 (evm target: shanghai)`
+- **Kết quả tổng thể:** **32/32 tests PASS (100%)**, 0 failure, 0 error.
+
+```text
+Running Solidity tests
+
+  test/ProjectCore.t.sol:ProjectCoreTest
+    ✔ test_Extra_F_SetVerifierAccessControl()
+    ✔ test_Extra_E_StudentCannotResubmitApprovedMilestone()
+    ✔ test_Extra_D_ReleasedAmountTracked()
+    ✔ test_Extra_C_SponsorCannotApproveMilestone()
+    ✔ test_Extra_B_NonSponsorCannotFund()
+    ✔ test_Extra_A_OverfundReverts()
+    ✔ test_13_ZeroMilestoneAmountReverts()
+    ✔ test_12_ZeroAddressStudentReverts()
+    ✔ test_11_ReleaseWithInsufficientFundsReverts()
+    ✔ test_10_DoubleReleaseReverts()
+    ✔ test_09_ReleaseBeforeApproveReverts()
+    ✔ test_08_StrangerCannotSubmitMilestone()
+    ✔ test_07_StrangerCannotApproveMilestone()
+    ✔ test_06_FundsReachStudentWallet()
+    ✔ test_05_ReleaseMilestoneSuccess()
+    ✔ test_04_VerifierApproveMilestone()
+    ✔ test_03_StudentSubmitMilestone()
+    ✔ test_02_SponsorFundScholarship()
+    ✔ test_01_SponsorCreateScholarship()
+
+  test/Lab10_Verify.t.sol:Lab10VerifyTest
+    ✔ test_VERIFY_WrongRecipient_SAFE()
+    ✔ test_VERIFY_SEC08_EventNameMismatch_INFO()
+    ✔ test_VERIFY_SEC07_WrongErrorCode_FIXED()
+    ✔ test_VERIFY_SEC06_DoS_NoReceiveWallet_EXISTS()
+    ✔ test_VERIFY_SEC06_DoS_MaliciousStudentWallet_EXISTS()
+    ✔ test_VERIFY_SEC05_SubmitApproveWithZeroFund_EXISTS()
+    ✔ test_VERIFY_SEC04_AnyoneCreateScholarship_EXISTS()
+    ✔ test_VERIFY_SEC03_FundLocking_EXISTS()
+    ✔ test_VERIFY_SEC02_StateRegression_FIXED()
+    ✔ test_VERIFY_SEC01_SponsorSelfApprove_FIXED()
+    ✔ test_VERIFY_ReleaseBeforeApproval_SAFE()
+    ✔ test_VERIFY_ReentrancyAndCEI_SAFE()
+    ✔ test_VERIFY_DoubleRelease_SAFE()
+
+32 passing (32 solidity)
+```
 
 ---
 > 🔗 **Điều hướng nhanh:** [Trang chủ README](../README.md) • [Đặc tả nghiệp vụ (SPEC.md)](SPEC.md) • [Quy tắc kinh tế (ECONOMIC_RULES.md)](ECONOMIC_RULES.md) • [Nhật ký AI (AI_JOURNAL.md)](AI_JOURNAL.md) • [Kết quả test Lab 09](../evidence/lab-09/TEST_RESULTS.md) • [Test kiểm chứng Lab 10](../test/Lab10_Verify.t.sol)

@@ -163,10 +163,7 @@ contract ProjectCoreTest {
     // ============================================================
 
     // Test 7: Unauthorized person cannot approve milestone
-    // DEVIATION NOTE: createScholarship has NO access control in current contract,
-    // so "person without role cannot create" cannot be tested as a revert.
-    // We test the actual RBAC gate: only sponsor/verifier can approveMilestone.
-    // This maps to SPEC R1 intent (restricted operations require authority).
+    // Only verifier can approve milestone (strictly enforced per SPEC R6 & ECONOMIC_RULES)
     function test_07_StrangerCannotApproveMilestone() public {
         vm.prank(sponsor);
         uint256 id = core.createScholarship(student, twoMilestones);
@@ -175,7 +172,7 @@ contract ProjectCoreTest {
         core.submitMilestone(id, 0, "QmProofHash_Milestone0");
 
         vm.prank(stranger);
-        vm.expectRevert(abi.encodeWithSelector(ProjectCore.NotSponsor.selector));
+        vm.expectRevert(abi.encodeWithSelector(ProjectCore.NotVerifier.selector));
         core.approveMilestone(id, 0);
     }
 
@@ -286,8 +283,8 @@ contract ProjectCoreTest {
         core.fundScholarship{value: 1 ether}(id);
     }
 
-    // Extra C: Sponsor is also allowed to approve milestone (dual authority)
-    function test_Extra_C_SponsorCanApproveMilestone() public {
+    // Extra C: Sponsor cannot approve milestone (only independent verifier allowed)
+    function test_Extra_C_SponsorCannotApproveMilestone() public {
         vm.prank(sponsor);
         uint256 id = core.createScholarship(student, twoMilestones);
 
@@ -295,9 +292,8 @@ contract ProjectCoreTest {
         core.submitMilestone(id, 0, "QmProofHash");
 
         vm.prank(sponsor);
+        vm.expectRevert(abi.encodeWithSelector(ProjectCore.NotVerifier.selector));
         core.approveMilestone(id, 0);
-
-        assert(uint8(core.getMilestoneStatus(id, 0)) == 2); // Approved
     }
 
     // Extra D: releasedAmount accumulates correctly after disbursement
@@ -317,5 +313,32 @@ contract ProjectCoreTest {
 
         ProjectCore.Scholarship memory s = core.getScholarship(id);
         assert(s.releasedAmount == 0.5 ether);
+    }
+
+    // Extra E: Student cannot submit milestone again if already approved (No state regression)
+    function test_Extra_E_StudentCannotResubmitApprovedMilestone() public {
+        vm.prank(sponsor);
+        uint256 id = core.createScholarship(student, twoMilestones);
+
+        vm.prank(student);
+        core.submitMilestone(id, 0, "QmProof0");
+
+        core.approveMilestone(id, 0);
+
+        vm.prank(student);
+        vm.expectRevert(abi.encodeWithSelector(ProjectCore.InvalidMilestoneStatus.selector));
+        core.submitMilestone(id, 0, "QmProof0_Overwrite");
+    }
+
+    // Extra F: Only verifier can update verifier
+    function test_Extra_F_SetVerifierAccessControl() public {
+        address newVerifier = address(0x4444);
+        vm.prank(stranger);
+        vm.expectRevert(abi.encodeWithSelector(ProjectCore.NotVerifier.selector));
+        core.setVerifier(newVerifier);
+
+        // Current verifier succeeds
+        core.setVerifier(newVerifier);
+        assert(core.verifier() == newVerifier);
     }
 }

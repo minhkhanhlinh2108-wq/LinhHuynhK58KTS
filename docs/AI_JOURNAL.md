@@ -205,7 +205,63 @@ Mỗi phiên làm việc có sử dụng AI cần được ghi chép theo cấu 
   - [`docs/LAB10_AUDIT.md`](LAB10_AUDIT.md) được cập nhật với Mục 5 (Kết Quả Kiểm Chứng) đầy đủ, bao gồm bảng tổng hợp, chi tiết từng finding, và nhận xét hậu kiểm chứng.
   - Mã nguồn `contracts/project/ProjectCore.sol` giữ nguyên — sẵn sàng cho giai đoạn Refactor.
 
+---
 
+### Lab 10 — Đối Chiếu Economic Rules, Thống Nhất SPEC & Sửa Lỗi Hợp Đồng (Refactor & Bug Fixes)
+
+- **Ngày thực hiện:** 04/10/2026
+- **Nhiệm vụ:**
+  1. Đối chiếu chi tiết từng Economic Rule trong [`docs/ECONOMIC_RULES.md`](ECONOMIC_RULES.md) với [`docs/SPEC.md`](SPEC.md) và hợp đồng [`contracts/project/ProjectCore.sol`](../contracts/project/ProjectCore.sol).
+  2. Đảm bảo hợp đồng thực thi được 8 bất biến nghiệp vụ cốt lõi:
+     - Chỉ đúng actor được thao tác.
+     - Scholarship phải được fund trước khi release.
+     - Chỉ đúng student nhận tiền.
+     - Chỉ milestone đã approve mới được release.
+     - Một milestone chỉ release một lần.
+     - Tổng released không vượt fund.
+     - Không có cách rút tiền trái với cam kết scholarship.
+     - Các state-changing action quan trọng emit event.
+  3. Xác định và giải quyết toàn bộ các điểm mâu thuẫn giữa `ECONOMIC_RULES.md`, `SPEC.md` và mã nguồn; ưu tiên SPEC sau khi cả nhóm thống nhất; cập nhật tài liệu tương ứng; không tự ý thêm tính năng mới.
+  4. Thực hiện chỉnh sửa mã nguồn hợp đồng, biên dịch và chạy kiểm thử tự động đạt 100% PASS.
+- **Prompt sử dụng:**
+  > *"Đọc: docs/ECONOMIC_RULES.md, docs/SPEC.md, contracts/project/ProjectCore.sol. Đối chiếu từng economic rule với ProjectCore.sol. Đảm bảo contract thực thi được: Chỉ đúng actor được thao tác. Scholarship phải được fund trước khi release. Chỉ đúng student nhận tiền. Chỉ milestone đã approve mới được release. Một milestone chỉ release một lần. Tổng released không vượt fund. Không có cách rút tiền trái với cam kết scholarship. Các state-changing action quan trọng emit event. Nếu ECONOMIC_RULES.md và code mâu thuẫn: xác định điểm mâu thuẫn; ưu tiên SPEC sau khi cả nhóm thống nhất; cập nhật documentation tương ứng; không tự ý thêm tính năng mới. Không cần token ERC20. Compile và sửa lỗi. Cập nhật AI_JOURNAL.md. Không làm DApp."*
+- **Phân tích đối chiếu & Điểm mâu thuẫn phát hiện:**
+  1. *Quyền duyệt mốc (`approveMilestone`):*
+     - `ECONOMIC_RULES.md` (Mục 2.4 & Mục 3) và `SPEC.md` (Mục 5 & R6) quy định rõ: Chỉ Người thẩm định độc lập (`VERIFIER_ROLE`) mới được duyệt mốc, Sponsor không được tự ý duyệt mốc cho sinh viên.
+     - Tuy nhiên `ProjectCore.sol` trước sửa đổi cho phép `msg.sender != s.sponsor && msg.sender != verifier` (cả Sponsor lẫn Verifier duyệt).
+     - *Thống nhất của nhóm:* Ưu tiên SPEC Mục 5, R6 và ECONOMIC_RULES 2.4 — **Chỉ duy nhất Verifier độc lập** được quyền duyệt mốc nhằm triệt tiêu lỗ hổng thông đồng giữa Sponsor và Student (SEC-01). Sửa `SPEC.md` Mục 6 Bước 4 để loại bỏ cụm từ "hoặc Sponsor".
+  2. *Thời điểm nạp tiền vào quỹ:*
+     - `ECONOMIC_RULES.md` (Mục 4.3) từng ghi yêu cầu nạp đủ 100% trước khi sinh viên nộp minh chứng.
+     - `SPEC.md` (Quy tắc R4) và yêu cầu thực tế quy định: *"Scholarship phải được fund trước khi release"*. Suất học bổng có thể nạp theo từng kỳ/mốc, miễn là trước khi gọi `releaseMilestone`, số dư nạp phải đủ chi trả cho mốc đó (`fundedAmount >= releasedAmount + milestone.amount`).
+     - *Thống nhất của nhóm:* Ưu tiên SPEC R4 — Cập nhật `ECONOMIC_RULES.md` Mục 4.3 cho đồng bộ với SPEC R4 và code.
+  3. *Lỗ hổng thụt lùi trạng thái (State Regression SEC-02):*
+     - Trong `submitMilestone`, hợp đồng chỉ chặn `Disbursed`. Sinh viên có thể nộp lại minh chứng cho mốc đã `Approved`, kéo lùi trạng thái về `Submitted` và gây tắc nghẽn giải ngân.
+     - *Thống nhất của nhóm:* Thắt chặt máy trạng thái nghiêm ngặt một chiều, chỉ cho phép gọi `submitMilestone` khi mốc đang ở trạng thái `Pending`.
+  4. *Lỗi ngữ nghĩa mã lỗi và thiếu event quản trị (SEC-07):*
+     - Hàm `setVerifier` kiểm tra `msg.sender != verifier` nhưng revert nhầm `NotSponsor()`.
+     - Thiếu event on-chain khi thay đổi người thẩm định.
+     - *Thống nhất của nhóm:* Thêm `error NotVerifier()`, `event VerifierUpdated(address, address)` và emit khi cập nhật.
+  5. *Ràng buộc không có rút tiền trái cam kết & Không tự ý thêm tính năng:*
+     - Nhóm không tự ý thêm các hàm rút tiền tùy tiện ngoài phạm vi học bổng. Toàn bộ dòng tiền chuyển giao trong `ProjectCore.sol` chỉ thông qua `releaseMilestone` về đúng địa chỉ `s.student`.
+- **Quyết định sửa chữa của nhóm:**
+  - Cập nhật [`contracts/project/ProjectCore.sol`](../contracts/project/ProjectCore.sol):
+    - Khai báo thêm custom error: `error NotVerifier();` và `error InvalidMilestoneStatus();`.
+    - Khai báo thêm event: `event VerifierUpdated(address indexed previousVerifier, address indexed newVerifier);`.
+    - Sửa `submitMilestone`: Thêm kiểm tra `if (m.status != MilestoneStatus.Pending) revert InvalidMilestoneStatus();`.
+    - Sửa `approveMilestone`: Giới hạn quyền gọi chỉ dành riêng cho `verifier` (`if (msg.sender != verifier) revert NotVerifier();`), kiểm tra `if (m.status != MilestoneStatus.Submitted) revert InvalidMilestoneStatus();`.
+    - Sửa `setVerifier`: Đổi mã lỗi hoàn tác thành `revert NotVerifier();` và phát ra sự kiện `emit VerifierUpdated(previousVerifier, newVerifier);`.
+  - Cập nhật tài liệu:
+    - Đồng bộ [`docs/SPEC.md`](SPEC.md) Mục 6 Bước 4 về quyền hạn chỉ dành cho Verifier.
+    - Cập nhật [`docs/ECONOMIC_RULES.md`](ECONOMIC_RULES.md) Mục 4.3 (Fund before release), Mục 4.4 (RBAC chặt chẽ), Bảng ánh xạ Mục 5 và bổ sung Mục 6 ghi chú mâu thuẫn đã giải quyết.
+  - Cập nhật bộ test suite:
+    - [`test/ProjectCore.t.sol`](../test/ProjectCore.t.sol): Cập nhật Test 7 và Test Extra C để kiểm tra Sponsor/Stranger không thể duyệt mốc; bổ sung Test Extra E (chặn State Regression) và Test Extra F (phân quyền `setVerifier`).
+    - [`test/Lab10_Verify.t.sol`](../test/Lab10_Verify.t.sol): Cập nhật kiểm chứng các finding SEC-01, SEC-02, SEC-07 đã được sửa hoàn chỉnh.
+- **Kết quả đạt được:**
+  - Biên dịch thành công 100% không cảnh báo (`Compiled with solc 0.8.20`).
+  - Toàn bộ test suite chạy thành công: **32/32 tests PASS (100%)**.
+  - Đảm bảo trọn vẹn 8 bất biến nghiệp vụ, đồng bộ hoàn hảo giữa SPEC, ECONOMIC_RULES và mã nguồn hợp đồng.
+
+---
 
 ### Lab 11: Economic Rules Chạy Đúng
 - **Ngày thực hiện:** [Chưa thực hiện]

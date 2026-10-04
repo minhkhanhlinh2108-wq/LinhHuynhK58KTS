@@ -115,7 +115,7 @@ sequenceDiagram
 1. **Bước 1 - Khởi tạo (Creation):** Nhà tài trợ gọi hàm tạo suất, khai báo địa chỉ ví sinh viên, tổng số tiền và phân bổ số tiền theo từng mốc. Suất ở trạng thái `Created`.
 2. **Bước 2 - Khóa Quỹ (Funding):** Nhà tài trợ chuyển tiền (ETH hoặc token) vào hợp đồng tương ứng với giá trị suất. Suất chuyển sang trạng thái `Funded`.
 3. **Bước 3 - Nộp Minh Chứng (Proof Submission):** Sinh viên thực hiện kỳ học/mốc cam kết (ví dụ: đạt điểm GPA >= 3.2 sau kỳ 1), tải giấy tờ lên IPFS và gửi `proofHash` lên contract. Mốc chuyển trạng thái `Submitted`.
-4. **Bước 4 - Thẩm Định (Verification):** Người có quyền (`VERIFIER_ROLE` hoặc Sponsor) kiểm tra minh chứng. Nếu đạt, gọi hàm xác nhận mốc. Mốc chuyển trạng thái `Approved`.
+4. **Bước 4 - Thẩm Định (Verification):** Người thẩm định có thẩm quyền (`VERIFIER_ROLE` / `verifier`) kiểm tra minh chứng ngoại tuyến. Nếu đạt yêu cầu, gọi hàm xác nhận mốc (`approveMilestone`). Mốc chuyển sang trạng thái `Approved`. (Nhà tài trợ không được tự ý duyệt mốc nhằm đảm bảo tính khách quan và kiểm soát rủi ro gian lận).
 5. **Bước 5 - Giải Ngân (Disbursement):** Sau khi mốc được xác nhận, Smart Contract tự động (hoặc qua lệnh giải ngân) chuyển đúng số tiền mốc vào ví sinh viên đã đăng ký. Mốc chuyển sang trạng thái `Disbursed`. Khi tất cả các mốc hoàn tất, suất học bổng chuyển sang `Completed`.
 
 ---
