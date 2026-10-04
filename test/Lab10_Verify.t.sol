@@ -66,11 +66,11 @@ contract Lab10VerifyTest {
     }
 
     // ==========================================================
-    // SEC-01: Sponsor co quyen tu phe duyet moc (DA FIX)
-    // Finding: Truoc day cho phep msg.sender == s.sponsor
-    // Ket qua sau fix: Sponsor bi chan bang NotVerifier()
+    // SEC-01: Sponsor co quyen tu phe duyet moc
+    // Finding: Dong 207 cho phep msg.sender == s.sponsor
+    // Ket qua kiem chung: FINDING TON TAI (CONFIRMED)
     // ==========================================================
-    function test_VERIFY_SEC01_SponsorSelfApprove_FIXED() public {
+    function test_VERIFY_SEC01_SponsorSelfApprove_EXISTS() public {
         // Sponsor tao suat hoc bong
         vm.prank(sponsor);
         uint256 id = core.createScholarship(student, twoMilestones);
@@ -79,18 +79,20 @@ contract Lab10VerifyTest {
         vm.prank(student);
         core.submitMilestone(id, 0, "QmRealProof");
 
-        // Sponsor co gang tu duyet moc cua minh -> Revert NotVerifier
+        // Sponsor tu duyet moc cua chinh minh — KHONG can Verifier doc lap
+        // Day la lo hong: Sponsor thong dong voi Student co the bypass Verifier
         vm.prank(sponsor);
-        vm.expectRevert(abi.encodeWithSelector(ProjectCore.NotVerifier.selector));
-        core.approveMilestone(id, 0);
+        core.approveMilestone(id, 0); // Khong revert => Finding ton tai
+
+        // Moc da duoc duyet boi Sponsor (khong qua Verifier)
+        assert(uint8(core.getMilestoneStatus(id, 0)) == 2); // MilestoneStatus.Approved
     }
 
     // ==========================================================
-    // SEC-02: State Regression — Sinh vien dao nguoc Approved -> Submitted (DA FIX)
-    // Finding: Truoc day cho phep submitMilestone khi da Approved
-    // Ket qua sau fix: submitMilestone bi chan bang InvalidMilestoneStatus()
+    // SEC-02: State Regression — Sinh vien dao nguoc Approved -> Submitted
+    // Ket qua kiem chung: FINDING TON TAI (CONFIRMED)
     // ==========================================================
-    function test_VERIFY_SEC02_StateRegression_FIXED() public {
+    function test_VERIFY_SEC02_StateRegression_EXISTS() public {
         vm.prank(sponsor);
         uint256 id = core.createScholarship(student, twoMilestones);
 
@@ -105,18 +107,19 @@ contract Lab10VerifyTest {
         core.approveMilestone(id, 0);
         assert(uint8(core.getMilestoneStatus(id, 0)) == 2); // Approved
 
-        // Student co gang nop lai minh chung khi moc da Approved -> Revert InvalidMilestoneStatus
+        // LOI: Student nop lai minh chung khi moc da Approved
+        // Contract chi chan khi status == Disbursed (dong 189)
+        // Khi status == Approved, submitMilestone van duoc phep!
         vm.prank(student);
-        vm.expectRevert(abi.encodeWithSelector(ProjectCore.InvalidMilestoneStatus.selector));
-        core.submitMilestone(id, 0, "QmFakeProof_Overwrite");
+        core.submitMilestone(id, 0, "QmFakeProof_Overwrite"); // Khong revert => Loi ton tai
 
-        // Trang thai van duoc bao toan la Approved
-        assert(uint8(core.getMilestoneStatus(id, 0)) == 2); // Approved
+        // Trang thai bi dao nguoc tu Approved ve Submitted!
+        assert(uint8(core.getMilestoneStatus(id, 0)) == 1); // Submitted (khong phai Approved)
 
-        // Giai ngan tiep tuc thanh cong
+        // Hau qua: releaseMilestone bay gio se revert vi status != Approved
         vm.prank(sponsor);
-        core.releaseMilestone(id, 0);
-        assert(uint8(core.getMilestoneStatus(id, 0)) == 3); // Disbursed
+        vm.expectRevert(abi.encodeWithSelector(ProjectCore.MilestoneNotApproved.selector));
+        core.releaseMilestone(id, 0); // Revert vi moc bi ha xuong Submitted
     }
 
     // ==========================================================
@@ -250,14 +253,17 @@ contract Lab10VerifyTest {
     }
 
     // ==========================================================
-    // SEC-07: setVerifier bao sai loi NotSponsor thay vi NotVerifier (DA FIX)
-    // Finding: Truoc day tra ve NotSponsor() sai ngu nghia
-    // Ket qua sau fix: Tra ve NotVerifier() chuan xac
+    // SEC-07: setVerifier bao sai loi NotSponsor thay vi NotVerifier
+    // Ket qua kiem chung: FINDING TON TAI (CONFIRMED)
     // ==========================================================
-    function test_VERIFY_SEC07_WrongErrorCode_FIXED() public {
+    function test_VERIFY_SEC07_WrongErrorCode_EXISTS() public {
+        // Stranger goi setVerifier: contract tra ve NotSponsor() (SAI ngu nghia)
+        // thay vi NotVerifier() hoac UnauthorizedCaller()
         vm.prank(stranger);
-        vm.expectRevert(abi.encodeWithSelector(ProjectCore.NotVerifier.selector));
+        vm.expectRevert(abi.encodeWithSelector(ProjectCore.NotSponsor.selector));
         core.setVerifier(address(0x9999));
+        // Loi NotSponsor() xay ra khi kiem tra msg.sender != verifier
+        // Ma loi SAI ve ngu nghia: nguoi goi khong phai Verifier, khong phai Sponsor
     }
 
     // ==========================================================

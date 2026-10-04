@@ -115,7 +115,7 @@ sequenceDiagram
 1. **Bước 1 - Khởi tạo (Creation):** Nhà tài trợ gọi hàm tạo suất, khai báo địa chỉ ví sinh viên, tổng số tiền và phân bổ số tiền theo từng mốc. Suất ở trạng thái `Created`.
 2. **Bước 2 - Khóa Quỹ (Funding):** Nhà tài trợ chuyển tiền (ETH hoặc token) vào hợp đồng tương ứng với giá trị suất. Suất chuyển sang trạng thái `Funded`.
 3. **Bước 3 - Nộp Minh Chứng (Proof Submission):** Sinh viên thực hiện kỳ học/mốc cam kết (ví dụ: đạt điểm GPA >= 3.2 sau kỳ 1), tải giấy tờ lên IPFS và gửi `proofHash` lên contract. Mốc chuyển trạng thái `Submitted`.
-4. **Bước 4 - Thẩm Định (Verification):** Người thẩm định có thẩm quyền (`VERIFIER_ROLE` / `verifier`) kiểm tra minh chứng ngoại tuyến. Nếu đạt yêu cầu, gọi hàm xác nhận mốc (`approveMilestone`). Mốc chuyển sang trạng thái `Approved`. (Nhà tài trợ không được tự ý duyệt mốc nhằm đảm bảo tính khách quan và kiểm soát rủi ro gian lận).
+4. **Bước 4 - Thẩm Định (Verification):** Người có quyền (`VERIFIER_ROLE` hoặc Sponsor) kiểm tra minh chứng. Nếu đạt, gọi hàm xác nhận mốc. Mốc chuyển trạng thái `Approved`.
 5. **Bước 5 - Giải Ngân (Disbursement):** Sau khi mốc được xác nhận, Smart Contract tự động (hoặc qua lệnh giải ngân) chuyển đúng số tiền mốc vào ví sinh viên đã đăng ký. Mốc chuyển sang trạng thái `Disbursed`. Khi tất cả các mốc hoàn tất, suất học bổng chuyển sang `Completed`.
 
 ---
@@ -213,20 +213,21 @@ struct Scholarship {
 
 ---
 
-## 11. Các Điểm Cần Như Huỳnh Kiểm Tra & Đóng Góp Ý Kiến (Review Checklist for Peer 2)
+## 11. Các Điểm Đã Thống Nhất & Đóng Góp Ý Kiến (Lab 11 Decisions & Checklist)
 
-Nhằm chuẩn bị tốt cho giai đoạn triển khai hợp đồng và viết test suite (Lab 09 - Lab 11), Thành viên 2 (**Trần Thị Như Huỳnh - QA & Testing**) cần rà soát và xác nhận các nội dung sau:
+Nhóm đã rà soát toàn diện và thống nhất các quyết định kỹ thuật cốt lõi tại mốc Lab 11:
 
-1. **Cơ chế gọi giải ngân mốc (Auto-Disbursement vs. Pull-Claim):**
-   - *Phương án A:* Sau khi Verifier gọi `verifyMilestone`, Smart Contract tự động chuyển tiền ngay (`push`).
-   - *Phương án B:* Sau khi Verifier duyệt, sinh viên phải chủ động gọi `claimMilestone` để rút tiền (`pull`).
-   - *Đánh giá bảo mật:* Phương án B thường an toàn hơn trước các lỗi DoS/reentrancy, nhưng phương án A tiện lợi hơn cho sinh viên. Cần Người 2 chốt phương án trước khi viết Interface tại Lab 09.
-2. **Loại tiền tệ giải ngân (Native ETH vs. ERC-20 Stablecoin):**
-   - Kiểm tra xem test suite tại Lab 11 sẽ ưu tiên test trên ETH hay mock token ERC-20 (hoặc hỗ trợ cả hai thông qua cấu trúc linh hoạt).
-3. **Cơ chế thu hồi quỹ khi sinh viên không đạt mốc (Refund Policy on Milestone Failure):**
-   - Nếu sinh viên quá hạn không nộp minh chứng hoặc mốc bị từ chối vĩnh viễn, Nhà tài trợ sẽ được quyền rút lại số tiền còn thừa của các mốc chưa giải ngân theo điều kiện thời gian nào?
-4. **Độ dài và định dạng của `proofHash`:**
-   - Sử dụng `string` (chứa chuỗi IPFS CID dạng `Qm...` hoặc `bafy...`) hay chuyển sang dạng `bytes32` tối ưu gas?
+1. **Cơ chế gọi giải ngân mốc (Disbursement Mechanism):**
+   - Áp dụng hàm `releaseMilestone(scholarshipId, milestoneIndex)` theo mẫu Checks-Effects-Interactions (CEI).
+   - Cho phép các actor liên quan (Sinh viên, Nhà tài trợ, Verifier) kích hoạt lệnh chuyển tiền sau khi mốc đã được phê duyệt (`Approved`), và tiền **100% chuyển trực tiếp vào địa chỉ ví sinh viên** `scholarship.student`.
+2. **Loại tiền tệ giải ngân (Native ETH — Không Cần Token ERC-20):**
+   - **Quyết định chính thức:** Hệ thống sử dụng **100% Native ETH testnet** (Sepolia / Arbitrum Sepolia) thông qua giao dịch `fundScholarship{value: ...}()` và chuyển Native ETH bằng low-level call.
+   - **Không cần và không sử dụng token ERC-20**, loại bỏ hoàn toàn sự phụ thuộc vào các hợp đồng token ngoại vi và tiết kiệm gas.
+3. **Chính sách bảo toàn quỹ và chống rút tiền trái cam kết (Fund Solvency & Commitment):**
+   - Tuân thủ nguyên tắc phi lưu ký (Non-custodial Escrow): **Không tạo bất kỳ hàm backdoor hay quyền rút quỹ khẩn cấp nào** cho phép Admin hoặc Sponsor rút tiền trái với cam kết học bổng.
+   - Tiền sau khi được nạp vào suất học bổng sẽ bị khóa an toàn và chỉ có thể được giải ngân cho sinh viên khi mốc tương ứng được thẩm định và phê duyệt hợp lệ.
+4. **Định dạng của `proofHash`:**
+   - Tiếp tục sử dụng kiểu `string` để lưu trữ linh hoạt mọi chuẩn mã băm minh chứng phi tập trung (IPFS CID dạng `Qm...` chuẩn v0 hoặc `bafy...` chuẩn v1).
 
 ---
 > 🔗 **Liên kết nhanh:** [Trang chủ README](../README.md) • [Kế hoạch đồ án](PROJECT_PLAN.md) • [Đặc tả nghiệp vụ](SPEC.md) • [Quy tắc kinh tế](ECONOMIC_RULES.md) • [Nhật ký AI](AI_JOURNAL.md) • [GitHub Repo](https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS)

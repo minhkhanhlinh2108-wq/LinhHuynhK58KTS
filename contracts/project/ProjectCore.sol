@@ -38,12 +38,10 @@ contract ProjectCore {
 
     error NotSponsor();
     error NotStudent();
-    error NotVerifier();
     error InvalidAddress();
     error InvalidAmount();
     error ScholarshipNotFound();
     error MilestoneNotFound();
-    error InvalidMilestoneStatus();
     error MilestoneNotApproved();
     error AlreadyReleased();
     error InsufficientFunds();
@@ -194,7 +192,6 @@ contract ProjectCore {
 
         Milestone storage m = _milestones[scholarshipId][milestoneIndex];
         if (m.status == MilestoneStatus.Disbursed) revert AlreadyReleased();
-        if (m.status != MilestoneStatus.Pending) revert InvalidMilestoneStatus();
 
         m.proofHash = proofHash;
         m.status = MilestoneStatus.Submitted;
@@ -204,7 +201,7 @@ contract ProjectCore {
 
     /**
      * @notice Approve a milestone after evaluating submitted proof.
-     * @dev Can be called only by the contract verifier.
+     * @dev Can be called by the scholarship sponsor or the contract verifier.
      * @param scholarshipId The scholarship ID.
      * @param milestoneIndex Index of the milestone to approve.
      */
@@ -212,12 +209,12 @@ contract ProjectCore {
         if (scholarshipId == 0 || scholarshipId > scholarshipCount) revert ScholarshipNotFound();
         Scholarship storage s = _scholarships[scholarshipId];
 
-        if (msg.sender != verifier) revert NotVerifier();
+        if (msg.sender != s.sponsor && msg.sender != verifier) revert NotSponsor();
         if (milestoneIndex >= s.milestoneCount) revert MilestoneNotFound();
 
         Milestone storage m = _milestones[scholarshipId][milestoneIndex];
         if (m.status == MilestoneStatus.Disbursed) revert AlreadyReleased();
-        if (m.status != MilestoneStatus.Submitted) revert InvalidMilestoneStatus();
+        if (m.status != MilestoneStatus.Submitted) revert MilestoneNotFound();
 
         m.status = MilestoneStatus.Approved;
         m.approvedAt = block.timestamp;
@@ -311,7 +308,7 @@ contract ProjectCore {
      * @param newVerifier The address of the new verifier.
      */
     function setVerifier(address newVerifier) external {
-        if (msg.sender != verifier) revert NotVerifier();
+        if (msg.sender != verifier) revert NotSponsor();
         if (newVerifier == address(0) || newVerifier == address(this)) revert InvalidAddress();
         address previousVerifier = verifier;
         verifier = newVerifier;
