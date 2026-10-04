@@ -196,6 +196,29 @@ Toàn bộ các mốc từ Lab 08 đến Lab 11 đều có thư mục lưu trữ
 | [`evidence/lab-10/`](../evidence/lab-10/) | [`LAB10_EVIDENCE.md`](../evidence/lab-10/LAB10_EVIDENCE.md) | Bằng chứng kiểm toán an ninh nội bộ vòng 1 và 13/13 verification tests tái hiện findings. |
 | [`evidence/lab-11/`](../evidence/lab-11/) | [`ECONOMIC_RULES_EVIDENCE.md`](../evidence/lab-11/ECONOMIC_RULES_EVIDENCE.md) | Bằng chứng kiểm chứng 8 yêu cầu kinh tế cốt lõi, ma trận ca hợp lệ & ca vi phạm (64/64 tests pass). |
 
+### 5.1. Bảng Checklist Đánh Giá Tính Toàn Vẹn Của Evidence (Lab 08 – Lab 11)
+
+Dựa trên yêu cầu kiểm tra thực chứng không tạo bằng chứng giả, nhóm đã rà soát 5 câu hỏi cốt lõi cho từng bài Lab:
+
+| Bài Lab | 1. File có tồn tại? | 2. Screenshot có đúng nội dung? | 3. Test result có rõ? | 4. Commit có tồn tại? | 5. Có thể trình diễn lại không? | Đánh Giá Chi Tiết |
+|:---:|:---:|:---:|:---:|:---:|:---:|:---|
+| **Lab 08** | ✅ **CÓ**<br>[`LAB08_EVIDENCE.md`](../evidence/lab-08/LAB08_EVIDENCE.md) | ℹ️ **ĐẦY ĐỦ LOG TEXT**<br>*(Lab tài liệu, không có GUI DApp)* | ℹ️ **SPEC/RULES RÕ**<br>*(Chưa viết code `.sol` theo nguyên tắc Spec First)* | ✅ **CÓ**<br>`c8110d7`<br>`74163af`<br>`25a97cc` | ✅ **TÁI HIỆN ĐƯỢC**<br>Toàn bộ 5 tài liệu khớp nhau 100% | Hoàn thành trọn vẹn bộ hồ sơ quản trị v1.0. Không có code giả hay test giả. |
+| **Lab 09** | ✅ **CÓ**<br>[`TEST_RESULTS.md`](../evidence/lab-09/TEST_RESULTS.md) | ℹ️ **TERMINAL LOG THẬT**<br>Ghi lại toàn bộ stdout, exit code 0 | ✅ **RÕ RÀNG**<br>17/17 tests pass (6 Success, 7 Fail, 4 Extra) | ✅ **CÓ**<br>`363cce9`<br>`a4149e2`<br>`8fbd2f9` | ✅ **TÁI HIỆN ĐƯỢC**<br>`npx hardhat test test/ProjectCore.t.sol` | Biên dịch `ProjectCore.sol` sạch sẽ, chỉ ra 4 điểm lệch giữa SPEC và code thực tế. |
+| **Lab 10** | ✅ **CÓ**<br>[`LAB10_EVIDENCE.md`](../evidence/lab-10/LAB10_EVIDENCE.md)<br>[`LAB10_AUDIT.md`](LAB10_AUDIT.md) | ℹ️ **TERMINAL LOG THẬT**<br>Khung kiểm chứng 13 verification tests | ✅ **RÕ RÀNG**<br>13/13 tests pass, đối soát 8 findings `SEC-01` $\rightarrow$ `SEC-08` | ✅ **CÓ**<br>`3b82334`<br>`7074c85`<br>`84ba956` | ✅ **TÁI HIỆN ĐƯỢC**<br>`npx hardhat test test/Lab10_Verify.t.sol` | Báo cáo kiểm toán 13 tiêu chí an ninh, không bịa đặt lỗ hổng, xác định rõ finding cần sửa. |
+| **Lab 11** | ✅ **CÓ**<br>[`ECONOMIC_RULES_EVIDENCE.md`](../evidence/lab-11/ECONOMIC_RULES_EVIDENCE.md) | ℹ️ **TERMINAL LOG THẬT**<br>Log terminal đầy đủ 64 passing tests | ✅ **RÕ RÀNG**<br>64/64 tests pass (27 Economic + 7 Core + 30 Regression) | ✅ **CÓ**<br>`fdcd60a`<br>`c5da75f` | ✅ **TÁI HIỆN ĐƯỢC**<br>`npx.cmd hardhat test` chạy trong ~7 giây | Đạt 100% yêu cầu ca hợp lệ & ca vi phạm. Không sửa contract vì contract không vi phạm SPEC. |
+
+### 5.2. Phân Tích Thiếu Hụt & Biện Pháp Bổ Sung (Không Tạo Bằng Chứng Giả)
+1. **Về tệp ảnh chụp màn hình đồ họa (Screenshots .png/.jpg):**
+   - *Hiện trạng:* Các bài Lab từ 08 đến 11 thuộc giai đoạn Smart Contract Backend & CLI Testing; toàn bộ thao tác diễn ra trong môi trường dòng lệnh (Terminal/PowerShell). Do đó, nhóm sử dụng **raw text terminal logs chuẩn xác** (chứa đầy đủ thông tin compiler, danh sách test case, thời gian thực thi, exit code 0) lưu trực tiếp trong các tệp Markdown evidence.
+   - *Nguyên tắc trung thực học thuật:* Nhóm **tuyệt đối không tạo file ảnh giả lập** hoặc chụp màn hình ngụy tạo khi chưa phát triển giao diện Web3 DApp (giao diện đồ họa sẽ được xây dựng và chụp ảnh thực tế tại Lab 15).
+2. **Về tính sẵn sàng trình diễn (Live Reproducibility):**
+   - Toàn bộ 64 test cases có thể được chạy lại trực tiếp tại chỗ bất kỳ lúc nào trước mặt Giảng viên bằng lệnh:
+     ```powershell
+     npx.cmd hardhat test
+     ```
+   - Thời gian thực thi trung bình: **6 – 8 giây**, không đòi hỏi cấu hình mạng ngoài hay tài khoản testnet bên thứ ba.
+
+
 ---
 
 ## 6. Cam Kết Code Freeze (Smart Contract Baseline)

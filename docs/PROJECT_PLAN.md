@@ -70,4 +70,70 @@ timeline
 | **Lab 15** | **Public DApp** | **Như Huỳnh** *(Frontend & Deploy)*<br>**Khánh Linh** *(Docs & Demo)* | • Triển khai (Deploy) hợp đồng lên mạng thử nghiệm công khai (Sepolia / Arbitrum Sepolia Testnet).<br>• Verify mã nguồn công khai trên Etherscan.<br>• Đóng gói và phát hành ứng dụng Frontend Web3 DApp hoàn chỉnh lên hosting công cộng (Vercel/Netlify).<br>• Thực hiện đầy đủ luồng tương tác thực tế bằng ví MetaMask (Tạo suất, Nạp ETH testnet, Nộp minh chứng, Duyệt mốc, Giải ngân).<br>• Hoàn thiện bộ slide thuyết trình, video demo và nghiệm thu đồ án. | • Smart Contract đã verify trên Testnet Explorer.<br>• Live DApp URL hoạt động ổn định và kết nối ví thành công.<br>• Video demo và toàn bộ tài liệu nghiệm thu sẵn sàng bảo vệ đồ án. |
 
 ---
+
+## 4. Kế Hoạch & Phân Công Chi Tiết Giai Đoạn 2 (Lab 13 – Lab 15)
+
+Sau khi hoàn tất đánh giá chất lượng toàn diện tại Gate Review 1 (Lab 12), nhóm chuyển giao sang giai đoạn 2 với phân công cụ thể cho từng thành viên:
+
+### 4.1. Lab 13: Thực Nghiệm Bảo Mật Nâng Cao (Security Experiments)
+- **Mục tiêu kỹ thuật:** Xây dựng kịch bản tấn công thực chứng (PoC) nhằm kiểm thử giới hạn an toàn của `ProjectCore.sol` trước các kỹ thuật khai thác tinh vi.
+- **Phân công nhiệm vụ:**
+  - **Nguyễn Minh Khánh Linh (Security Lead):**
+    - Phân tích mô hình mối đe dọa (Threat Modeling) và thiết kế kịch bản tấn công khai thác Reentrancy nâng cao và Front-running giao dịch giải ngân.
+    - Đánh giá kiến trúc phòng thủ Checks-Effects-Interactions (CEI) và đề xuất cơ chế khôi phục nếu xảy ra sự cố.
+    - Rà soát tác động của lỗi `SEC-06` (DoS khi ví sinh viên từ chối nhận ETH) và thiết kế giải pháp Pull-payment dự phòng.
+  - **Trần Thị Như Huỳnh (Testing & QA Lead):**
+    - Lập trình hợp đồng tấn công giả lập: `MaliciousAttacker.sol` (thực hiện reentrancy hook trong fallback/receive) và `RevertingStudentWallet.sol` (cố tình `revert()` để bẫy DoS).
+    - Viết test suite `test/Lab13_SecurityExperiments.t.sol` thực thi tấn công và đo lường khả năng phòng vệ của `ProjectCore.sol`.
+    - Thu thập log terminal, đo lường Gas tiêu hao khi bị tấn công và biên soạn báo cáo thực nghiệm tại `evidence/lab-13/SECURITY_EXPERIMENTS.md`.
+- **Sản phẩm bàn giao:** `test/Lab13_SecurityExperiments.t.sol`, `evidence/lab-13/SECURITY_EXPERIMENTS.md`, cập nhật `docs/AI_JOURNAL.md`.
+
+---
+
+### 4.2. Lab 14: Kiểm Toán Chéo & Tối Ưu Hóa Gas (Cross-Audit & Gas Optimization)
+- **Mục tiêu kỹ thuật:** Hoán đổi vai trò kiểm toán độc lập chéo giữa 2 thành viên, rà soát bằng công cụ phân tích tĩnh chuyên sâu và tối ưu hóa chi phí Gas.
+- **Phân công nhiệm vụ:**
+  - **Trần Thị Như Huỳnh (Lead Cross-Auditor):**
+    - Đổi vai kiểm toán độc lập toàn bộ mã nguồn hợp đồng lõi và các kịch bản kiểm thử của Khánh Linh.
+    - Cài đặt và cấu hình bộ công cụ phân tích tĩnh Slither / Mythril, chạy quét tự động toàn bộ codebase.
+    - Tổng hợp danh mục các cảnh báo tĩnh, phân loại mức độ nghiêm trọng và viết báo cáo kiểm toán chéo tại `docs/LAB14_CROSS_AUDIT.md`.
+  - **Nguyễn Minh Khánh Linh (Lead Gas Optimization & Integration):**
+    - Cấu hình plugin `hardhat-gas-reporter` đo lường chi tiết gas tiêu hao cho từng hàm (`createScholarship`, `fundScholarship`, `submitMilestone`, `approveMilestone`, `releaseMilestone`).
+    - Phân tích cấu trúc lưu trữ (Storage layout packing) của `struct Scholarship` và `struct Milestone` để tối ưu hóa vị trí slots bộ nhớ.
+    - Thực hiện kiểm thử tích hợp E2E (End-to-End) giữa Smart Contract và JSON-RPC Provider mô phỏng mạng thật.
+    - Lập bảng so sánh chi phí Gas trước và sau khi tối ưu hóa.
+- **Sản phẩm bàn giao:** `docs/LAB14_CROSS_AUDIT.md`, `evidence/lab-14/GAS_REPORT.md`, cập nhật `docs/AI_JOURNAL.md`.
+
+---
+
+### 4.3. Lab 15: Ứng Dụng Web3 DApp & Triển Khai Testnet (Public DApp & Deployment)
+- **Mục tiêu kỹ thuật:** Triển khai Smart Contract lên Testnet công khai, phát hành ứng dụng Web3 DApp hoàn chỉnh trên Web hosting, quay video demo và nghiệm thu đồ án.
+- **Phân công nhiệm vụ:**
+  - **Trần Thị Như Huỳnh (Lead Web3 Frontend & Hosting):**
+    - Khởi tạo và lập trình ứng dụng Web3 DApp bằng Vite + React, áp dụng thiết kế giao diện hiện đại (Modern Web3 UI, Glassmorphism, Responsive) bằng Vanilla CSS.
+    - Tích hợp thư viện kết nối ví (Wagmi, Viem, MetaMask) hỗ trợ chuyển mạng Arbitrum Sepolia / Sepolia tự động.
+    - Xây dựng 3 giao diện người dùng tương ứng với 3 vai trò: Dashboard Nhà tài trợ (Tạo suất & Nạp ETH), Dashboard Sinh viên (Nộp minh chứng IPFS CID & Nhận giải ngân), Dashboard Người thẩm định (Duyệt mốc).
+    - Deploy ứng dụng DApp lên hosting công khai (Vercel / Netlify) với custom domain / HTTPS.
+  - **Nguyễn Minh Khánh Linh (Lead Testnet Deployment & Demo Pitch):**
+    - Cấu hình script triển khai `scripts/deploy.js` và thực hiện deploy `ProjectCore.sol` lên mạng thử nghiệm Arbitrum Sepolia / Sepolia Testnet.
+    - Thực hiện Verify mã nguồn Smart Contract công khai trên Block Explorer (Arbiscan / Etherscan) kèm ABI chuẩn.
+    - Thực hiện chuỗi giao dịch thử nghiệm thực tế on-chain (tạo suất thật, nạp ETH testnet thật, submit CID IPFS thật, approve thật và giải ngân về ví sinh viên thật).
+    - Soạn thảo Slide thuyết trình hoàn thiện, kịch bản thuyết trình và quay video demo 3–5 phút chất lượng cao.
+- **Sản phẩm bàn giao:** Địa chỉ Contract đã verify trên Testnet Explorer, Live DApp URL, Video Demo, Slide thuyết trình và biên bản nghiệm thu đồ án cuối kỳ.
+
+---
+
+## 5. Danh Mục Kiểm Tra Tiến Độ Chuyển Pha (Phase Transition Checklist)
+
+| Hạng Mục | Tiêu Chí Đạt Chuẩn | Trạng Thái Hiện Tại | Người Phụ Trách |
+|:---|:---|:---:|:---:|
+| **Smart Contract Core** | `ProjectCore.sol` compile sạch sẽ, 0 error, 0 warning | ✅ **ĐẠT (Lab 09)** | Khánh Linh |
+| **Bảo Mật Nội Bộ** | Kiểm toán 13 tiêu chí, vá xong `SEC-02` & `SEC-07` | ✅ **ĐẠT (Lab 10)** | Như Huỳnh & Khánh Linh |
+| **Quy Tắc Kinh Tế** | 64/64 test cases pass 100%, bảo toàn hạn mức số dư | ✅ **ĐẠT (Lab 11)** | Như Huỳnh |
+| **Code Freeze** | Ký biên bản đóng băng tầng hợp đồng, sẵn sàng API | ✅ **ĐẠT (Lab 12)** | Khánh Linh & Như Huỳnh |
+| **Phân Công Giai Đoạn 2** | Làm rõ nhiệm vụ chi tiết Lab 13 – 15 cho 2 thành viên | ✅ **ĐẠT (Lab 12)** | Khánh Linh & Như Huỳnh |
+| **Nghiệm Thu Cột Mốc 1** | Giảng viên hướng dẫn thẩm định và phê duyệt Gate 1 | ⏳ **[CHỜ GIẢNG VIÊN XÁC NHẬN]** | Giảng viên hướng dẫn |
+
+---
 > 🔗 **Liên kết nhanh:** [Trang chủ README](../README.md) • [Kế hoạch đồ án](PROJECT_PLAN.md) • [Đặc tả nghiệp vụ](SPEC.md) • [Quy tắc kinh tế](ECONOMIC_RULES.md) • [Nhật ký AI](AI_JOURNAL.md) • [GitHub Repo](https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS)
+
