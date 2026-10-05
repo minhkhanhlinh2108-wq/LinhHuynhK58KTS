@@ -288,13 +288,39 @@ Mỗi phiên làm việc có sử dụng AI cần được ghi chép theo cấu 
 
 ---
 
-### Lab 13: Security Experiment
-- **Ngày thực hiện:** [Chưa thực hiện]
-- **Nhiệm vụ:** Thực nghiệm bảo mật nâng cao (Security Experiment): Mô phỏng tấn công reentrancy, tấn công DoS chuyển tiền, và stress testing.
-- **Prompt sử dụng:** *(Sẽ cập nhật khi triển khai Lab 13)*
-- **Phản hồi & Lỗi của AI:** *(Sẽ ghi chép các thiếu sót khi AI dựng kịch bản tấn công giả lập)*
-- **Quyết định sửa chữa của nhóm:** *(Sẽ cập nhật)*
-- **Kết quả đạt được:** *(Sẽ cập nhật)*
+### Lab 13: Security Experiment (Thực Nghiệm An Ninh & Kiểm Toán Reentrancy Chuyên Sâu)
+
+- **Ngày thực hiện:** 05/10/2026
+- **Nhiệm vụ:**
+  1. Phụ trách thực nghiệm bảo mật (Security Experiments) theo hướng dẫn Lab 13 trong sổ tay và đặc tả nghiệp vụ [SPEC.md](SPEC.md).
+  2. Tạo bộ hợp đồng đào tạo riêng biệt tại `contracts/training/`:
+     - [`VulnerableScholarshipBank.sol`](../contracts/training/VulnerableScholarshipBank.sol): Cố tình tạo lỗi Reentrancy do thực hiện external call chuyển Native ETH trước khi cập nhật số dư (vi phạm nguyên tắc CEI).
+     - [`AttackerScholarshipBank.sol`](../contracts/training/AttackerScholarshipBank.sol): Hợp đồng tấn công hook vào `receive()` để tái nhập hàm `withdraw()` rút cạn toàn bộ quỹ ngân hàng nhiều lần.
+     - [`SecureScholarshipBank.sol`](../contracts/training/SecureScholarshipBank.sol): Phiên bản an toàn được gia cố (hardened) bằng 2 lớp phòng thủ: mẫu thiết kế Checks-Effects-Interactions (CEI) và khóa Mutex `ReentrancyGuard`.
+  3. Tuyệt đối KHÔNG đưa vulnerability cố ý này vào hợp đồng lõi [`ProjectCore.sol`](../contracts/project/ProjectCore.sol); duy trì nghiêm ngặt cam kết Code Freeze từ Gate Review 1 (Lab 12).
+  4. Tiến hành kiểm toán chuyên sâu hợp đồng lõi [`ProjectCore.sol`](../contracts/project/ProjectCore.sol) giải quyết trọn vẹn 5 câu hỏi an ninh:
+     - Có external call không?
+     - State update có trước call không?
+     - Release hai lần có bị chặn không?
+     - Wrong student có bị chặn không?
+     - Release trước approval có bị chặn không?
+  5. Xây dựng test suite kiểm thử tự động `test/Lab13_SecurityExperiments.t.sol` (10 test cases), lập báo cáo an ninh chi tiết tại [`docs/LAB13_SECURITY.md`](LAB13_SECURITY.md) và lưu hồ sơ nghiệm thu tại [`evidence/lab-13/LAB13_EVIDENCE.md`](../evidence/lab-13/LAB13_EVIDENCE.md).
+- **Prompt sử dụng:**
+  > *"phụ trách security experiment. Đọc hướng dẫn Lab 13 trong sổ tay và đọc: contracts/project/ProjectCore.sol, docs/SPEC.md. Tạo contract TRAINING riêng: contracts/training/VulnerableScholarshipBank.sol. Mục đích chỉ để minh họa lỗi reentrancy. Không đưa vulnerability cố ý này vào ProjectCore.sol. Tạo một attacker contract training để minh họa: external call xảy ra trước state update; attacker có thể gọi lại withdraw; số dư bị rút nhiều lần. Sau đó tạo phiên bản an toàn/hardened hoặc giải thích patch bằng CEI: Checks → Effects → Interactions. Tiếp tục audit ProjectCore.sol: có external call không? state update có trước call không? release hai lần có bị chặn không? wrong student có bị chặn không? release trước approval có bị chặn không? Nếu ProjectCore đã an toàn thì KHÔNG được cố tình làm nó vulnerable. Tạo: docs/LAB13_SECURITY.md. Cập nhật AI_JOURNAL.md. Lưu evidence/lab-13/."*
+- **Phản hồi & Lỗi của AI phát hiện được:**
+  1. *Cám dỗ phá vỡ Code Freeze của hợp đồng lõi:* AI ban đầu có xu hướng muốn sửa trực tiếp vào `ProjectCore.sol` để tạo một nhánh code lỗi nhằm minh họa Reentrancy. Nhóm đã lập tức can thiệp và ngăn chặn: Hợp đồng `ProjectCore.sol` đã trải qua kiểm toán nội bộ Lab 10 và được Code Freeze tại Gate Review 1 (Lab 12); tuyệt đối không được đưa mã độc hại vào core contract. Mọi thử nghiệm tấn công phải được cô lập trong môi trường đào tạo (`contracts/training/`).
+  2. *Lỗi hiểu sai cơ chế lan truyền bọt khí lỗi (Revert Bubbling) trong EVM Low-level Call:* Trong lần chạy test phòng vệ trên `SecureScholarshipBank`, AI dự đoán hàm `withdraw()` sẽ revert với thông báo lỗi bên trong của hàm bị tái nhập (`"Insufficient balance"` hoặc `"ReentrancyGuard: reentrant call"`). Tuy nhiên, vì hàm bảo vệ sử dụng `call{value: ...}("")`, khi hàm con bên trong `receive()` của Attacker revert, EVM trả về cờ `success = false`, khiến hàm bên ngoài revert với `"ETH transfer failed"`. Nhóm đã hướng dẫn lập trình contract `AttackerSecureBank` hỗ trợ linh hoạt 2 chế độ: dùng khối `try/catch` có kiểm soát để trích xuất đúng mã lỗi nội tại, và chế độ unhandled để kiểm chứng tính toàn vẹn của toàn bộ transaction.
+  3. *Nguy cơ mô phỏng hời hợt (Shallow Reentrancy):* AI ban đầu chỉ định nghĩa hàm tấn công tái nhập 1 lần duy nhất rồi dừng lại. Nhóm đã yêu cầu nâng cấp logic của `AttackerScholarshipBank` thành vòng lặp đệ quy trong `receive()`, tiếp tục rút tiền cho đến khi số dư của `VulnerableScholarshipBank` bị rút cạn từ 6.0 ETH về đúng 0.0 ETH, phản ánh chân thực mức độ nghiêm trọng của thảm họa The DAO Hack.
+- **Quyết định sửa chữa của nhóm:**
+  - Giữ nguyên trạng 100% mã nguồn [`ProjectCore.sol`](../contracts/project/ProjectCore.sol), khẳng định hợp đồng lõi hoàn toàn an toàn và sẵn sàng cho môi trường Testnet.
+  - Tạo mới 3 hợp đồng đào tạo chuyên biệt: [`VulnerableScholarshipBank.sol`](../contracts/training/VulnerableScholarshipBank.sol), [`AttackerScholarshipBank.sol`](../contracts/training/AttackerScholarshipBank.sol), và [`SecureScholarshipBank.sol`](../contracts/training/SecureScholarshipBank.sol).
+  - Lập trình test suite [`test/Lab13_SecurityExperiments.t.sol`](../test/Lab13_SecurityExperiments.t.sol) với 10 test cases tự động: 4 bài test thực nghiệm trên hợp đồng đào tạo, 5 bài test kiểm chứng 5 câu hỏi audit của `ProjectCore.sol`, và 1 bài test tấn công tái nhập trực tiếp vào `ProjectCore.sol` (kết quả thất bại, quỹ an toàn 100%).
+  - Biên soạn báo cáo an ninh chuẩn mực [`docs/LAB13_SECURITY.md`](LAB13_SECURITY.md) tích hợp sơ đồ Mermaid, bảng so sánh 4 kiến trúc bảo mật và đối soát từng dòng code thực tế.
+  - Lưu trữ nhật ký terminal và bằng chứng nghiệm thu tại [`evidence/lab-13/LAB13_EVIDENCE.md`](../evidence/lab-13/LAB13_EVIDENCE.md).
+- **Kết quả đạt được:**
+  - 10/10 test cases Lab 13 PASS 100%.
+  - Tổng số test case tự động toàn dự án đạt **74/74 tests PASS** (64 test cũ từ Lab 09-11 + 10 test mới của Lab 13).
+  - Bàn giao đầy đủ hồ sơ nghiệm thu Lab 13, sẵn sàng chuyển giao sang mốc Lab 14 (Cross-Audit & Gas Optimization).
 
 ---
 
