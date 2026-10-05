@@ -170,3 +170,15 @@ Running Solidity tests
 | **6. Tấn công Reentrancy trực tiếp** | **BỊ ĐÁNH BẠI** | Toàn bộ hàm giải ngân | Khóa Mutex `nonReentrant` + CEI trạng thái vô hiệu hóa hoàn toàn attacker |
 
 **Cam kết nhóm:** Hợp đồng lõi `ProjectCore.sol` an toàn 100%, không bị sửa đổi, giữ vững trạng thái Code Freeze.
+
+---
+
+## 5. Thông Tin Lưu Trữ & Đối Soát Git
+- **Mã Commit Git:** [`b4947b2`](https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS/commit/b4947b2)
+- **Thông điệp Commit:** `feat(lab-13): hoan thanh security experiment - mo phong reentrancy va audit ProjectCore (74/74 tests pass)`
+- **Trạng thái Code Freeze:** Khẳng định 100% không chỉnh sửa file `contracts/project/ProjectCore.sol`.
+- **Tình trạng kiểm thử:** Tái hiện độc lập 100% bằng lệnh `npx.cmd hardhat test` (~8 giây, 74/74 passing).
+- **Kế hoạch tiếp theo:** Sẵn sàng chuyển giao sang **Lab 14: Cross-Audit & Gas Optimization**.
+
+---
+> 🔗 **Liên kết nhanh:** [Trang chủ README](../../README.md) • [Kế hoạch đồ án](../../docs/PROJECT_PLAN.md) • [Đặc tả nghiệp vụ](../../docs/SPEC.md) • [Quy tắc kinh tế](../../docs/ECONOMIC_RULES.md) • [Báo cáo an ninh Lab 13](../../docs/LAB13_SECURITY.md) • [Nhật ký AI](../../docs/AI_JOURNAL.md) • [GitHub Repo](https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS)

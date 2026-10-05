@@ -132,6 +132,7 @@ Sau khi hoàn tất đánh giá chất lượng toàn diện tại Gate Review 1
 | **Quy Tắc Kinh Tế** | 64/64 test cases pass 100%, bảo toàn hạn mức số dư | ✅ **ĐẠT (Lab 11)** | Như Huỳnh |
 | **Code Freeze** | Ký biên bản đóng băng tầng hợp đồng, sẵn sàng API | ✅ **ĐẠT (Lab 12)** | Khánh Linh & Như Huỳnh |
 | **Phân Công Giai Đoạn 2** | Làm rõ nhiệm vụ chi tiết Lab 13 – 15 cho 2 thành viên | ✅ **ĐẠT (Lab 12)** | Khánh Linh & Như Huỳnh |
+| **Thực Nghiệm An Ninh** | 10/10 tests Lab 13 pass, Reentrancy exploit PoC & CEI defense, audit ProjectCore an toàn | ✅ **ĐẠT (Lab 13)** | Như Huỳnh & Khánh Linh |
 | **Nghiệm Thu Cột Mốc 1** | Giảng viên hướng dẫn thẩm định và phê duyệt Gate 1 | ⏳ **[CHỜ GIẢNG VIÊN XÁC NHẬN]** | Giảng viên hướng dẫn |
 
 ---
