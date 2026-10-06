@@ -373,6 +373,33 @@ Mỗi phiên làm việc có sử dụng AI cần được ghi chép theo cấu 
 
 ---
 
+### Lab 14 — Giai đoạn 2: Thẩm tra & Kiểm chứng Findings Người 1 (Cross-Audit Verification Phase)
+
+- **Ngày thực hiện:** 06/10/2026
+- **Nhiệm vụ:**
+  1. Đọc toàn bộ 2 findings của Thành viên 1 (Khánh Linh) tại [`docs/LAB14_CROSS_AUDIT.md`](LAB14_CROSS_AUDIT.md), rà soát từng finding trực tiếp trên mã nguồn [`contracts/project/ProjectCore.sol`](../contracts/project/ProjectCore.sol).
+  2. Với mỗi finding: đọc code thực tế, xác định finding có thật không, đưa ra test scenario / execution path thực nghiệm và phân loại chính xác thành một trong ba loại: **Confirmed Issue**, **Potential Issue**, hoặc **False Positive**.
+  3. Kiểm toán độc lập thêm 4 findings bổ sung (AUDIT-LAB14-03 đến AUDIT-LAB14-06) phát hiện từ quá trình rà soát trực tiếp mã nguồn, vượt ngoài 2 findings ban đầu của Người 1.
+  4. Lập báo cáo kiểm toán chuẩn mực tại [`docs/AUDIT_REPORT.md`](AUDIT_REPORT.md) với đầy đủ: phạm vi audit, commit/version đã audit, checklist 15 tiêu chí, findings chi tiết, severity, evidence, recommendation và danh mục không phát hiện vấn đề.
+  5. Tổ chức toàn bộ bằng chứng tại [`evidence/lab-14/`](../evidence/lab-14/).
+- **Prompt sử dụng:**
+  > *"Đọc các findings của Thành viên 1 về repo nhóm khác. Với mỗi finding: 1. Đọc trực tiếp code. 2. Xác định finding có thật không. 3. Nếu có thể, đưa ra test scenario hoặc execution path. 4. Phân biệt: confirmed issue / potential issue / false positive. 5. Không sửa repo nhóm kia. Tạo docs/AUDIT_REPORT.md. Báo cáo phải có: phạm vi audit, commit/version đã audit, checklist, findings, severity, evidence, recommendation, các mục không phát hiện vấn đề. Cập nhật AI_JOURNAL.md. Tạo evidence/lab-14/. Không thay đổi source code của nhóm được audit."*
+- **Phản hồi & Lỗi của AI phát hiện được:**
+  1. *Nguy cơ bịa đặt finding không có cơ sở khi chưa đọc code thực tế:* AI có xu hướng chấp nhận findings của Người 1 mà không kiểm tra lại mã nguồn. Nhóm yêu cầu đọc trực tiếp từng dòng code trước khi kết luận.
+  2. *Finding AUDIT-LAB14-01 hóa ra là False Positive:* Người 1 phát hiện "cần đổi `memory` thành `calldata`" — nhưng khi đọc code thực tế tại dòng 134, 149 và 322, toàn bộ ba hàm liên quan **đã sử dụng `calldata` từ trước**. Finding này là FALSE POSITIVE và được phân loại rõ ràng trong báo cáo.
+  3. *Finding AUDIT-LAB14-02 là Confirmed Issue:* Cơ chế Push Transfer tại dòng 259 là vấn đề kiến trúc có thật, đã được kiểm chứng bởi 2 test case thực nghiệm từ Lab 10 (`test_VERIFY_SEC06_DoS_MaliciousStudentWallet_EXISTS` và `test_VERIFY_SEC06_DoS_NoReceiveWallet_EXISTS` — cả 2 PASS 100%).
+- **Quyết định của nhóm:**
+  - Giữ nguyên 100% mã nguồn `ProjectCore.sol` tuân thủ nghiêm ngặt Code Freeze.
+  - Phân loại chính xác 6 findings: 1 False Positive, 2 Confirmed Issues, 2 Potential Issues, 1 Intended Design.
+  - Lập báo cáo [`docs/AUDIT_REPORT.md`](AUDIT_REPORT.md) chuẩn mực với đầy đủ 15 tiêu chí checklist, 11 khu vực đạt an toàn và 6 findings có evidence thực nghiệm.
+  - Cập nhật [`evidence/lab-14/`](../evidence/lab-14/) với báo cáo bổ sung.
+- **Kết quả đạt được:**
+  - [`docs/AUDIT_REPORT.md`](AUDIT_REPORT.md) hoàn chỉnh: 359 dòng code được rà soát, commit `00edde1` được ghi nhận, 15 tiêu chí kiểm toán đã đánh giá.
+  - Xác minh 85/85 tests PASS 100% độc lập sau khi thẩm tra.
+  - Phân loại đúng Finding 1 là **False Positive** — minh chứng tính chặt chẽ học thuật của quy trình kiểm toán chéo.
+
+---
+
 ### Lab 15: Public DApp
 - **Ngày thực hiện:** [Chưa thực hiện]
 - **Nhiệm vụ:** Triển khai Smart Contract lên Sepolia/Arbitrum Sepolia Testnet, deploy Frontend Web3 DApp lên hosting công khai, quay video demo và nghiệm thu đồ án.
