@@ -314,12 +314,12 @@ Mỗi phiên làm việc có sử dụng AI cần được ghi chép theo cấu 
 - **Quyết định sửa chữa của nhóm:**
   - Giữ nguyên trạng 100% mã nguồn [`ProjectCore.sol`](../contracts/project/ProjectCore.sol), khẳng định hợp đồng lõi hoàn toàn an toàn và sẵn sàng cho môi trường Testnet.
   - Tạo mới 3 hợp đồng đào tạo chuyên biệt: [`VulnerableScholarshipBank.sol`](../contracts/training/VulnerableScholarshipBank.sol), [`AttackerScholarshipBank.sol`](../contracts/training/AttackerScholarshipBank.sol), và [`SecureScholarshipBank.sol`](../contracts/training/SecureScholarshipBank.sol).
-  - Lập trình test suite [`test/Lab13_SecurityExperiments.t.sol`](../test/Lab13_SecurityExperiments.t.sol) với 10 test cases tự động: 4 bài test thực nghiệm trên hợp đồng đào tạo, 5 bài test kiểm chứng 5 câu hỏi audit của `ProjectCore.sol`, và 1 bài test tấn công tái nhập trực tiếp vào `ProjectCore.sol` (kết quả thất bại, quỹ an toàn 100%).
-  - Biên soạn báo cáo an ninh chuẩn mực [`docs/LAB13_SECURITY.md`](LAB13_SECURITY.md) tích hợp sơ đồ Mermaid, bảng so sánh 4 kiến trúc bảo mật và đối soát từng dòng code thực tế.
-  - Lưu trữ nhật ký terminal và bằng chứng nghiệm thu tại [`evidence/lab-13/LAB13_EVIDENCE.md`](../evidence/lab-13/LAB13_EVIDENCE.md).
+  - Lập trình test suite [`test/Lab13_SecurityExperiments.t.sol`](../test/Lab13_SecurityExperiments.t.sol) với 15 test cases tự động: 4 bài test thực nghiệm trên hợp đồng đào tạo (exploit & defense), 5 bài test kiểm chứng 5 câu hỏi audit của `ProjectCore.sol`, 1 bài test tấn công tái nhập trực tiếp vào `ProjectCore.sol` (thất bại, quỹ an toàn 100%), và 5 bài test negative testing chuyên sâu kiểm chứng giải ngân trước approval, giải ngân 2 lần, wrong student, unauthorized caller, và insufficient fund.
+  - Biên soạn báo cáo an ninh chuẩn mực [`docs/LAB13_SECURITY.md`](LAB13_SECURITY.md) tích hợp sơ đồ Mermaid, bảng so sánh 4 kiến trúc bảo mật, thiết lập tấn công, kết quả kỳ vọng/thực tế, patch và đối soát từng dòng code thực tế.
+  - Lưu trữ nhật ký terminal và bằng chứng nghiệm thu tại [`evidence/lab-13/LAB13_EVIDENCE.md`](../evidence/lab-13/LAB13_EVIDENCE.md) và [`evidence/lab-13/TRAINING_ATTACK_EVIDENCE.md`](../evidence/lab-13/TRAINING_ATTACK_EVIDENCE.md).
 - **Kết quả đạt được:**
-  - 10/10 test cases Lab 13 PASS 100%.
-  - Tổng số test case tự động toàn dự án đạt **74/74 tests PASS** (64 test cũ từ Lab 09-11 + 10 test mới của Lab 13).
+  - 15/15 test cases Lab 13 PASS 100%.
+  - Tổng số test case tự động toàn dự án đạt **79/79 tests PASS** (64 test cũ từ Lab 09-11 + 15 test của Lab 13).
   - Bàn giao đầy đủ hồ sơ nghiệm thu Lab 13, sẵn sàng chuyển giao sang mốc Lab 14 (Cross-Audit & Gas Optimization).
 
 ---

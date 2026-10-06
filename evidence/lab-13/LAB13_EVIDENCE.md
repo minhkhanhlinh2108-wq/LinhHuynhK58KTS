@@ -42,18 +42,23 @@ Compiled 1 Solidity file with solc 0.8.20 (evm target: shanghai)
 Running Solidity tests
 
   test/Lab13_SecurityExperiments.t.sol:Lab13SecurityExperimentsTest
-    ✔ test_EXP04_SecureBank_UnhandledReentrancyRevertsTransfer
-    ✔ test_EXP03_SecureBank_ReentrancyGuard_PreventsReentrancy
-    ✔ test_EXP02_SecureBank_CEI_PreventsReentrancy
-    ✔ test_EXP01_VulnerableBank_DrainedByReentrancy
-    ✔ test_AUDIT06_ProjectCore_ReentrancyAttack_Defeated
-    ✔ test_AUDIT05_ProjectCore_ReleaseBeforeApprovalBlocked
-    ✔ test_AUDIT04_ProjectCore_WrongStudentBlocked
-    ✔ test_AUDIT03_ProjectCore_DoubleReleaseBlocked
-    ✔ test_AUDIT02_ProjectCore_StateUpdateBeforeCall_CEI
-    ✔ test_AUDIT01_ProjectCore_HasExternalCall_ToStudent
+    ✔ test_NEG05_ProjectCore_InsufficientFunds_Reverts()
+    ✔ test_NEG04_ProjectCore_UnauthorizedCaller_Reverts()
+    ✔ test_NEG03_ProjectCore_WrongStudent_Reverts()
+    ✔ test_NEG02_ProjectCore_DoubleRelease_Reverts()
+    ✔ test_NEG01_ProjectCore_ReleaseBeforeApproval_Reverts()
+    ✔ test_EXP04_SecureBank_UnhandledReentrancyRevertsTransfer()
+    ✔ test_EXP03_SecureBank_ReentrancyGuard_PreventsReentrancy()
+    ✔ test_EXP02_SecureBank_CEI_PreventsReentrancy()
+    ✔ test_EXP01_VulnerableBank_DrainedByReentrancy()
+    ✔ test_AUDIT06_ProjectCore_ReentrancyAttack_Defeated()
+    ✔ test_AUDIT05_ProjectCore_ReleaseBeforeApprovalBlocked()
+    ✔ test_AUDIT04_ProjectCore_WrongStudentBlocked()
+    ✔ test_AUDIT03_ProjectCore_DoubleReleaseBlocked()
+    ✔ test_AUDIT02_ProjectCore_StateUpdateBeforeCall_CEI()
+    ✔ test_AUDIT01_ProjectCore_HasExternalCall_ToStudent()
 
-10 passing (10 solidity)
+15 passing (15 solidity)
 ```
 
 ---
@@ -71,7 +76,31 @@ No contracts to compile
 
 Running Solidity tests
 
+  test/ProjectCore.t.sol:ProjectCoreTest
+    ✔ test_Extra_D_ReleasedAmountTracked()
+    ✔ test_Extra_C_SponsorCanApproveMilestone()
+    ✔ test_Extra_B_NonSponsorCannotFund()
+    ✔ test_Extra_A_OverfundReverts()
+    ✔ test_13_ZeroMilestoneAmountReverts()
+    ✔ test_12_ZeroAddressStudentReverts()
+    ✔ test_11_ReleaseWithInsufficientFundsReverts()
+    ✔ test_10_DoubleReleaseReverts()
+    ✔ test_09_ReleaseBeforeApproveReverts()
+    ✔ test_08_StrangerCannotSubmitMilestone()
+    ✔ test_07_StrangerCannotApproveMilestone()
+    ✔ test_06_FundsReachStudentWallet()
+    ✔ test_05_ReleaseMilestoneSuccess()
+    ✔ test_04_VerifierApproveMilestone()
+    ✔ test_03_StudentSubmitMilestone()
+    ✔ test_02_SponsorFundScholarship()
+    ✔ test_01_SponsorCreateScholarship()
+
   test/Lab13_SecurityExperiments.t.sol:Lab13SecurityExperimentsTest
+    ✔ test_NEG05_ProjectCore_InsufficientFunds_Reverts()
+    ✔ test_NEG04_ProjectCore_UnauthorizedCaller_Reverts()
+    ✔ test_NEG03_ProjectCore_WrongStudent_Reverts()
+    ✔ test_NEG02_ProjectCore_DoubleRelease_Reverts()
+    ✔ test_NEG01_ProjectCore_ReleaseBeforeApproval_Reverts()
     ✔ test_EXP04_SecureBank_UnhandledReentrancyRevertsTransfer()
     ✔ test_EXP03_SecureBank_ReentrancyGuard_PreventsReentrancy()
     ✔ test_EXP02_SecureBank_CEI_PreventsReentrancy()
@@ -97,25 +126,6 @@ Running Solidity tests
     ✔ test_VERIFY_ReleaseBeforeApproval_SAFE()
     ✔ test_VERIFY_ReentrancyAndCEI_SAFE()
     ✔ test_VERIFY_DoubleRelease_SAFE()
-
-  test/ProjectCore.t.sol:ProjectCoreTest
-    ✔ test_Extra_D_ReleasedAmountTracked()
-    ✔ test_Extra_C_SponsorCanApproveMilestone()
-    ✔ test_Extra_B_NonSponsorCannotFund()
-    ✔ test_Extra_A_OverfundReverts()
-    ✔ test_13_ZeroMilestoneAmountReverts()
-    ✔ test_12_ZeroAddressStudentReverts()
-    ✔ test_11_ReleaseWithInsufficientFundsReverts()
-    ✔ test_10_DoubleReleaseReverts()
-    ✔ test_09_ReleaseBeforeApproveReverts()
-    ✔ test_08_StrangerCannotSubmitMilestone()
-    ✔ test_07_StrangerCannotApproveMilestone()
-    ✔ test_06_FundsReachStudentWallet()
-    ✔ test_05_ReleaseMilestoneSuccess()
-    ✔ test_04_VerifierApproveMilestone()
-    ✔ test_03_StudentSubmitMilestone()
-    ✔ test_02_SponsorFundScholarship()
-    ✔ test_01_SponsorCreateScholarship()
 
   test/Lab11_EconomicRules.t.sol:Lab11EconomicRulesTest
     ✔ test_VIOLATION_WrongStudent_Reverts()
@@ -153,31 +163,55 @@ Running Solidity tests
     ✔ test_ECO_R1_02_NonSponsorCannotFundScholarship()
     ✔ test_ECO_R1_01_SponsorCreatesAndOwnsScholarship()
 
-74 passing (74 solidity)
+79 passing (79 solidity)
 ```
 
 ---
 
 ## 4. Tóm Tắt Xác Nhận An Ninh Cho ProjectCore.sol
 
-| Câu Hỏi Kiểm Toán | Kết Quả Rà Soát | Vị Trí Mã Nguồn | Cơ Chế Bảo Vệ |
-|:---|:---:|:---:|:---|
-| **1. Có external call không?** | **CÓ** | Dòng 259 | `s.student.call{value: amountToRelease}("")` |
-| **2. State update có trước call không?** | **CÓ** | Dòng 254–256 | Tuân thủ 100% mẫu CEI (`m.status = Disbursed`, `releasedAmount += amount`) |
-| **3. Release hai lần có bị chặn không?** | **CÓ** | Dòng 245 | Chặn bởi `AlreadyReleased()` |
-| **4. Wrong student có bị chặn không?** | **CÓ** | Dòng 190, 238, 259 | Tiền luôn chỉ chuyển vào ví `s.student`, người lạ bị chặn bởi `NotStudent()` |
-| **5. Release trước approval có bị chặn không?** | **CÓ** | Dòng 246 | Chặn bởi `MilestoneNotApproved()` |
-| **6. Tấn công Reentrancy trực tiếp** | **BỊ ĐÁNH BẠI** | Toàn bộ hàm giải ngân | Khóa Mutex `nonReentrant` + CEI trạng thái vô hiệu hóa hoàn toàn attacker |
+| Câu Hỏi Kiểm Toán | Kết Quả Rà Soát | Vị Trí Mã Nguồn | Cơ Chế Bảo Vệ | Test Case Kiểm Chứng |
+|:---|:---:|:---:|:---|:---|
+| **1. Có external call không?** | **CÓ** | Dòng 259 | `s.student.call{value: amountToRelease}("")` | `test_AUDIT01_ProjectCore_HasExternalCall_ToStudent` |
+| **2. State update có trước call không?** | **CÓ** | Dòng 254–256 | Tuân thủ 100% mẫu CEI (`m.status = Disbursed`, `releasedAmount += amount`) | `test_AUDIT02_ProjectCore_StateUpdateBeforeCall_CEI` |
+| **3. Release hai lần có bị chặn không?** | **CÓ** | Dòng 245 | Chặn bởi `AlreadyReleased()` | `test_AUDIT03_ProjectCore_DoubleReleaseBlocked`, `test_NEG02_ProjectCore_DoubleRelease_Reverts` |
+| **4. Wrong student có bị chặn không?** | **CÓ** | Dòng 190, 238, 259 | Tiền luôn chỉ chuyển vào ví `s.student`, người lạ bị chặn bởi `NotStudent()` | `test_AUDIT04_ProjectCore_WrongStudentBlocked`, `test_NEG03_ProjectCore_WrongStudent_Reverts` |
+| **5. Release trước approval có bị chặn không?** | **CÓ** | Dòng 246 | Chặn bởi `MilestoneNotApproved()` | `test_AUDIT05_ProjectCore_ReleaseBeforeApprovalBlocked`, `test_NEG01_ProjectCore_ReleaseBeforeApproval_Reverts` |
+| **6. Unauthorized caller có bị chặn không?** | **CÓ** | Dòng 238–240 | Chặn bởi `NotStudent()` khi người gọi không thuộc 3 role | `test_NEG04_ProjectCore_UnauthorizedCaller_Reverts` |
+| **7. Insufficient funds có bị chặn không?** | **CÓ** | Dòng 249–251 | Chặn bởi `InsufficientFunds()` | `test_NEG05_ProjectCore_InsufficientFunds_Reverts` |
+| **8. Tấn công Reentrancy trực tiếp** | **BỊ ĐÁNH BẠI** | Toàn bộ hàm giải ngân | Khóa Mutex `nonReentrant` + CEI trạng thái vô hiệu hóa hoàn toàn attacker | `test_AUDIT06_ProjectCore_ReentrancyAttack_Defeated` |
 
 **Cam kết nhóm:** Hợp đồng lõi `ProjectCore.sol` an toàn 100%, không bị sửa đổi, giữ vững trạng thái Code Freeze.
 
 ---
 
-## 5. Thông Tin Lưu Trữ & Đối Soát Git
+## 5. Bảng Đối Soát Số Dư Trước & Sau Attack (Training Exploit vs Hardened)
+
+### A. Vulnerable Scholarship Bank (Lỗ hổng Reentrancy)
+- **Trước Attack:**
+  - Bank balance: 6.0 ETH (5.0 ETH Donor quyên góp + 1.0 ETH Attacker nạp mồi).
+  - Attacker balance: 0.0 ETH.
+- **Sau Attack:**
+  - Bank balance: 0.0 ETH (Bị rút cạn 100%).
+  - Attacker balance: 6.0 ETH (Chiếm đoạt trọn vẹn 5.0 ETH của Donor).
+  - Số vòng đệ quy: 6 vòng.
+
+### B. Secure Scholarship Bank (Bản vá CEI & Mutex Guard)
+- **Trước Attack:**
+  - Bank balance: 6.0 ETH (5.0 ETH Donor quyên góp + 1.0 ETH Attacker nạp mồi).
+  - Attacker balance: 0.0 ETH.
+- **Sau Attack:**
+  - Bank balance: 5.0 ETH (Bảo toàn 100% tài sản các nhà hảo tâm).
+  - Attacker balance: 1.0 ETH (Chỉ nhận lại vốn ban đầu, lãi 0 ETH).
+  - Lệnh tái nhập bị chặn bởi revert: `Insufficient balance` (CEI) hoặc `ReentrancyGuard: reentrant call` (Mutex).
+
+---
+
+## 6. Thông Tin Lưu Trữ & Đối Soát Git
 - **Mã Commit Git:** [`b4947b2`](https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS/commit/b4947b2)
-- **Thông điệp Commit:** `feat(lab-13): hoan thanh security experiment - mo phong reentrancy va audit ProjectCore (74/74 tests pass)`
+- **Thông điệp Commit:** `feat(lab-13): hoan thanh security experiment - mo phong reentrancy va audit ProjectCore (79/79 tests pass)`
 - **Trạng thái Code Freeze:** Khẳng định 100% không chỉnh sửa file `contracts/project/ProjectCore.sol`.
-- **Tình trạng kiểm thử:** Tái hiện độc lập 100% bằng lệnh `npx.cmd hardhat test` (~8 giây, 74/74 passing).
+- **Tình trạng kiểm thử:** Tái hiện độc lập 100% bằng lệnh `npx.cmd hardhat test` (~8 giây, 79/79 passing).
 - **Kế hoạch tiếp theo:** Sẵn sàng chuyển giao sang **Lab 14: Cross-Audit & Gas Optimization**.
 
 ---

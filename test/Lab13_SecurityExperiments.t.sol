@@ -435,4 +435,119 @@ contract Lab13SecurityExperimentsTest {
         // 4. Số tiền maliciousStudent nhận được chỉ đúng 0.5 ETH của mốc 0, không thể rút lẹm mốc 1!
         assert(address(maliciousStudent).balance == 0.5 ether);
     }
+
+    // ============================================================
+    // PHẦN 3: NEGATIVE TESTS CHUYÊN BIỆT CHO ProjectCore.sol
+    // ============================================================
+
+    /**
+     * @notice NEG-01: Release trước approval bị từ chối
+     * @dev Thử nghiệm giải ngân ở cả 2 trạng thái: Pending (chưa nộp) và Submitted (đã nộp nhưng chưa duyệt).
+     *      Kỳ vọng: Cả 2 trường hợp đều revert với MilestoneNotApproved().
+     */
+    function test_NEG01_ProjectCore_ReleaseBeforeApproval_Reverts() public {
+        vm.prank(sponsor);
+        uint256 id = core.createScholarship(student, twoMilestones);
+        vm.prank(sponsor);
+        core.fundScholarship{value: 1 ether}(id);
+
+        // Trường hợp 1: Mốc 0 ở trạng thái Pending -> Release bị revert
+        vm.prank(sponsor);
+        vm.expectRevert(abi.encodeWithSelector(ProjectCore.MilestoneNotApproved.selector));
+        core.releaseMilestone(id, 0);
+
+        // Sinh viên nộp minh chứng -> Mốc 0 chuyển sang Submitted
+        vm.prank(student);
+        core.submitMilestone(id, 0, "QmProofPendingApproval");
+
+        // Trường hợp 2: Mốc 0 ở trạng thái Submitted nhưng chưa duyệt -> Release bị revert
+        vm.prank(student);
+        vm.expectRevert(abi.encodeWithSelector(ProjectCore.MilestoneNotApproved.selector));
+        core.releaseMilestone(id, 0);
+    }
+
+    /**
+     * @notice NEG-02: Release hai lần cùng một mốc bị từ chối (Double disbursement protection)
+     * @dev Sau khi giải ngân thành công lần đầu, mốc chuyển sang Disbursed.
+     *      Kỳ vọng: Lần giải ngân thứ hai revert với AlreadyReleased().
+     */
+    function test_NEG02_ProjectCore_DoubleRelease_Reverts() public {
+        vm.prank(sponsor);
+        uint256 id = core.createScholarship(student, twoMilestones);
+        vm.prank(sponsor);
+        core.fundScholarship{value: 1 ether}(id);
+
+        vm.prank(student);
+        core.submitMilestone(id, 0, "QmProofApproved");
+        core.approveMilestone(id, 0);
+
+        // Lần 1: Giải ngân thành công
+        vm.prank(sponsor);
+        core.releaseMilestone(id, 0);
+        assert(uint8(core.getMilestoneStatus(id, 0)) == 3); // Disbursed
+
+        // Lần 2: Cố tình giải ngân lại mốc 0 -> PHẢI revert AlreadyReleased
+        vm.prank(sponsor);
+        vm.expectRevert(abi.encodeWithSelector(ProjectCore.AlreadyReleased.selector));
+        core.releaseMilestone(id, 0);
+    }
+
+    /**
+     * @notice NEG-03: Wrong student không thể nộp minh chứng và không thể nhận tiền
+     * @dev Một địa chỉ sinh viên lạ (stranger) không có quyền thao tác trên suất học bổng của người khác.
+     *      Kỳ vọng: submitMilestone revert NotStudent().
+     */
+    function test_NEG03_ProjectCore_WrongStudent_Reverts() public {
+        vm.prank(sponsor);
+        uint256 id = core.createScholarship(student, twoMilestones);
+        vm.prank(sponsor);
+        core.fundScholarship{value: 1 ether}(id);
+
+        // Wrong student / stranger cố tình nộp minh chứng
+        vm.prank(stranger);
+        vm.expectRevert(abi.encodeWithSelector(ProjectCore.NotStudent.selector));
+        core.submitMilestone(id, 0, "QmWrongStudentProof");
+    }
+
+    /**
+     * @notice NEG-04: Unauthorized caller (người lạ không có vai trò) không được phép kích hoạt release
+     * @dev Chỉ sponsor, student, hoặc verifier mới có quyền gọi releaseMilestone.
+     *      Kỳ vọng: Caller lạ gọi releaseMilestone revert NotStudent().
+     */
+    function test_NEG04_ProjectCore_UnauthorizedCaller_Reverts() public {
+        vm.prank(sponsor);
+        uint256 id = core.createScholarship(student, twoMilestones);
+        vm.prank(sponsor);
+        core.fundScholarship{value: 1 ether}(id);
+
+        vm.prank(student);
+        core.submitMilestone(id, 0, "QmProofValid");
+        core.approveMilestone(id, 0);
+
+        // Người lạ (stranger - không phải sponsor, student, verifier) cố bấm nút release
+        vm.prank(stranger);
+        vm.expectRevert(abi.encodeWithSelector(ProjectCore.NotStudent.selector));
+        core.releaseMilestone(id, 0);
+    }
+
+    /**
+     * @notice NEG-05: Insufficient fund (quỹ chưa nạp hoặc không đủ) bị chặn khi giải ngân
+     * @dev Suất học bổng được tạo nhưng chưa nạp tiền (fundedAmount = 0). Mốc được duyệt.
+     *      Kỳ vọng: releaseMilestone revert InsufficientFunds().
+     */
+    function test_NEG05_ProjectCore_InsufficientFunds_Reverts() public {
+        vm.prank(sponsor);
+        uint256 id = core.createScholarship(student, twoMilestones);
+
+        // Không nạp tiền (fundedAmount = 0)
+        vm.prank(student);
+        core.submitMilestone(id, 0, "QmProofUnfunded");
+        core.approveMilestone(id, 0);
+
+        // Khi release: fundedAmount (0) < releasedAmount (0) + amountToRelease (0.5 ether)
+        // -> PHẢI revert InsufficientFunds
+        vm.prank(sponsor);
+        vm.expectRevert(abi.encodeWithSelector(ProjectCore.InsufficientFunds.selector));
+        core.releaseMilestone(id, 0);
+    }
 }

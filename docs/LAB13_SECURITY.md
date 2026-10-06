@@ -123,28 +123,46 @@ receive() external payable {
 }
 ```
 
-### 3.3. Kết quả thực nghiệm tấn công (Test EXP-01)
-Trong test case `test_EXP01_VulnerableBank_DrainedByReentrancy`:
-- **Tình huống ban đầu:**
-  - Nhà tài trợ 1 nạp: `3.0 ETH`
-  - Nhà tài trợ 2 nạp: `2.0 ETH`
-  - Tổng số dư ngân hàng học bổng: `5.0 ETH`
-- **Kẻ tấn công thực thi:**
-  - Nạp vốn mồi: `1.0 ETH`
-  - Tổng số dư ngân hàng tăng lên: `6.0 ETH`
-  - Kích hoạt lệnh `attack()` $\rightarrow$ gọi `withdraw()`.
-- **Kết quả sau tấn công:**
-  - Số lần tái nhập đệ quy (`attackCount`): **6 lần**.
-  - Số dư ngân hàng [`VulnerableScholarshipBank`](file:///d:/crypto-smart-contract-2026/LinhHuynhK58KTS/contracts/training/VulnerableScholarshipBank.sol): **`0.0 ETH`** (bị rút cạn 100%).
-  - Số dư trong hợp đồng [`AttackerScholarshipBank`](file:///d:/crypto-smart-contract-2026/LinhHuynhK58KTS/contracts/training/AttackerScholarshipBank.sol): **`6.0 ETH`** (chiếm đoạt thành công 5.0 ETH của các nhà hảo tâm).
+### 3.3. Chi Tiết Thực Nghiệm Tấn Công (Training Attack Execution)
+
+#### A. Attack Setup (Thiết Lập Kịch Bản Tấn Công)
+- **Hợp đồng nạn nhân:** `VulnerableScholarshipBank` được nạp tiền bởi các nhà hảo tâm:
+  - `Donor 1` nạp: `3.0 ETH`
+  - `Donor 2` nạp: `2.0 ETH`
+  - Tổng số dư quỹ học bổng trong ngân hàng ban đầu: `5.0 ETH`.
+- **Hợp đồng kẻ tấn công:** `AttackerScholarshipBank` được triển khai bởi địa chỉ người lạ `Stranger`.
+- **Kích hoạt:** Kẻ tấn công gửi `1.0 ETH` vốn mồi vào `AttackerScholarshipBank.attack{value: 1 ether}()`. Hợp đồng tấn công nạp 1.0 ETH vào `VulnerableScholarshipBank` (nâng tổng số dư ngân hàng lên 6.0 ETH) và lập tức gọi `withdraw()`.
+
+#### B. Expected Result (Kết Quả Kỳ Vọng Kỹ Thuật)
+- Khi ngân hàng thực hiện `msg.sender.call{value: 1 ether}("")`, quyền điều khiển chuyển sang hook `receive()` của Attacker.
+- Vì trạng thái `balances[attacker]` chưa kịp trừ (vẫn giữ nguyên 1.0 ETH), hàm `receive()` gọi lại `withdraw()`.
+- Lệnh gọi đệ quy lặp lại liên tục cho đến khi số dư ngân hàng về 0 ETH.
+- **Kỳ vọng:** Toàn bộ 6.0 ETH (bao gồm 5.0 ETH tiền quyên góp của các donor) bị rút sạch vào hợp đồng của kẻ tấn công; số lần tái nhập đệ quy là 6 lần.
+
+#### C. Actual Result (Ghi Lại Số Dư Trước và Sau Attack)
+
+Bảng đối soát số dư thực tế ghi nhận từ test case `test_EXP01_VulnerableBank_DrainedByReentrancy`:
+
+| Thực Thể Tham Gia | Địa Chỉ / Vai Trò | Số Dư Trước Attack | Số Dư Sau Attack | Biến Động Số Dư | Đánh Giá An Ninh |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| **`VulnerableScholarshipBank`** | Ngân hàng mục tiêu | **`6.0 ETH`** (5 ETH quỹ + 1 ETH mồi) | **`0.0 ETH`** | **`-6.0 ETH`** | 🔴 Bị rút cạn 100% |
+| **`AttackerScholarshipBank`** | Hợp đồng tấn công | **`0.0 ETH`** | **`6.0 ETH`** | **`+6.0 ETH`** (+5 ETH lãi ròng) | 🔴 Chiếm đoạt thành công |
+| **`Donor 1` (Nhà tài trợ 1)** | Người quyên góp | Đã nạp 3.0 ETH | Bị chiếm đoạt | **`-3.0 ETH`** | Quỹ bị thất thoát |
+| **`Donor 2` (Nhà tài trợ 2)** | Người quyên góp | Đã nạp 2.0 ETH | Bị chiếm đoạt | **`-2.0 ETH`** | Quỹ bị thất thoát |
+| **`attackCount`** | Biến đếm tái nhập | `0` | **`6`** | **`+6 lần`** | Đệ quy 6 vòng hoàn tất |
+
+#### D. Chứng Minh Contract Vulnerable Training Có Vấn Đề (Proof of Vulnerability)
+1. **Vi phạm Checks-Effects-Interactions (CEI):** Hàm `withdraw()` tại dòng 52 thực hiện external call `.call{value: amount}("")` trước khi cập nhật storage `balances[msg.sender] = 0` tại dòng 57.
+2. **Mất kiểm soát luồng thực thi (Control Flow Hijacking):** EVM trao quyền xử lý cho địa chỉ nhận. Attacker tận dụng hook `receive()` để reenter `withdraw()` khi biến trạng thái nội bộ của nạn nhân vẫn ghi nhận kẻ tấn công còn số dư.
+3. **Thất thoát tài sản người dùng:** Kẻ tấn công bỏ ra 1.0 ETH nhưng chiếm đoạt được 6.0 ETH, gây tổn hại nghiêm trọng đến tiền ký quỹ học bổng.
 
 ---
 
-## 4. Giải Pháp Phòng Ngừa & Phiên Bản An Toàn (Remediation & Hardening)
+## 4. Giải Pháp Phòng Ngừa & Phiên Bản Đã Sửa (Patch & Hardening)
 
 Để triệt tiêu hoàn toàn nguy cơ Reentrancy, nhóm đã phát triển hợp đồng [`SecureScholarshipBank.sol`](file:///d:/crypto-smart-contract-2026/LinhHuynhK58KTS/contracts/training/SecureScholarshipBank.sol) áp dụng 2 lớp phòng thủ tiêu chuẩn công nghiệp:
 
-### 4.1. Lớp phòng thủ 1: Mẫu Thiết Kế Checks-Effects-Interactions (CEI)
+### 4.1. Lớp phòng thủ 1 (Patch CEI): Mẫu Thiết Kế Checks-Effects-Interactions
 Nguyên tắc vàng của lập trình Smart Contract an toàn:
 1. **Checks:** Kiểm tra mọi điều kiện tiên quyết (quyền truy cập, số dư, trạng thái).
 2. **Effects:** Thay đổi toàn bộ trạng thái nội bộ của hợp đồng (trừ số dư, đánh dấu cờ đã rút, tăng biến đếm).
@@ -172,9 +190,8 @@ function withdrawCEI() external {
     emit Withdrawn(msg.sender, amount);
 }
 ```
-**Cơ chế đánh bại cuộc tấn công:** Khi attacker cố tình gọi lại `withdrawCEI()` từ hook `receive()`, cuộc gọi thứ hai đi vào bước [1] Checks và kiểm tra `balances[msg.sender]`. Vì biến này đã được cập nhật bằng `0` ở bước [2] của cuộc gọi trước đó, điều kiện `require(amount > 0)` lập tức thất bại và **REVERT với thông báo `Insufficient balance`**! Toàn bộ 5.0 ETH của các nhà hảo tâm được bảo toàn nguyên vẹn.
 
-### 4.2. Lớp phòng thủ 2: Khóa Mutex ReentrancyGuard
+### 4.2. Lớp phòng thủ 2 (Patch Mutex): Khóa Mutex ReentrancyGuard
 Sử dụng biến cờ trạng thái nhị phân để ngăn chặn mọi luồng thực thi đệ quy xâm nhập vào bất kỳ hàm nào được bảo vệ:
 ```solidity
 uint256 private _status;
@@ -188,9 +205,18 @@ modifier nonReentrant() {
     _status = _NOT_ENTERED;
 }
 ```
-Khi attacker gọi lại hàm có gắn `nonReentrant`, modifier phát hiện `_status == _ENTERED` và lập tức ném lỗi **`ReentrancyGuard: reentrant call`**, chặn đứng cuộc tấn công ngay tại cổng vào của hợp đồng mà không cho phép chạm vào bất kỳ dòng logic nào.
 
-### 4.3. Bảng đối chiếu so sánh kiến trúc an ninh
+### 4.3. Chứng Minh Attack Không Còn Thực Hiện Được (Proof of Defense)
+Khi chạy attacker trên phiên bản đã sửa/hardened `SecureScholarshipBank`:
+- **Đối với CEI (`test_EXP02_SecureBank_CEI_PreventsReentrancy`):**
+  - Khi attacker cố tình gọi lại `withdrawCEI()` từ hook `receive()`, cuộc gọi thứ hai đi vào bước [1] Checks và kiểm tra `balances[msg.sender]`.
+  - Vì biến này đã được cập nhật bằng `0` ở bước [2] của cuộc gọi trước đó, điều kiện `require(amount > 0)` lập tức thất bại và **REVERT với thông báo `Insufficient balance`**.
+  - **Kết quả:** Ngân hàng bảo toàn nguyên vẹn **`5.0 ETH`** của các nhà hảo tâm. Kẻ tấn công chỉ nhận lại đúng `1.0 ETH` tiền nạp của mình (lợi nhuận = 0 ETH).
+- **Đối với Mutex Guard (`test_EXP03_SecureBank_ReentrancyGuard_PreventsReentrancy`):**
+  - Khi attacker gọi lại hàm có gắn `nonReentrant`, modifier phát hiện `_status == _ENTERED` và lập tức ném lỗi **`ReentrancyGuard: reentrant call`**.
+  - **Kết quả:** Cuộc tấn công bị chặn đứng ngay tại cổng vào, số dư ngân hàng được bảo toàn 100% (**`5.0 ETH`**).
+
+### 4.4. Bảng đối chiếu so sánh kiến trúc an ninh
 
 | Tiêu Chí Đánh Giá | Vulnerable Contract | Secure Bank (CEI Only) | Secure Bank (CEI + ReentrancyGuard) | ProjectCore.sol (Hợp Đồng Lõi) |
 |:---|:---:|:---:|:---:|:---:|
@@ -233,10 +259,7 @@ graph TD
   (bool success, ) = s.student.call{value: amountToRelease}("");
   if (!success) revert TransferFailed();
   ```
-- **Phân tích an ninh:**
-  - Hợp đồng sử dụng low-level `call` kèm giá trị Native ETH để chuyển học bổng.
-  - Địa chỉ nhận tiền là `s.student` (địa chỉ ví sinh viên được lưu cố định trong suất học bổng từ lúc khởi tạo).
-  - Đây là tương tác ngoại vi tiềm ẩn nguy cơ Reentrancy nếu người thụ hưởng là một Smart Contract; do đó đòi hỏi các lớp phòng vệ nghiêm ngặt ở các bước trước đó.
+- **Phân tích an ninh:** Low-level call gửi Native ETH sang ví sinh viên `s.student`.
 - **Test case kiểm chứng:** `test_AUDIT01_ProjectCore_HasExternalCall_ToStudent` $\rightarrow$ ✅ **PASS**.
 
 ---
@@ -253,9 +276,6 @@ graph TD
   // Interaction
   (bool success, ) = s.student.call{value: amountToRelease}("");
   ```
-- **Phân tích an ninh:**
-  - Toàn bộ các biến trạng thái nhạy cảm (`m.status` chuyển thành `Disbursed`, `m.disbursedAt` ghi nhận thời gian, `s.releasedAmount` cộng thêm số tiền giải ngân) đều được ghi vào storage của blockchain **trước khi dòng code chuyển ETH (dòng 259) được thực thi**.
-  - Ngoài ra, hàm được bao bọc bởi modifier `nonReentrant` (dòng 110–115), thiết lập cờ `_status = _ENTERED` ngay từ khi bước vào hàm.
 - **Test case kiểm chứng:** `test_AUDIT02_ProjectCore_StateUpdateBeforeCall_CEI` $\rightarrow$ ✅ **PASS**.
 
 ---
@@ -266,30 +286,14 @@ graph TD
   ```solidity
   if (m.status == MilestoneStatus.Disbursed) revert AlreadyReleased();
   ```
-- **Phân tích an ninh:**
-  - Ở lần giải ngân đầu tiên, mốc chuyển trạng thái sang `MilestoneStatus.Disbursed`.
-  - Nếu bất kỳ ai (dù là sinh viên, nhà tài trợ hay người thẩm định) cố tình gọi lệnh `releaseMilestone` lần thứ hai cho cùng mốc đó, câu lệnh `if` tại dòng 245 sẽ phát hiện ngay lập tức và hoàn tác toàn bộ giao dịch với mã lỗi tùy chỉnh `AlreadyReleased()`.
-- **Test case kiểm chứng:** `test_AUDIT03_ProjectCore_DoubleReleaseBlocked` $\rightarrow$ ✅ **PASS**.
+- **Test case kiểm chứng:** `test_AUDIT03_ProjectCore_DoubleReleaseBlocked` & `test_NEG02_ProjectCore_DoubleRelease_Reverts` $\rightarrow$ ✅ **PASS**.
 
 ---
 
 ### Câu Hỏi 4: Wrong student có bị chặn không?
 - **Kết luận:** **CÓ (Chặn tuyệt đối ở cả 2 khâu: nộp minh chứng và nhận tiền).**
-- **Vị trí mã nguồn:**
-  1. *Khâu nộp minh chứng:* Dòng 190 tệp [`ProjectCore.sol`](file:///d:/crypto-smart-contract-2026/LinhHuynhK58KTS/contracts/project/ProjectCore.sol#L190):
-     ```solidity
-     if (msg.sender != s.student) revert NotStudent();
-     ```
-     Kẻ lạ không thể nộp minh chứng thay cho sinh viên.
-  2. *Khâu kích hoạt giải ngân:* Dòng 238–240:
-     ```solidity
-     if (msg.sender != s.student && msg.sender != s.sponsor && msg.sender != verifier) {
-         revert NotStudent();
-     }
-     ```
-     Chỉ 3 thực thể liên quan trực tiếp mới có quyền kích hoạt lệnh.
-  3. *Khâu nhận tiền:* Dòng 259: Tiền luôn luôn được chuyển vào `s.student`. Dù cho Sponsor hay Verifier là người bấm nút kích hoạt lệnh giải ngân, tiền Native ETH cũng không bao giờ chuyển vào ví của người bấm nút mà chuyển thẳng vào ví sinh viên đã lưu trong hợp đồng.
-- **Test case kiểm chứng:** `test_AUDIT04_ProjectCore_WrongStudentBlocked` $\rightarrow$ ✅ **PASS**.
+- **Vị trí mã nguồn:** Dòng 190, 238–240, 259.
+- **Test case kiểm chứng:** `test_AUDIT04_ProjectCore_WrongStudentBlocked` & `test_NEG03_ProjectCore_WrongStudent_Reverts` $\rightarrow$ ✅ **PASS**.
 
 ---
 
@@ -299,16 +303,12 @@ graph TD
   ```solidity
   if (m.status != MilestoneStatus.Approved) revert MilestoneNotApproved();
   ```
-- **Phân tích an ninh:**
-  - Một mốc học bổng khi mới khởi tạo ở trạng thái `Pending`.
-  - Khi sinh viên nộp minh chứng, mốc chuyển sang trạng thái `Submitted`.
-  - Nếu mốc đang ở `Pending` hoặc `Submitted` mà bị gọi hàm giải ngân `releaseMilestone`, điều kiện tại dòng 246 sẽ bắt buộc hoàn tác giao dịch và ném lỗi `MilestoneNotApproved()`. Tiền ký quỹ chỉ được mở khóa khi và chỉ khi người có thẩm quyền đã thẩm định và xác nhận mốc hợp lệ.
-- **Test case kiểm chứng:** `test_AUDIT05_ProjectCore_ReleaseBeforeApprovalBlocked` $\rightarrow$ ✅ **PASS**.
+- **Test case kiểm chứng:** `test_AUDIT05_ProjectCore_ReleaseBeforeApprovalBlocked` & `test_NEG01_ProjectCore_ReleaseBeforeApproval_Reverts` $\rightarrow$ ✅ **PASS**.
 
 ---
 
 ### Thử Nghiệm Nâng Cao: Tấn Công Tái Nhập Trực Tiếp Vào ProjectCore.sol
-Nhóm đã triển khai một hợp đồng sinh viên độc hại [`ReentrantMaliciousStudent`](file:///d:/crypto-smart-contract-2026/LinhHuynhK58KTS/test/Lab13_SecurityExperiments.t.sol#L77-L105) đóng vai trò là ví người thụ hưởng. Khi nhận được 0.5 ETH từ mốc 0, hàm `receive()` của nó cố tình gọi ngược lại `core.releaseMilestone(id, 0)` nhằm bòn rút tiếp 0.5 ETH còn lại của mốc 1.
+Nhóm đã triển khai hợp đồng sinh viên độc hại [`ReentrantMaliciousStudent`](file:///d:/crypto-smart-contract-2026/LinhHuynhK58KTS/test/Lab13_SecurityExperiments.t.sol#L77-L105) đóng vai trò là ví người thụ hưởng. Khi nhận được 0.5 ETH từ mốc 0, hàm `receive()` của nó cố tình gọi ngược lại `core.releaseMilestone(id, 0)` nhằm bòn rút tiếp 0.5 ETH còn lại của mốc 1.
 
 **Kết quả kiểm chứng (`test_AUDIT06_ProjectCore_ReentrancyAttack_Defeated`):**
 1. Lệnh tái nhập bị chặn đứng hoàn toàn bởi lớp phòng thủ kép `nonReentrant` và `m.status == Disbursed`.
@@ -318,7 +318,21 @@ Nhóm đã triển khai một hợp đồng sinh viên độc hại [`ReentrantM
 
 ---
 
-## 6. Bảng Tổng Hợp Kết Quả Thực Nghiệm Lab 13 (10/10 PASS)
+## 6. Kết Quả Bộ Kiểm Thử Negative Tests Cho ProjectCore.sol
+
+Để đáp ứng trọn vẹn yêu cầu kiểm thử bảo mật tiêu cực (Negative Testing) cho hợp đồng lõi `ProjectCore.sol`, nhóm đã bổ sung 5 bài test negative độc lập:
+
+| Mã Kiểm Thử | Kịch Bản Thử Nghiệm (Negative Scenario) | Hành Vi Vi Phạm Mô Phỏng | Mã Lỗi Kỳ Vọng (Revert Selector) | Kết Quả Thực Tế | Trạng Thái |
+|:---|:---|:---|:---|:---:|:---:|
+| **`NEG-01`** | **Release trước approval** | Gọi giải ngân khi mốc ở trạng thái `Pending` hoặc `Submitted` (chưa duyệt) | `MilestoneNotApproved()` | Revert đúng mã lỗi ở cả 2 trạng thái | ✅ **PASS** |
+| **`NEG-02`** | **Release hai lần** | Cố tình gọi `releaseMilestone` lần thứ hai cho cùng một mốc đã giải ngân | `AlreadyReleased()` | Revert ngay tại bước kiểm tra status | ✅ **PASS** |
+| **`NEG-03`** | **Wrong student** | Địa chỉ ví lạ (stranger) cố nộp minh chứng giả mạo thay cho sinh viên | `NotStudent()` | Revert tại khâu nộp proof | ✅ **PASS** |
+| **`NEG-04`** | **Unauthorized caller** | Người lạ (không phải student, sponsor, verifier) bấm nút kích hoạt giải ngân | `NotStudent()` | Chặn đứng quyền truy cập trái phép | ✅ **PASS** |
+| **`NEG-05`** | **Insufficient fund** | Mốc đã được duyệt nhưng sponsor chưa nạp tiền (hoặc nạp thiếu) | `InsufficientFunds()` | Chặn lệnh chuyển tiền khi quỹ không đủ | ✅ **PASS** |
+
+---
+
+## 7. Bảng Tổng Hợp Kết Quả Thực Nghiệm Lab 13 (15/15 PASS)
 
 | Test Case | Nhóm Kiểm Thử | Mục Đích Kiểm Chứng | Kỳ Vọng Kỹ Thuật | Kết Quả Thực Tế | Trạng Thái |
 |:---|:---:|:---|:---|:---:|:---:|
@@ -332,12 +346,17 @@ Nhóm đã triển khai một hợp đồng sinh viên độc hại [`ReentrantM
 | `test_AUDIT04_ProjectCore_WrongStudentBlocked` | Audit ProjectCore | Kiểm tra chống nộp/nhận sai sinh viên | Revert `NotStudent` với người lạ | ✅ Khớp 100% | **🟢 VERIFIED** |
 | `test_AUDIT05_ProjectCore_ReleaseBeforeApprovalBlocked` | Audit ProjectCore | Kiểm tra chống giải ngân trước duyệt | Revert `MilestoneNotApproved` | ✅ Khớp 100% | **🟢 VERIFIED** |
 | `test_AUDIT06_ProjectCore_ReentrancyAttack_Defeated` | Audit ProjectCore | Thực nghiệm tấn công reentrancy trực tiếp | Thất bại hoàn toàn, quỹ được bảo toàn | ✅ Khớp 100% | **🟢 SECURE** |
+| `test_NEG01_ProjectCore_ReleaseBeforeApproval_Reverts` | Core Negative | Chặn giải ngân khi mốc chưa duyệt | Revert `MilestoneNotApproved()` | ✅ Khớp 100% | **🟢 VERIFIED** |
+| `test_NEG02_ProjectCore_DoubleRelease_Reverts` | Core Negative | Chặn giải ngân 2 lần trên cùng một mốc | Revert `AlreadyReleased()` | ✅ Khớp 100% | **🟢 VERIFIED** |
+| `test_NEG03_ProjectCore_WrongStudent_Reverts` | Core Negative | Chặn người lạ nộp minh chứng thay sinh viên | Revert `NotStudent()` | ✅ Khớp 100% | **🟢 VERIFIED** |
+| `test_NEG04_ProjectCore_UnauthorizedCaller_Reverts` | Core Negative | Chặn người lạ gọi lệnh giải ngân | Revert `NotStudent()` | ✅ Khớp 100% | **🟢 VERIFIED** |
+| `test_NEG05_ProjectCore_InsufficientFunds_Reverts` | Core Negative | Chặn giải ngân khi chưa nạp tiền hoặc thiếu quỹ | Revert `InsufficientFunds()` | ✅ Khớp 100% | **🟢 VERIFIED** |
 
 ---
 
-## 7. Bằng Chứng Thực Nghiệm Terminal Log
+## 8. Bằng Chứng Thực Nghiệm Terminal Log
 
-Lệnh chạy kiểm thử độc lập:
+Lệnh chạy kiểm thử độc lập Lab 13:
 ```bash
 npx.cmd hardhat test test/Lab13_SecurityExperiments.t.sol
 ```
@@ -349,6 +368,11 @@ Compiled 1 Solidity file with solc 0.8.20 (evm target: shanghai)
 Running Solidity tests
 
   test/Lab13_SecurityExperiments.t.sol:Lab13SecurityExperimentsTest
+    ✔ test_NEG05_ProjectCore_InsufficientFunds_Reverts()
+    ✔ test_NEG04_ProjectCore_UnauthorizedCaller_Reverts()
+    ✔ test_NEG03_ProjectCore_WrongStudent_Reverts()
+    ✔ test_NEG02_ProjectCore_DoubleRelease_Reverts()
+    ✔ test_NEG01_ProjectCore_ReleaseBeforeApproval_Reverts()
     ✔ test_EXP04_SecureBank_UnhandledReentrancyRevertsTransfer()
     ✔ test_EXP03_SecureBank_ReentrancyGuard_PreventsReentrancy()
     ✔ test_EXP02_SecureBank_CEI_PreventsReentrancy()
@@ -360,7 +384,7 @@ Running Solidity tests
     ✔ test_AUDIT02_ProjectCore_StateUpdateBeforeCall_CEI()
     ✔ test_AUDIT01_ProjectCore_HasExternalCall_ToStudent()
 
-10 passing (10 solidity)
+15 passing (15 solidity)
 ```
 
 Lệnh chạy kiểm thử toàn trình toàn bộ dự án:
@@ -374,12 +398,12 @@ No contracts to compile
 
 Running Solidity tests
 
-  test/Lab13_SecurityExperiments.t.sol:Lab13SecurityExperimentsTest (10 tests)
-  test/Lab10_Verify.t.sol:Lab10VerifyTest (13 tests)
   test/ProjectCore.t.sol:ProjectCoreTest (17 tests)
+  test/Lab13_SecurityExperiments.t.sol:Lab13SecurityExperimentsTest (15 tests)
+  test/Lab10_Verify.t.sol:Lab10VerifyTest (13 tests)
   test/Lab11_EconomicRules.t.sol:Lab11EconomicRulesTest (34 tests)
 
-74 passing (74 solidity)
+79 passing (79 solidity)
 ```
 
 ---
