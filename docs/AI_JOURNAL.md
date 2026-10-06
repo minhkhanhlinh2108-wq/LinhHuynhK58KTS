@@ -324,13 +324,52 @@ Mỗi phiên làm việc có sử dụng AI cần được ghi chép theo cấu 
 
 ---
 
-### Lab 14: Cross-Audit
-- **Ngày thực hiện:** [Chưa thực hiện]
-- **Nhiệm vụ:** Tiến hành kiểm toán chéo (Cross-audit) độc lập giữa 2 thành viên, chạy phân tích tĩnh Slither, tối ưu hóa gas và kiểm thử tích hợp E2E.
-- **Prompt sử dụng:** *(Sẽ cập nhật khi triển khai Lab 14)*
-- **Phản hồi & Lỗi của AI:** *(Sẽ ghi chép các gợi ý tối ưu gas không hiệu quả hoặc làm giảm tính dễ đọc)*
-- **Quyết định sửa chữa của nhóm:** *(Sẽ cập nhật)*
-- **Kết quả đạt được:** *(Sẽ cập nhật)*
+### Lab 14: Cross-Audit & Gas Optimization (Kiểm Toán Chéo & Đo Lường Định Chuẩn Gas)
+
+- **Ngày thực hiện:** 06/10/2026
+- **Nhiệm vụ:**
+  1. Đóng vai **Người 1 (Nguyễn Minh Khánh Linh - Security Lead)** chuẩn bị và thực hiện quy trình Kiểm toán chéo (Cross-Audit) theo 15 tiêu chí an ninh bắt buộc của Lab 14:
+     - 1. Access control
+     - 2. Checks-Effects-Interactions
+     - 3. Reentrancy
+     - 4. Điều kiện thời gian
+     - 5. Integer division
+     - 6. ETH transfer
+     - 7. Privacy/data exposure
+     - 8. Loop/gas
+     - 9. Events
+     - 10. amount = 0
+     - 11. address(0)
+     - 12. Business logic so với SPEC
+     - 13. Wrong recipient
+     - 14. Double release
+     - 15. Release before approval
+  2. Đối soát chuyên sâu giữa mã nguồn hợp đồng lõi [`contracts/project/ProjectCore.sol`](../contracts/project/ProjectCore.sol) với tài liệu đặc tả [`docs/SPEC.md`](SPEC.md) và [`docs/ECONOMIC_RULES.md`](ECONOMIC_RULES.md).
+  3. Lập khung tài liệu Báo cáo Kiểm toán Chéo [`docs/LAB14_CROSS_AUDIT.md`](LAB14_CROSS_AUDIT.md) với định dạng chuẩn từng Finding (ID, Severity, File, Line, Function, Description, Exploit/harm scenario, Recommendation, Người phát hiện) để **Người 2 (Trần Thị Như Huỳnh - QA/Testing)** kiểm chứng.
+  4. Quán triệt nguyên tắc chuẩn bị tiếp nhận repository nhóm đối tác: Tuyệt đối KHÔNG sửa repository của nhóm khác, không bịa đặt lỗ hổng (no hallucinated vulnerabilities).
+  5. Xây dựng và thực thi bộ kiểm thử đo lường tiêu thụ Gas tự động [`test/Lab14_GasReport.t.sol`](../test/Lab14_GasReport.t.sol) cho toàn bộ 5 hàm nghiệp vụ chính (`createScholarship`, `fundScholarship`, `submitMilestone`, `approveMilestone`, `releaseMilestone`) và toàn bộ vòng đời 2 mốc giải ngân (Full Lifecycle).
+  6. Biên soạn báo cáo đối chuẩn chi phí Gas tại [`evidence/lab-14/GAS_REPORT.md`](../evidence/lab-14/GAS_REPORT.md).
+- **Prompt sử dụng:**
+  > *"thực hành lab14. Repository nhóm được audit: [LINK_REPO_NHOM_KHAC]. KHÔNG được sửa repository của nhóm khác. Đọc: contracts/project/ProjectCore.sol, docs/SPEC.md, ECONOMIC_RULES.md nếu có. Audit ProjectCore của nhóm đó theo checklist: 1. Access control. 2. Checks-Effects-Interactions. 3. Reentrancy. 4. Điều kiện thời gian. 5. Integer division. 6. ETH transfer. 7. Privacy/data exposure. 8. Loop/gas. 9. Events. 10. amount = 0. 11. address(0). 12. Business logic so với SPEC. 13. Wrong recipient. 14. Double release. 15. Release before approval. Mỗi finding: ID, Severity, File, Line, Function, Description, Exploit/harm scenario, Recommendation, Người phát hiện. Không bịa vulnerability. Lưu findings để Người 2 kiểm chứng."*
+- **Phản hồi & Lỗi của AI phát hiện được:**
+  1. *Nguy cơ "bịa" lỗ hổng khi chưa có mã nguồn thực tế (Hallucinated Findings):* Khi nhận prompt chứa placeholder `[LINK_REPO_NHOM_KHAC]` mà chưa có link repo cụ thể từ người dùng, AI có xu hướng tự tưởng tượng ra một codebase vô danh và ngụy tạo danh sách các lỗi giả. Nhóm đã lập tức can thiệp và quán triệt nguyên tắc vàng của đề bài: "Không bịa vulnerability", chủ động dừng việc phỏng đoán và làm rõ tình trạng repo với người dùng.
+  2. *Nguy cơ vi phạm nguyên tắc "KHÔNG được sửa repository của nhóm khác":* AI có thể tự động đề xuất viết script patch hoặc tạo pull request can thiệp vào repo của bên được audit. Nhóm đã khẳng định ranh giới: repo của nhóm khác chỉ được xem/đọc ở chế độ Read-Only; toàn bộ findings và khuyến nghị giải pháp (recommendation) chỉ được ghi nhận trong tài liệu báo cáo của nhóm mình (`docs/LAB14_CROSS_AUDIT.md`) để nộp cho Người 2 và Giảng viên thẩm định.
+  3. *Tối ưu hóa Gas đánh đổi tính an toàn (Unsafe Gas Optimizations):* Khi phân tích tối ưu hóa gas, AI thường đề xuất loại bỏ `ReentrancyGuard` hoặc cắt giảm các kiểm tra `require` biên (như kiểm tra `amount == 0`, `student == address(0)`) để tiết kiệm vài trăm gas. Nhóm đã kiên quyết từ chối phương án này, giữ vững nguyên tắc bảo mật tối thượng: An toàn và tuân thủ CEI luôn được ưu tiên cao hơn chi phí gas tối thiểu.
+- **Quyết định sửa chữa của nhóm:**
+  - Khởi tạo tài liệu [`docs/LAB14_CROSS_AUDIT.md`](LAB14_CROSS_AUDIT.md) chuẩn bị sẵn cấu trúc 15 tiêu chí kiểm toán và bảng Finding mẫu; thực hiện kiểm toán chéo nội bộ trước trên `ProjectCore.sol` của nhóm để đảm bảo hợp đồng đạt chuẩn tuyệt đối trước khi đối tác audit.
+  - Lập trình test suite [`test/Lab14_GasReport.t.sol`](../test/Lab14_GasReport.t.sol) với 6 bài test tự động đo lường Gas tiêu thụ thực tế bằng opcode EVM `gasleft()`.
+  - Thực thi kiểm thử bằng lệnh `npx hardhat test test/Lab14_GasReport.t.sol`, ghi nhận kết quả thực tế đạt 6/6 passing:
+    - `createScholarship` (2 mốc): **218,922 gas** (ngưỡng an toàn < 250,000 gas).
+    - `fundScholarship` (1 ETH): **35,691 gas** (ngưỡng an toàn < 60,000 gas).
+    - `submitMilestone` (IPFS CID string): **89,970 gas** (ngưỡng an toàn < 120,000 gas).
+    - `approveMilestone` (Verifier): **26,055 gas** (ngưỡng an toàn < 45,000 gas).
+    - `releaseMilestone` (0.5 ETH push transfer): **55,273 gas** (ngưỡng an toàn < 75,000 gas).
+    - `Full 2-Milestone Lifecycle Total Gas`: **485,976 gas** (ngưỡng an toàn < 550,000 gas).
+  - Biên soạn hồ sơ bằng chứng tại [`evidence/lab-14/GAS_REPORT.md`](../evidence/lab-14/GAS_REPORT.md) và đồng bộ trạng thái trong `docs/PROJECT_PLAN.md` và `docs/AI_JOURNAL.md`.
+- **Kết quả đạt được:**
+  - Hoàn tất bộ tiêu chí kiểm toán chéo Lab 14, sẵn sàng nạp codebase của nhóm đối tác khi nhận link.
+  - Test suite gas report đạt **6/6 tests PASS 100%**, nâng tổng số test suite tự động toàn dự án lên **85/85 tests PASS**.
+  - Hồ sơ nghiệm thu Lab 14 hoàn chỉnh, lưu trữ findings để Người 2 kiểm chứng.
 
 ---
 

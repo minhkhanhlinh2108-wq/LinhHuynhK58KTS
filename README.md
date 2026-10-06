@@ -48,7 +48,8 @@
     ├── ProjectCore.t.sol      # Test suite chuẩn Lab 09 (17 tests)
     ├── Lab10_Verify.t.sol     # Test suite kiểm chứng findings Lab 10 (13 tests)
     ├── Lab11_EconomicRules.t.sol # Test suite kinh tế Lab 11 (34 tests)
-    └── Lab13_SecurityExperiments.t.sol # Test suite thực nghiệm an ninh Lab 13 (10 tests)
+    ├── Lab13_SecurityExperiments.t.sol # Test suite thực nghiệm an ninh Lab 13 (10 tests)
+    └── Lab14_GasReport.t.sol           # Test suite đo lường gas benchmark Lab 14 (6 tests)
 ```
 
 ---
@@ -62,7 +63,9 @@
 - 🚦 **Biên bản thẩm định Gate Review 1:** [GATE_REVIEW_1.md](docs/GATE_REVIEW_1.md)
 - 🔬 **Báo cáo thực nghiệm an ninh Lab 13:** [LAB13_SECURITY.md](docs/LAB13_SECURITY.md)
 - 🧾 **Bằng chứng thực nghiệm Lab 13:** [LAB13_EVIDENCE.md](evidence/lab-13/LAB13_EVIDENCE.md)
+- 🔍 **Báo cáo kiểm toán chéo Lab 14:** [LAB14_CROSS_AUDIT.md](docs/LAB14_CROSS_AUDIT.md)
+- ⛽ **Báo cáo đối chuẩn Gas Lab 14:** [GAS_REPORT.md](evidence/lab-14/GAS_REPORT.md)
 - 🤖 **Nhật ký ứng dụng AI xuyên suốt:** [AI_JOURNAL.md](docs/AI_JOURNAL.md)
 
 ---
-> 🔗 **Liên kết nhanh:** [Trang chủ](README.md) • [Kế hoạch đồ án](docs/PROJECT_PLAN.md) • [Đặc tả nghiệp vụ](docs/SPEC.md) • [Quy tắc kinh tế](docs/ECONOMIC_RULES.md) • [Kiểm toán Lab 10](docs/LAB10_AUDIT.md) • [Gate Review 1](docs/GATE_REVIEW_1.md) • [Thực nghiệm an ninh Lab 13](docs/LAB13_SECURITY.md) • [Nhật ký AI](docs/AI_JOURNAL.md) • [GitHub Repo](https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS)
+> 🔗 **Liên kết nhanh:** [Trang chủ](README.md) • [Kế hoạch đồ án](docs/PROJECT_PLAN.md) • [Đặc tả nghiệp vụ](docs/SPEC.md) • [Quy tắc kinh tế](docs/ECONOMIC_RULES.md) • [Kiểm toán Lab 10](docs/LAB10_AUDIT.md) • [Gate Review 1](docs/GATE_REVIEW_1.md) • [Thực nghiệm an ninh Lab 13](docs/LAB13_SECURITY.md) • [Kiểm toán chéo Lab 14](docs/LAB14_CROSS_AUDIT.md) • [Nhật ký AI](docs/AI_JOURNAL.md) • [GitHub Repo](https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS)
