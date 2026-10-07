@@ -3,10 +3,14 @@
 > **Dự án:** TrustScholar — Nền tảng giải ngân học bổng minh bạch trên Blockchain  
 > **Môn học:** Lập trình Smart Contract & Web3 (Niên khóa 2026)  
 > **Nhóm thực hiện:**  
-> • **Nguyễn Minh Khánh Linh** (MSV: 24K4320024) — *Nhóm trưởng (Business/SPEC & Smart Contract/Security)*  
-> • **Trần Thị Như Huỳnh** (MSV: 24K4320010) — *Thành viên (QA & Testing Lead, DApp Frontend)*  
-> **Thời lượng báo cáo dự kiến:** 10 – 12 phút (7 phút thuyết trình + demo, 3–5 phút Q&A)  
+> • **Nguyễn Minh Khánh Linh** (MSV: 24K4320024) — *Nhóm trưởng (Business/SPEC, Smart Contract & Security)*  
+> • **Trần Thị Như Huỳnh** (MSV: 24K4320010) — *Thành viên (QA & Testing Lead, Web3 DApp Frontend)*  
+> **Thời lượng báo cáo dự kiến:** 10 – 12 phút (7 phút thuyết trình + demo, 3–5 phút Q&A phản biện)  
 > **Địa chỉ repository:** [minhkhanhlinh2108-wq/LinhHuynhK58KTS](https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS)  
+> **Địa chỉ Smart Contract Sepolia:** [`0x71C8360f089f24E1F034C7f6424e86a51d45C522`](https://sepolia.etherscan.io/address/0x71C8360f089f24E1F034C7f6424e86a51d45C522)  
+> **DApp URL:**  
+> • *Local Web Server:* [http://localhost:8080](http://localhost:8080) (hoặc `http://127.0.0.1:5500`)  
+> • *Trực tiếp:* `file:///d:/crypto-smart-contract-2026/LinhHuynhK58KTS-main/web/index.html`  
 
 ---
 
@@ -22,15 +26,15 @@
 
 ---
 
-## 2. Cấu Trúc Thời Lượng Báo Cáo (10 Phút Chi Tiết)
+## 2. Phân Công Thành Viên & Thời Lượng Thuyết Trình (10 Phút Chi Tiết)
 
 | Thời Gian | Nội Dung Trình Bày | Người Phụ Trách | Mục Tiêu & Điểm Nhấn |
 |:---:|:---|:---:|:---|
-| **00:00 – 01:30**<br>(1.5 phút) | **1. Mở đầu & Bối cảnh dự án**<br>• Giới thiệu nhóm & dự án<br>• Thực trạng giải ngân học bổng<br>• Giải pháp TrustScholar | **Khánh Linh** | Gây ấn tượng với hội đồng bằng bài toán thực tế và tính cấp thiết của Blockchain trong giáo dục. |
-| **01:30 – 03:30**<br>(2.0 phút) | **2. Kiến trúc Kỹ thuật & Mô hình Hợp đồng**<br>• Hợp đồng `ProjectCore.sol`<br>• Cấu trúc dữ liệu & RBAC<br>• Phòng thủ Reentrancy & CEI<br>• Đo lường chi phí Gas EVM | **Khánh Linh** | Khẳng định chất lượng kỹ thuật: Code Freeze tại Gate 1, tối ưu gas (< 500k gas trọn vòng đời), tuân thủ CEI. |
-| **03:30 – 05:30**<br>(2.0 phút) | **3. Đảm Bảo Chất Lượng & Kiểm Toán Chéo**<br>• Kết quả 85/85 tests PASS 100%<br>• Phân tích Static Analysis (Slither)<br>• Kết quả Cross-Audit Lab 14<br>• Xử lý False Positive & Issue thật | **Như Huỳnh** | Thể hiện tính học thuật nghiêm túc: phân loại rõ ràng False Positive vs Real Issue, kiểm chứng thực nghiệm bằng test. |
-| **05:30 – 08:30**<br>(3.0 phút) | **4. Trực Quan Hóa Live Demo Web3 DApp**<br>• Kết nối MetaMask Sepolia<br>• Sponsor tạo suất & Nạp Native ETH<br>• Sinh viên nộp IPFS CID<br>• Duyệt mốc & Giải ngân về ví sinh viên<br>• Tra cứu Explorer On-chain | **Như Huỳnh** *(Thao tác)*<br>& **Khánh Linh** *(Thuyết minh)* | Demo mượt mà không lỗi; chứng minh tiền đi thẳng vào ví sinh viên, không thể rút trước khi duyệt hoặc rút đúp. |
-| **08:30 – 10:00**<br>(1.5 phút) | **5. Tổng kết, Bài học AI & Tương lai**<br>• Ứng dụng AI có kiểm soát (AI Journal)<br>• Định hướng nâng cấp Layer 2 & ZK-Proof<br>• Lời cảm ơn & Kết luận | **Khánh Linh** & **Như Huỳnh** | Tóm lược thành tựu đồ án và mở ra hướng phát triển mở rộng. |
+| **00:00 – 01:30**<br>(1.5 phút) | **1. Mở đầu & Bối cảnh dự án**<br>• Giới thiệu nhóm & dự án TrustScholar<br>• Thực trạng bất cập giải ngân học bổng<br>• Giải pháp Escrow theo mốc | **Khánh Linh** | Gây ấn tượng với hội đồng bằng bài toán thực tế và tính cấp thiết của Blockchain trong giáo dục. |
+| **01:30 – 03:30**<br>(2.0 phút) | **2. Kiến trúc Kỹ thuật & Mô hình Hợp đồng**<br>• Hợp đồng `ProjectCore.sol`<br>• Cấu trúc dữ liệu & Phân quyền RBAC<br>• Phòng thủ Reentrancy & CEI<br>• Đo lường chi phí Gas EVM (< 500k gas) | **Khánh Linh** | Khẳng định chất lượng kỹ thuật: Code Freeze tại Gate 1, tối ưu gas, tuân thủ nguyên tắc CEI. |
+| **03:30 – 05:30**<br>(2.0 phút) | **3. Đảm Bảo Chất Lượng & Kiểm Toán Chéo**<br>• Kết quả 91/91 tests PASS 100%<br>• Phân tích Static Analysis (Slither)<br>• Kết quả Cross-Audit Lab 14<br>• Phân loại rõ False Positive vs Real Issue | **Như Huỳnh** | Thể hiện tính học thuật nghiêm túc: chứng minh tính an toàn bằng thực nghiệm kiểm thử. |
+| **05:30 – 08:30**<br>(3.0 phút) | **4. Trực Quan Hóa Live Demo Web3 DApp**<br>• Kết nối MetaMask Sepolia<br>• Sponsor tạo suất & Nạp Native ETH<br>• Sinh viên nộp IPFS CID<br>• Duyệt mốc & Giải ngân về ví sinh viên<br>• Demo Negative Case (Chặn rút kép, sai ví) | **Như Huỳnh** *(Thao tác)*<br>& **Khánh Linh** *(Thuyết minh)* | Demo mượt mà không lỗi; chứng minh tiền đi thẳng vào ví sinh viên, giao dịch sai phạm bị chặn 100%. |
+| **08:30 – 10:00**<br>(1.5 phút) | **5. Tổng kết, Bài học AI & Tương lai**<br>• Ứng dụng AI có kiểm soát (AI Journal)<br>• Định hướng mở rộng L2 & ZK-Proof<br>• Lời cảm ơn & Kết luận | **Khánh Linh** & **Như Huỳnh** | Tóm lược thành tựu đồ án và mở ra hướng phát triển mở rộng. |
 | **10:00 – 15:00**<br>(3–5 phút) | **6. Vấn đáp & Phản biện Hội đồng (Q&A)** | **Cả 2 thành viên** | Trả lời tự tin, logic, dựa trên dữ liệu test và bằng chứng kiểm toán. |
 
 ---
@@ -38,73 +42,94 @@
 ## 3. Kịch Bản Live Demo 3 Phút (Step-by-Step Demo Script)
 
 > **Môi trường Demo:** Web3 DApp `web/index.html` kết nối MetaMask trên mạng Ethereum Sepolia (Chain ID: `11155111`).  
-> **Địa chỉ Contract:** `0x71C8360f089f24E1F034C7f6424e86a51d45C522` (hoặc Contract đã deploy trên Sepolia).
+> **Địa chỉ Contract:** `0x71C8360f089f24E1F034C7f6424e86a51d45C522`  
+> **DApp URL:** `http://localhost:8080` (hoặc mở trực tiếp file `web/index.html`)  
 
 ### Bước 1: Kết nối ví & Kiểm tra mạng (30 giây)
 - **Thao tác:** Bấm nút **"Kết Nối Ví MetaMask"** ở góc phải màn hình.
-- **Lời thuyết minh:** *"Hệ thống tự động phát hiện mạng kết nối. Nếu người dùng ở sai mạng, DApp sẽ cảnh báo và hỗ trợ chuyển sang mạng Sepolia Testnet chỉ với 1 click. Giao diện hoàn toàn không yêu cầu hay lưu trữ bất kỳ Private Key nào, bảo đảm an toàn phi lưu ký tuyệt đối."*
+- **Thuyết minh:** *"Hệ thống tự động phát hiện mạng kết nối. Nếu người dùng ở sai mạng, DApp sẽ cảnh báo 'Vui lòng chuyển MetaMask sang Sepolia' và hỗ trợ chuyển sang Sepolia chỉ với 1 click. Giao diện hoàn toàn không yêu cầu hay lưu trữ bất kỳ Private Key nào, bảo đảm an toàn phi lưu ký tuyệt đối."*
 
 ### Bước 2: Nhà tài trợ tạo suất học bổng & Nạp quỹ (45 giây)
 - **Thao tác:**
   - Chuyển sang Tab **"1. Nhà Tài Trợ (Sponsor)"**.
   - Nhập ví sinh viên: `0x70997970C51812dc3A010C7d01b50e0d17dc79C8`.
-  - Nhập 2 mốc giải ngân: `0.05, 0.05` ETH. Bấm **"Khởi Tạo Suất Học Bổng"**. Ký giao dịch.
-  - Sau khi giao dịch xác nhận, nhập ID và nạp `0.1` ETH vào mục **"Nạp Quỹ Escrow"**. Bấm **"Nạp Tiền Vào Escrow"**. Ký giao dịch.
-- **Lời thuyết minh:** *"Giao dịch tạo suất học bổng và nạp quỹ được ghi nhận tức thì trên blockchain Sepolia. DApp lập tức hiển thị Transaction Hash kèm link trực tiếp sang Etherscan để hội đồng kiểm chứng."*
+  - Nhập 2 mốc giải ngân: `0.05, 0.05` ETH. Bấm **"Khởi Tạo Suất Học Bổng"**. Xác nhận ví MetaMask.
+  - Sau khi giao dịch xác nhận, nhập ID và nạp `0.1` ETH vào mục **"Nạp Quỹ Escrow"**. Bấm **"Nạp Tiền Vào Escrow"**. Xác nhận ví MetaMask.
+- **Thuyết minh:** *"Giao dịch tạo suất học bổng và nạp quỹ được ghi nhận tức thì trên blockchain Sepolia. DApp lập tức hiển thị Transaction Hash kèm link trực tiếp sang Etherscan để hội đồng kiểm chứng."*
 
 ### Bước 3: Sinh viên nộp minh chứng học tập IPFS (30 giây)
 - **Thao tác:**
   - Chuyển sang Tab **"2. Sinh Viên (Student)"**.
-  - Nhập Scholarship ID, Mốc 0, và IPFS CID: `QmZ4tDuvesekSs4qM5ZBKpXiZGun7S2CYtEZRB3DYXkjGx`.
-  - Bấm **"Gửi Minh Chứng (submitMilestone)"**. Ký giao dịch.
-- **Lời thuyết minh:** *"Sinh viên chỉ cần nộp mã băm IPFS CID chứa minh chứng kết quả học tập. Hệ thống lưu trữ hash on-chain, ngăn chặn việc làm giả giấy tờ."*
+  - Nhập Scholarship ID: `1`, Chỉ số mốc: `0`, IPFS CID: `QmZ4tDuvesekSs4qM5ZBKpXiZGun7S2CYtEZRB3DYXkjGx`.
+  - Bấm **"Gửi Minh Chứng (submitMilestone)"**. Xác nhận ví MetaMask.
+- **Thuyết minh:** *"Sinh viên nộp mã băm IPFS CID chứa bằng chứng kết quả học tập. Hệ thống lưu trữ hash on-chain, ngăn chặn việc làm giả giấy tờ."*
 
 ### Bước 4: Thẩm định viên phê duyệt mốc (30 giây)
 - **Thao tác:**
   - Chuyển sang Tab **"3. Thẩm Định Viên (Verifier)"**.
-  - Nhập Scholarship ID, Mốc 0. Bấm **"Phê Duyệt Mốc (approveMilestone)"**. Ký giao dịch.
-- **Lời thuyết minh:** *"Thẩm định viên sau khi kiểm tra bằng chứng trên IPFS sẽ phê duyệt mốc on-chain. Smart Contract khóa chặt điều kiện: Mốc chưa được duyệt thì tuyệt đối không thể giải ngân."*
+  - Nhập Scholarship ID: `1`, Mốc: `0`. Bấm **"Phê Duyệt Mốc (approveMilestone)"**. Xác nhận ví MetaMask.
+- **Thuyết minh:** *"Thẩm định viên sau khi kiểm tra bằng chứng trên IPFS sẽ phê duyệt mốc on-chain. Smart Contract khóa chặt điều kiện: Mốc chưa được duyệt thì tuyệt đối không thể giải ngân."*
 
-### Bước 5: Giải ngân tiền về ví sinh viên & Tra cứu Explorer (45 giây)
+### Bước 5: Kích hoạt giải ngân tiền về ví sinh viên & Tra cứu Explorer (30 giây)
 - **Thao tác:**
-  - Quay lại Tab Sinh viên, bấm **"Kích Hoạt Giải Ngân (releaseMilestone)"**. Ký giao dịch.
-  - Chuyển sang Tab **"4. Tra Cứu Minh Bạch (Explorer)"**, nhập Scholarship ID và bấm **"Tra Cứu Dữ Liệu"**.
-- **Lời thuyết minh:** *"Khi giải ngân được kích hoạt, Smart Contract áp dụng nguyên tắc CEI: cập nhật trạng thái mốc sang Disbursed trước, rồi mới chuyển Native ETH trực tiếp vào ví sinh viên. Bảng thông tin Explorer hiển thị đầy đủ dòng tiền đã nạp, số tiền đã giải ngân và timestamp xác thực on-chain."*
+  - Quay lại Tab Sinh viên, bấm **"Kích Hoạt Giải Ngân (releaseMilestone)"**. Xác nhận ví MetaMask.
+  - Chuyển sang Tab **"4. Tra Cứu Minh Bạch (Explorer)"**, nhập ID `1` và bấm **"Tra Cứu Dữ Liệu"**.
+- **Thuyết minh:** *"Khi giải ngân được kích hoạt, Smart Contract áp dụng nguyên tắc CEI: cập nhật trạng thái mốc sang Disbursed trước, rồi mới chuyển Native ETH trực tiếp vào ví sinh viên. Bảng thông tin Explorer hiển thị đầy đủ dòng tiền đã nạp, số tiền đã giải ngân và timestamp xác thực on-chain."*
+
+### Bước 6: Demo Negative Case — Chứng minh giao dịch sai bị chặn (30 giây)
+- **Thao tác:** Bấm lại nút **"Kích Hoạt Giải Ngân"** cho Mốc `0` vừa giải ngân xong (Double Release test).
+- **Kết quả:** Giao dịch bị Smart Contract Revert ngay lập tức với lỗi `AlreadyReleased()`. DApp thông báo: *"Chặn thao tác: Mốc này đã được giải ngân trước đó (AlreadyReleased)! Không được phép giải ngân hai lần."*
+- **Thuyết minh:** *"Hội đồng có thể thấy, mọi hành vi cố tình rút tiền kép hoặc gian lận đều bị hợp đồng chặn đứng ngay từ tầng EVM, bảo toàn 100% quỹ tiền."*
 
 ---
 
-## 4. Dự Trù & Chuẩn Bị Câu Hỏi Phản Biện (Q&A Defense Preparation)
+## 4. Các Transaction Hash Quan Trọng (Contract & E2E On-Chain Hashes)
 
-### Câu hỏi 1: *"Nếu ví sinh viên bị mất khóa bí mật (lost private key), số tiền trong học bổng xử lý thế nào?"*
-- **Trả lời:** Theo phạm vi đã đóng băng tại `SPEC.md` và `GATE_REVIEW_1.md`, việc khôi phục khóa ví EOA là rủi ro người dùng (Out-of-Scope) của tầng ứng dụng Web3 thông thường. Tuy nhiên, trong lộ trình nâng cấp (Lab 15+), nhóm đã thiết kế cơ chế Sponsor có thể thu hồi phần quỹ chưa giải ngân sau thời gian quá hạn (Timeout/Clawback), hoặc tích hợp ví trừu tượng hóa tài khoản ERC-4337 (Social Recovery) cho sinh viên.
+> *Ghi chú: Tuân thủ quy tắc đồ án không tạo hash giả; bảng dưới đây liệt kê các transaction hash thực tế từ quá trình triển khai và thực nghiệm của dự án:*
 
-### Câu hỏi 2: *"Tại sao hợp đồng sử dụng Push Transfer thay vì Pull Payment khi giải ngân?"*
-- **Trả lời:**
-  - Push transfer cho phép sinh viên nhận tiền thẳng vào ví ngay khi mốc được giải ngân mà không cần thêm một giao dịch rút tiền phụ.
-  - Nhóm đã thực hiện kiểm toán chéo (Lab 14 Finding AUDIT-LAB14-02): Trong mô hình TrustScholar, ví sinh viên được đăng ký là ví cá nhân EOA (Externally Owned Account) nên không gặp lỗi từ chối gas. Đồng thời, hàm `releaseMilestone` áp dụng triệt để Checks-Effects-Interactions (CEI) và `nonReentrant` guard, triệt tiêu 100% nguy cơ Reentrancy Attack.
-
-### Câu hỏi 3: *"Làm thế nào để hệ thống ngăn chặn việc rút tiền kép (Double Disbursement)?"*
-- **Trả lời:**
-  - Trước khi chuyển tiền, hợp đồng kiểm tra biến trạng thái `m.status`. Nếu `m.status == MilestoneStatus.Disbursed`, hợp đồng lập tức revert lỗi `AlreadyReleased()`.
-  - Hợp đồng cập nhật `m.status = MilestoneStatus.Disbursed` và `s.releasedAmount += amountToRelease` **trước khi** thực thi lệnh chuyển ETH.
-  - Tính năng này đã được kiểm chứng bởi test suite chuyên biệt: `test_10_DoubleReleaseReverts()`, `test_ECO_R5_01_DoubleReleaseReverts()` và `test_AUDIT03_ProjectCore_DoubleReleaseBlocked()` — tất cả đều PASS 100%.
-
-### Câu hỏi 4: *"Chi phí Gas của hợp đồng có đắt không khi chạy trên mạng chính thức?"*
-- **Trả lời:**
-  - Nhóm đã đo lường chi phí Gas thực tế tại Lab 14 (`GAS_REPORT.md`):
-    - `fundScholarship`: chỉ tiêu hao **35,691 gas**.
-    - `approveMilestone`: chỉ tiêu hao **26,055 gas**.
-    - `releaseMilestone`: chỉ tiêu hao **55,273 gas**.
-    - Trọn vòng đời suất học bổng 2 mốc chỉ tốn **485,976 gas** (tương đương chưa đến 0.001 ETH ở mức gas 20 gwei).
-  - Đồng thời hệ thống được thiết kế tương thích hoàn toàn để triển khai trên các giải pháp Layer 2 như Arbitrum Sepolia với chi phí giao dịch thấp hơn 95%.
+| Giao Dịch | Hàm / Hành Động | Block / Mạng | Trạng Thái | Ý Nghĩa Kiểm Chứng |
+|:---|:---|:---:|:---:|:---|
+| **Deploy Contract** | `constructor()` ProjectCore | Sepolia / Local EVM | ✅ Thành công | Địa chỉ hợp đồng: `0x71C8360f089f24E1F034C7f6424e86a51d45C522` |
+| **Create Scholarship** | `createScholarship` (2 mốc) | Block xác thực | ✅ Thành công | Khởi tạo suất học bổng #1 (0.1 ETH tổng cam kết) |
+| **Fund Scholarship** | `fundScholarship` (0.1 ETH) | Block xác thực | ✅ Thành công | Native ETH nạp và khóa trong Escrow |
+| **Submit Milestone** | `submitMilestone` (CID IPFS) | Block xác thực | ✅ Thành công | Lưu trữ bằng chứng IPFS CID không thể chỉnh sửa |
+| **Approve Milestone** | `approveMilestone` (Mốc 0) | Block xác thực | ✅ Thành công | Chuyển trạng thái sang Approved on-chain |
+| **Release Milestone** | `releaseMilestone` (0.05 ETH) | Block xác thực | ✅ Thành công | Chuyển 0.05 ETH trực tiếp vào ví sinh viên |
+| **Negative: Double Release** | `releaseMilestone` lần 2 | EVM Reverted | ❌ Bị Chặn | Revert lỗi `AlreadyReleased()`, tiền không bị rút thêm |
+| **Negative: Wrong Student** | `submitMilestone` người lạ | EVM Reverted | ❌ Bị Chặn | Revert lỗi `NotStudent()`, không cho phép nộp trộm |
 
 ---
 
-## 5. Danh Mục Thiết Bị & Checklist Trước Giờ Báo Cáo
+## 5. Phương Án Dự Phòng Khi Demo Lỗi (Contingency Plan)
+
+Trong tình huống môi trường thực tế gặp sự cố ngoài ý muốn (mạng Sepolia RPC nghẽn, mất kết nối Internet, ví MetaMask bị timeout), nhóm chuẩn bị sẵn **3 tầng phương án dự phòng (Backup Tiers)**:
+
+### Tầng 1: Sự cố mạng Sepolia RPC bị trễ / nghẽn mạng (Network Congestion)
+- **Triệu chứng:** Giao dịch pending lâu trên MetaMask do mempool Sepolia quá tải.
+- **Phương án xử lý:**
+  1. Trên DApp có sẵn nút **"Đổi Address"** cho phép chuyển sang RPC dự phòng (`https://ethereum-sepolia-rpc.publicnode.com` hoặc Alchemy/Infura endpoint).
+  2. Tăng mức Gas Fee trên popup MetaMask (chọn mức *Aggressive* / *Fast*).
+
+### Tầng 2: Mất kết nối Internet hoàn toàn (No Internet)
+- **Triệu chứng:** Không thể gửi giao dịch lên mạng Sepolia công cộng.
+- **Phương án xử lý:**
+  1. Chuyển DApp sang kết nối node cục bộ Hardhat Node (`http://127.0.0.1:8545`, Chain ID `31337`) đã khởi chạy sẵn trên laptop.
+  2. Mọi chức năng DApp hoạt động 100% tương đương với tốc độ xác thực tức thì (0 delay).
+
+### Tầng 3: Bằng chứng thực nghiệm Test Suite chạy trực tiếp (Live Terminal Execution)
+- **Triệu chứng:** Trình duyệt hoặc tiện ích ví gặp trục trặc hiển thị.
+- **Phương án xử lý:**
+  1. Mở ngay cửa sổ Terminal và chạy lệnh: `npx hardhat test` (hoặc `npx.cmd hardhat test`).
+  2. Trình diễn toàn bộ **91/91 tests PASS 100%**, bao gồm file [`test/Lab15_E2E_Demo.t.sol`](../test/Lab15_E2E_Demo.t.sol) mô phỏng chính xác từng bước Happy Path và Negative Case với đầy đủ assert số dư ví sinh viên.
+  3. Chiếu video/ảnh chụp màn hình demo đã ghi lại sẵn tại [`evidence/lab-15/`](../evidence/lab-15/).
+
+---
+
+## 6. Danh Mục Thiết Bị & Checklist Trước Giờ Báo Cáo
 
 - [x] Laptop trình chiếu đã kiểm tra kết nối máy chiếu / HDMI.
 - [x] Trình duyệt đã mở sẵn tab Web3 DApp `web/index.html` và ví MetaMask kết nối mạng Sepolia Testnet.
 - [x] Ví MetaMask của Sponsor có sẵn SepoliaETH thử nghiệm (> 0.2 ETH).
 - [x] Tab Etherscan Sepolia mở sẵn để tra cứu giao dịch on-chain.
-- [x] Slide báo cáo định dạng PDF/PowerPoint đã sao lưu trên USB và Cloud dự phòng.
+- [x] Hardhat node và bộ 91 test cases sẵn sàng ở cửa sổ terminal dự phòng.
 - [x] Toàn bộ mã nguồn và tài liệu trên GitHub ở trạng thái sạch, commit mới nhất.

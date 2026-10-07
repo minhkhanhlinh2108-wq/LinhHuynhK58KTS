@@ -614,8 +614,8 @@
       <div style="display: flex; align-items: center; gap: 8px;">
         <span style="font-size: 1.2rem;">⚠️</span>
         <div>
-          <strong>Chưa kết nối đúng mạng Sepolia Testnet!</strong>
-          <div style="font-size: 0.8rem; opacity: 0.9;">Hệ thống yêu cầu mạng Sepolia (Chain ID: 11155111 / 0xaa36a7).</div>
+          <strong id="networkAlertTitle">Vui lòng chuyển MetaMask sang Sepolia.</strong>
+          <div style="font-size: 0.8rem; opacity: 0.9;">Hệ thống yêu cầu mạng Sepolia Testnet (Chain ID: 11155111 / 0xaa36a7).</div>
         </div>
       </div>
       <button id="btnSwitchNetwork" class="btn btn-warning">Chuyển sang Sepolia</button>
@@ -715,6 +715,26 @@
             📥 Nạp Tiền Vào Escrow (fundScholarship)
           </button>
         </div>
+
+        <!-- Card 1C: Sponsor Check Status -->
+        <div class="card" style="grid-column: 1 / -1;">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">📊 Xem Trạng Thái Suất Học Bổng (Sponsor Monitor)</h2>
+              <p class="card-desc">Nhà tài trợ theo dõi trực tiếp tiến độ nạp tiền và trạng thái giải ngân từng mốc.</p>
+            </div>
+          </div>
+          <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
+            <div class="form-group" style="flex: 1; min-width: 200px;">
+              <label class="form-label" for="inpSponsorCheckId">Mã Suất Học Bổng (Scholarship ID)</label>
+              <input id="inpSponsorCheckId" class="form-input" type="number" min="1" placeholder="1" value="1" />
+            </div>
+            <button class="btn btn-secondary" onclick="handleSponsorCheckStatus()">
+              🔎 Xem Trạng Thái
+            </button>
+          </div>
+          <div id="sponsorStatusBox" style="display: none; background: rgba(0,0,0,0.35); padding: 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); font-size: 0.88rem;"></div>
+        </div>
       </div>
     </section>
 
@@ -778,6 +798,26 @@
           <button id="btnReleaseMilestone" class="btn btn-success" onclick="handleReleaseMilestone()">
             💰 Kích Hoạt Giải Ngân (releaseMilestone)
           </button>
+        </div>
+
+        <!-- Card 2C: View Student Scholarship & Progress -->
+        <div class="card" style="grid-column: 1 / -1;">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">🎓 Xem Suất Học Bổng Của Tôi (My Scholarship Progress)</h2>
+              <p class="card-desc">Sinh viên theo dõi trạng thái từng mốc, tiến độ duyệt và số tiền đã giải ngân về ví.</p>
+            </div>
+          </div>
+          <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
+            <div class="form-group" style="flex: 1; min-width: 200px;">
+              <label class="form-label" for="inpStudentCheckId">Mã Suất Học Bổng (Scholarship ID)</label>
+              <input id="inpStudentCheckId" class="form-input" type="number" min="1" placeholder="1" value="1" />
+            </div>
+            <button class="btn btn-secondary" onclick="handleStudentCheckStatus()">
+              👀 Xem Tiến Độ & Số Dư
+            </button>
+          </div>
+          <div id="studentStatusBox" style="display: none; background: rgba(0,0,0,0.35); padding: 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); font-size: 0.88rem;"></div>
         </div>
       </div>
     </section>
@@ -876,6 +916,35 @@
                 </tbody>
               </table>
             </div>
+          </div>
+        </div>
+
+        <!-- Live Transaction History & Transparency Feed -->
+        <div style="margin-top: 24px; border-top: 1px solid var(--border-color); padding-top: 20px;">
+          <h3 style="font-size: 1.05rem; color: #ffffff; display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+            <span>📜</span> Lịch Sử Giao Dịch & Minh Bạch (Live Session Ledger)
+          </h3>
+          <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 12px;">
+            Ghi nhận thời gian thực mọi giao dịch on-chain thành công và các giao dịch bị chặn / revert từ smart contract.
+          </p>
+          <div style="overflow-x: auto;">
+            <table class="milestone-table">
+              <thead>
+                <tr>
+                  <th>Thời gian</th>
+                  <th>Hành Động</th>
+                  <th>Suất ID</th>
+                  <th>Trạng Thái</th>
+                  <th>Transaction Hash & Sepolia Explorer</th>
+                  <th>Chi tiết / Lý do</th>
+                </tr>
+              </thead>
+              <tbody id="sessionTxTableBody">
+                <tr>
+                  <td colspan="6" style="text-align: center; color: var(--text-dim);">Chưa có giao dịch nào được thực hiện trong phiên làm việc này.</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -1084,7 +1153,109 @@
       }
     };
 
-    // --- SMART CONTRACT INTERACTIONS ---
+    // --- SMART CONTRACT INTERACTIONS & LOGIC ---
+
+    // Session Transaction History Store
+    const sessionTransactions = [];
+
+    function recordSessionTx(action, status, hash, details, scholarshipId = "-") {
+      const timeStr = new Date().toLocaleTimeString("vi-VN");
+      sessionTransactions.unshift({
+        time: timeStr,
+        action,
+        status,
+        hash,
+        details,
+        scholarshipId
+      });
+
+      const tbody = document.getElementById("sessionTxTableBody");
+      if (!tbody) return;
+
+      tbody.innerHTML = "";
+      sessionTransactions.forEach(tx => {
+        const row = document.createElement("tr");
+        const statusBadge = tx.status === "Thành công" 
+          ? `<span class="status-pill disbursed">Thành công</span>`
+          : `<span class="status-pill pending" style="background: rgba(239, 68, 68, 0.2); color: #fca5a5; border-color: rgba(239, 68, 68, 0.4);">${tx.status}</span>`;
+
+        const linkHtml = tx.hash
+          ? `<a class="tx-link" href="https://sepolia.etherscan.io/tx/${tx.hash}" target="_blank" rel="noopener noreferrer">${tx.hash.slice(0, 10)}...${tx.hash.slice(-8)} ↗</a>`
+          : `<span style="color: var(--text-dim); font-size: 0.8rem;">(Chưa phát sinh on-chain)</span>`;
+
+        row.innerHTML = `
+          <td>${tx.time}</td>
+          <td><strong>${tx.action}</strong></td>
+          <td><span class="code-pill">#${tx.scholarshipId}</span></td>
+          <td>${statusBadge}</td>
+          <td>${linkHtml}</td>
+          <td style="font-size: 0.82rem; color: var(--text-muted);">${tx.details}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    // Helper: Preconditions check
+    function validatePreconditions() {
+      if (!signer) {
+        showStatus("Chưa kết nối ví!", "Vui lòng kết nối ví MetaMask trước!", "error");
+        alert("Vui lòng kết nối ví MetaMask trước!");
+        return false;
+      }
+      if (!isCorrectNetwork) {
+        showStatus("Sai mạng!", "Vui lòng chuyển MetaMask sang Sepolia.", "error");
+        alert("Vui lòng chuyển MetaMask sang Sepolia.");
+        return false;
+      }
+      return true;
+    }
+
+    // Helper: Contract Error Decoding (Tất cả 9 trường hợp theo yêu cầu)
+    function handleContractError(err, prefix, id = "-") {
+      console.error(prefix, err);
+
+      // 1. Transaction Rejected by user
+      if (err.code === 4001 || err.code === "ACTION_REJECTED" || (err.message && err.message.toLowerCase().includes("user rejected"))) {
+        const msg = "Người dùng đã từ chối giao dịch trên MetaMask (Transaction Rejected).";
+        showStatus(`${prefix}!`, msg, "error");
+        recordSessionTx(prefix, "Từ chối", null, msg, id);
+        return;
+      }
+
+      const rawMsg = (err.reason || err.shortMessage || err.message || "").toString();
+      const errorData = (err.data || err.info?.error?.data || err.error?.data || "").toString();
+
+      let friendlyMsg = "Giao dịch thực thi thất bại trên blockchain.";
+
+      // 2. Không có quyền / Sai student
+      if (rawMsg.includes("NotStudent") || errorData.includes("51ee4177")) {
+        friendlyMsg = "Chặn thao tác: Sai địa chỉ sinh viên thụ hưởng (NotStudent)! Chỉ sinh viên được chỉ định mới có quyền thực hiện.";
+      } else if (rawMsg.includes("NotSponsor") || errorData.includes("ee3da5c8")) {
+        friendlyMsg = "Lỗi phân quyền: Bạn không có quyền thực hiện thao tác này (NotSponsor / Không có quyền)!";
+      } else if (rawMsg.includes("MilestoneNotApproved") || errorData.includes("3235bba4")) {
+        friendlyMsg = "Chặn thao tác: Mốc học tập chưa được phê duyệt (MilestoneNotApproved)!";
+      } else if (rawMsg.includes("AlreadyReleased") || errorData.includes("d3617be3")) {
+        friendlyMsg = "Chặn thao tác: Mốc này đã được giải ngân trước đó (AlreadyReleased)! Không được phép giải ngân hai lần.";
+      } else if (rawMsg.includes("InsufficientFunds") || errorData.includes("7a224ec8")) {
+        friendlyMsg = "Chặn thao tác: Quỹ học bổng chưa nạp đủ tiền giải ngân (InsufficientFunds)!";
+      } else if (rawMsg.includes("ScholarshipNotFound") || errorData.includes("3aa7cf12")) {
+        friendlyMsg = "Lỗi: Không tìm thấy suất học bổng (ScholarshipNotFound)!";
+      } else if (rawMsg.includes("MilestoneNotFound") || errorData.includes("600c01fa")) {
+        friendlyMsg = "Lỗi: Mốc học tập không tồn tại hoặc chưa nộp minh chứng (MilestoneNotFound)!";
+      } else if (rawMsg.includes("InvalidAmount") || errorData.includes("2c5211c6")) {
+        friendlyMsg = "Lỗi: Số tiền không hợp lệ hoặc vượt định mức cam kết (InvalidAmount)!";
+      } else if (rawMsg.includes("InvalidAddress") || errorData.includes("e6c4247b")) {
+        friendlyMsg = "Lỗi: Địa chỉ ví không hợp lệ (InvalidAddress)!";
+      } else if (rawMsg.includes("insufficient funds")) {
+        friendlyMsg = "Lỗi: Số dư ví không đủ Native SepoliaETH để chi trả giao dịch hoặc phí gas!";
+      } else if (rawMsg) {
+        friendlyMsg = `Giao dịch thất bại: ${rawMsg}`;
+      }
+
+      showStatus(`${prefix}!`, friendlyMsg, "error");
+      const failedHash = err.transactionHash || err.receipt?.hash || null;
+      recordSessionTx(prefix, "Bị Chặn / Thất Bại", failedHash, friendlyMsg, id);
+    }
 
     // 1. Create Scholarship
     async function handleCreateScholarship() {
@@ -1112,9 +1283,20 @@
         showStatus("Giao dịch đang chờ xác nhận trên blockchain...", `TxHash: ${tx.hash}`, "loading", tx.hash);
 
         const receipt = await tx.wait();
-        showStatus("Tạo suất học bổng thành công! 🎉", `Block: ${receipt.blockNumber}`, "success", tx.hash);
+        const nextId = (await coreContract.scholarshipCount()).toString();
+        showStatus(`Tạo suất học bổng #${nextId} thành công! 🎉`, `Block: ${receipt.blockNumber}`, "success", tx.hash);
+        recordSessionTx("Tạo Suất Học Bổng", "Thành công", tx.hash, `Đã tạo suất #${nextId} cho ${studentAddr.slice(0, 8)}...`, nextId);
+        
+        // Cập nhật sẵn ID sang các ô nhập liệu khác
+        document.getElementById("inpFundScholarshipId").value = nextId;
+        document.getElementById("inpSponsorCheckId").value = nextId;
+        document.getElementById("inpSubmitId").value = nextId;
+        document.getElementById("inpReleaseId").value = nextId;
+        document.getElementById("inpApproveId").value = nextId;
+        document.getElementById("inpStudentCheckId").value = nextId;
+        document.getElementById("inpLookupId").value = nextId;
       } catch (err) {
-        handleContractError(err, "Tạo suất học bổng thất bại");
+        handleContractError(err, "Tạo suất học bổng thất bại", "Mới");
       }
     }
 
@@ -1143,8 +1325,9 @@
 
         const receipt = await tx.wait();
         showStatus(`Nạp thành công ${ethAmount} ETH vào suất #${id}! 💰`, `Block: ${receipt.blockNumber}`, "success", tx.hash);
+        recordSessionTx("Nạp Tiền Escrow", "Thành công", tx.hash, `Nạp ${ethAmount} ETH vào suất #${id}`, id);
       } catch (err) {
-        handleContractError(err, "Nạp tiền thất bại");
+        handleContractError(err, "Nạp tiền thất bại", id);
       }
     }
 
@@ -1168,8 +1351,9 @@
 
         const receipt = await tx.wait();
         showStatus(`Đã nộp minh chứng mốc ${index} thành công! 📑`, `Block: ${receipt.blockNumber}`, "success", tx.hash);
+        recordSessionTx("Nộp Minh Chứng", "Thành công", tx.hash, `Nộp IPFS CID cho Mốc ${index}`, id);
       } catch (err) {
-        handleContractError(err, "Nộp minh chứng thất bại");
+        handleContractError(err, "Nộp minh chứng thất bại", id);
       }
     }
 
@@ -1192,8 +1376,9 @@
 
         const receipt = await tx.wait();
         showStatus(`Phê duyệt mốc ${index} thành công! ✅`, `Block: ${receipt.blockNumber}`, "success", tx.hash);
+        recordSessionTx("Phê Duyệt Mốc", "Thành công", tx.hash, `Đã duyệt giải ngân cho Mốc ${index}`, id);
       } catch (err) {
-        handleContractError(err, "Phê duyệt mốc thất bại");
+        handleContractError(err, "Phê duyệt mốc thất bại", id);
       }
     }
 
@@ -1216,12 +1401,108 @@
 
         const receipt = await tx.wait();
         showStatus(`Giải ngân mốc ${index} thành công về ví sinh viên! 💸`, `Block: ${receipt.blockNumber}`, "success", tx.hash);
+        recordSessionTx("Giải Ngân Học Bổng", "Thành công", tx.hash, `Đã chuyển Native ETH mốc ${index} về ví sinh viên`, id);
       } catch (err) {
-        handleContractError(err, "Giải ngân thất bại");
+        handleContractError(err, "Giải ngân thất bại", id);
       }
     }
 
-    // 6. Lookup Scholarship (Explorer)
+    // 6. Sponsor Check Status
+    async function handleSponsorCheckStatus() {
+      const id = document.getElementById("inpSponsorCheckId").value;
+      const box = document.getElementById("sponsorStatusBox");
+      if (!id || id <= 0) {
+        alert("Vui lòng nhập Scholarship ID hợp lệ!");
+        return;
+      }
+
+      try {
+        const readProvider = provider || new ethers.JsonRpcProvider("https://ethereum-sepolia-rpc.publicnode.com");
+        const readContract = new ethers.Contract(currentContractAddress, PROJECT_CORE_ABI, readProvider);
+        const s = await readContract.getScholarship(id);
+
+        let html = `
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 12px;">
+            <div><strong>Học bổng:</strong> #${s.id}</div>
+            <div><strong>Sinh viên:</strong> <span class="code-pill">${s.student.slice(0, 6)}...${s.student.slice(-4)}</span></div>
+            <div><strong>Tổng cam kết:</strong> ${ethers.formatEther(s.totalAmount)} ETH</div>
+            <div><strong>Đã nạp (Funded):</strong> ${ethers.formatEther(s.fundedAmount)} ETH</div>
+            <div><strong>Đã giải ngân:</strong> ${ethers.formatEther(s.releasedAmount)} ETH</div>
+            <div><strong>Số mốc:</strong> ${s.milestoneCount}</div>
+          </div>
+          <div style="font-weight: 600; margin-bottom: 6px;">Tiến độ các mốc:</div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        `;
+
+        const statusNames = ["Pending (Chờ)", "Submitted (Đã nộp)", "Approved (Đã duyệt)", "Disbursed (Đã nhận tiền)"];
+        const statusClasses = ["pending", "submitted", "approved", "disbursed"];
+
+        for (let i = 0; i < Number(s.milestoneCount); i++) {
+          const st = Number(await readContract.getMilestoneStatus(id, i));
+          html += `<span class="status-pill ${statusClasses[st]}">Mốc ${i}: ${statusNames[st]}</span>`;
+        }
+
+        html += `</div>`;
+        box.innerHTML = html;
+        box.style.display = "block";
+      } catch (err) {
+        console.error(err);
+        box.innerHTML = `<span style="color: var(--accent-danger);">Không tìm thấy suất học bổng #${id}!</span>`;
+        box.style.display = "block";
+      }
+    }
+
+    // 7. Student Check Status
+    async function handleStudentCheckStatus() {
+      const id = document.getElementById("inpStudentCheckId").value;
+      const box = document.getElementById("studentStatusBox");
+      if (!id || id <= 0) {
+        alert("Vui lòng nhập Scholarship ID hợp lệ!");
+        return;
+      }
+
+      try {
+        const readProvider = provider || new ethers.JsonRpcProvider("https://ethereum-sepolia-rpc.publicnode.com");
+        const readContract = new ethers.Contract(currentContractAddress, PROJECT_CORE_ABI, readProvider);
+        const s = await readContract.getScholarship(id);
+
+        let studentBal = "0";
+        try {
+          const bal = await readProvider.getBalance(s.student);
+          studentBal = ethers.formatEther(bal);
+        } catch (_) {}
+
+        let html = `
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 12px;">
+            <div><strong>Học bổng:</strong> #${s.id}</div>
+            <div><strong>Ví nhận tiền:</strong> <span class="code-pill">${s.student.slice(0, 6)}...${s.student.slice(-4)}</span></div>
+            <div><strong>Số dư ví hiện tại:</strong> <span style="color: var(--accent-success); font-weight: 700;">${studentBal} ETH</span></div>
+            <div><strong>Đã giải ngân:</strong> <span style="color: #6ee7b7; font-weight: 700;">${ethers.formatEther(s.releasedAmount)} ETH</span></div>
+            <div><strong>Quỹ đã nạp:</strong> ${ethers.formatEther(s.fundedAmount)} / ${ethers.formatEther(s.totalAmount)} ETH</div>
+          </div>
+          <div style="font-weight: 600; margin-bottom: 6px;">Trạng thái từng mốc học tập:</div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        `;
+
+        const statusNames = ["Pending (Chờ nộp)", "Submitted (Chờ duyệt)", "Approved (Sẵn sàng nhận tiền)", "Disbursed (Đã nhận tiền về ví)"];
+        const statusClasses = ["pending", "submitted", "approved", "disbursed"];
+
+        for (let i = 0; i < Number(s.milestoneCount); i++) {
+          const st = Number(await readContract.getMilestoneStatus(id, i));
+          html += `<span class="status-pill ${statusClasses[st]}">Mốc ${i}: ${statusNames[st]}</span>`;
+        }
+
+        html += `</div>`;
+        box.innerHTML = html;
+        box.style.display = "block";
+      } catch (err) {
+        console.error(err);
+        box.innerHTML = `<span style="color: var(--accent-danger);">Không tìm thấy suất học bổng #${id}!</span>`;
+        box.style.display = "block";
+      }
+    }
+
+    // 8. Lookup Scholarship (Explorer)
     async function handleLookupScholarship() {
       const id = document.getElementById("inpLookupId").value;
       if (!id || id <= 0) {
@@ -1273,35 +1554,6 @@
         console.error("Lỗi tra cứu:", err);
         showStatus("Không tìm thấy dữ liệu suất học bổng!", `ID #${id} chưa tồn tại hoặc lỗi kết nối RPC.`, "error");
       }
-    }
-
-    // Helper: Preconditions check
-    function validatePreconditions() {
-      if (!signer) {
-        alert("Vui lòng kết nối ví MetaMask trước!");
-        return false;
-      }
-      if (!isCorrectNetwork) {
-        alert("Vui lòng chuyển sang mạng Sepolia Testnet (Chain ID 11155111) trước khi thao tác!");
-        return false;
-      }
-      return true;
-    }
-
-    // Helper: Contract Error Decoding
-    function handleContractError(err, prefix) {
-      console.error(prefix, err);
-      let msg = err.reason || err.shortMessage || err.message || "Giao dịch bị từ chối.";
-      
-      // Map custom errors
-      if (msg.includes("NotSponsor")) msg = "Lỗi quyền: Bạn không phải là Nhà tài trợ (Sponsor) của suất học bổng này!";
-      else if (msg.includes("NotStudent")) msg = "Lỗi quyền: Bạn không phải là Sinh viên thụ hưởng của suất học bổng này!";
-      else if (msg.includes("MilestoneNotApproved")) msg = "Chặn giao dịch: Mốc này chưa được phê duyệt (MilestoneNotApproved)!";
-      else if (msg.includes("AlreadyReleased")) msg = "Chặn giao dịch: Mốc này đã được giải ngân trước đó (AlreadyReleased)!";
-      else if (msg.includes("InsufficientFunds")) msg = "Chặn giao dịch: Quỹ escrow chưa nạp đủ tiền giải ngân (InsufficientFunds)!";
-      else if (msg.includes("InvalidAmount")) msg = "Số tiền không hợp lệ hoặc vượt định mức cho phép!";
-
-      showStatus(`${prefix}!`, msg, "error");
     }
 
     // Event Listeners

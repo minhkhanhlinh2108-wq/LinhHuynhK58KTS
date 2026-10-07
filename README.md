@@ -52,16 +52,18 @@
 │   ├── lab-11/                # Bằng chứng 8 yêu cầu kinh tế & 34 tests chuyên sâu
 │   ├── lab-13/                # Bằng chứng thực nghiệm an ninh Reentrancy & 10 tests
 │   ├── lab-14/                # Bằng chứng kiểm toán chéo & benchmark gas EVM
-│   └── lab-15/                # Bằng chứng đánh giá kỹ thuật cuối kỳ & Checklist nghiệm thu
+│   └── lab-15/                # Bằng chứng đánh giá kỹ thuật cuối kỳ & E2E Demo Walkthrough
+│       ├── DEMO_RUN_REPORT.md         # Báo cáo chạy thử DApp thực tế 8 phần & đối soát số dư
 │       ├── FINAL_TECHNICAL_REVIEW.md  # Báo cáo rà soát 17 tiêu chí kỹ thuật
 │       ├── CHECKLIST_FINAL_RELEASE.md # Danh mục kiểm tra nghiệm thu chính thức
 │       └── DAPP_VERIFICATION.md       # Bằng chứng kiểm thử giao diện DApp & mạng Sepolia
-└── test/                      # Hệ thống kiểm thử tự động (85/85 tests PASS 100%)
+└── test/                      # Hệ thống kiểm thử tự động (91/91 tests PASS 100%)
     ├── ProjectCore.t.sol      # Test suite chuẩn Lab 09 (17 tests)
     ├── Lab10_Verify.t.sol     # Test suite kiểm chứng findings Lab 10 (13 tests)
     ├── Lab11_EconomicRules.t.sol # Test suite kinh tế Lab 11 (34 tests)
     ├── Lab13_SecurityExperiments.t.sol # Test suite thực nghiệm an ninh Lab 13 (10 tests)
-    └── Lab14_GasReport.t.sol           # Test suite đo lường gas benchmark Lab 14 (6 tests)
+    ├── Lab14_GasReport.t.sol           # Test suite đo lường gas benchmark Lab 14 (6 tests)
+    └── Lab15_E2E_Demo.t.sol            # Test suite mô phỏng 8 phần E2E Demo Lab 15 (6 tests)
 ```
 
 ---
@@ -80,13 +82,13 @@ npx hardhat compile
 cmd /c npx hardhat compile
 ```
 
-### Bước 3: Chạy toàn bộ 85 bài test tự động
+### Bước 3: Chạy toàn bộ 91 bài test tự động (bao gồm 6 E2E Demo tests)
 ```bash
 npx hardhat test
 # Hoặc trên Windows PowerShell:
 cmd /c npx hardhat test
 ```
-*Kết quả mong đợi:* **85 passing (85 solidity)** không có lỗi nào.
+*Kết quả mong đợi:* **91 passing (91 solidity)** không có lỗi nào.
 
 ---
 
@@ -148,6 +150,7 @@ cmd /c npx hardhat test
 - 🔍 **Báo cáo kiểm toán chéo Lab 14:** [LAB14_CROSS_AUDIT.md](docs/LAB14_CROSS_AUDIT.md)
 - ⛽ **Báo cáo đối chuẩn Gas Lab 14:** [GAS_REPORT.md](evidence/lab-14/GAS_REPORT.md)
 - 🎤 **Kế hoạch thuyết trình & Demo Lab 15:** [PRESENTATION_PLAN.md](docs/PRESENTATION_PLAN.md)
+- 🖥️ **Báo cáo chạy thử DApp thực tế 8 phần:** [DEMO_RUN_REPORT.md](evidence/lab-15/DEMO_RUN_REPORT.md)
 - 📝 **Đánh giá kỹ thuật cuối kỳ Lab 15:** [FINAL_TECHNICAL_REVIEW.md](evidence/lab-15/FINAL_TECHNICAL_REVIEW.md)
 - 🚀 **Danh mục nghiệm thu phát hành chính thức:** [CHECKLIST_FINAL_RELEASE.md](evidence/lab-15/CHECKLIST_FINAL_RELEASE.md)
 - 🖥️ **Bằng chứng xác minh DApp:** [DAPP_VERIFICATION.md](evidence/lab-15/DAPP_VERIFICATION.md)
