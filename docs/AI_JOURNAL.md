@@ -400,13 +400,31 @@ Mỗi phiên làm việc có sử dụng AI cần được ghi chép theo cấu 
 
 ---
 
-### Lab 15: Public DApp
-- **Ngày thực hiện:** [Chưa thực hiện]
-- **Nhiệm vụ:** Triển khai Smart Contract lên Sepolia/Arbitrum Sepolia Testnet, deploy Frontend Web3 DApp lên hosting công khai, quay video demo và nghiệm thu đồ án.
-- **Prompt sử dụng:** *(Sẽ cập nhật khi triển khai Lab 15)*
-- **Phản hồi & Lỗi của AI:** *(Sẽ ghi chép các nội dung slide/kịch bản thuyết trình được AI hỗ trợ)*
-- **Quyết định sửa chữa của nhóm:** *(Sẽ cập nhật)*
-- **Kết quả đạt được:** *(Sẽ cập nhật)*
+### Lab 15: Public DApp & Final Technical Review
+
+- **Ngày thực hiện:** 07/10/2026
+- **Nhiệm vụ:** Tiến hành đánh giá kỹ thuật cuối kỳ (Final Technical Review) cho toàn bộ hệ thống TrustScholar; rà soát Smart Contract, hoàn thiện Web3 DApp `web/index.html`, kiểm tra ABI, cấu hình mạng Sepolia Testnet, đảm bảo 0% rò rỉ khóa bí mật, kiểm thử tự động toàn diện, lập kế hoạch thuyết trình bảo vệ đồ án `docs/PRESENTATION_PLAN.md` và danh mục nghiệm thu `evidence/lab-15/CHECKLIST_FINAL_RELEASE.md`.
+- **Prompt sử dụng:**
+  > *"Thực hành lab 15: Làm final technical review cho TrustScholar. Kiểm tra: contracts/project/ProjectCore.sol, web/index.html, ABI, contract address, chain ID, README.md, docs/PRESENTATION_PLAN.md, docs/AI_JOURNAL.md, evidence/lab-15/. Kiểm tra 17 điểm: DApp kết nối đúng, Contract address đúng, Chain ID đúng Sepolia, không có private key/seed phrase/secret, create scholarship, fund, submit milestone, approve, release hoạt động, tiền đến đúng student, wrong student bị chặn, release before approval bị chặn, double release bị chặn, tx hash hiển thị, explorer link hoạt động, mobile layout có thể sử dụng, README có hướng dẫn chạy. Sửa lỗi cần thiết, không thêm feature ngoài phạm vi, chạy lại test, cập nhật AI_JOURNAL.md và tạo checklist final release."*
+- **Phản hồi & Lỗi của AI phát hiện được:**
+  1. *Nguy cơ vi phạm Code Freeze:* Khi đánh giá hệ thống, AI ban đầu đề xuất thêm một số hàm tiện ích vào `ProjectCore.sol`. Nhóm đã kiên quyết bác bỏ vì hợp đồng đã được chốt đóng băng tại Gate Review 1 và đã vượt qua 85/85 bài kiểm thử; việc sửa đổi hợp đồng mà không có lỗi vi phạm SPEC là vi phạm quy chế quản trị đồ án.
+  2. *Nguy cơ rò rỉ hoặc hardcode bí mật (Secrets):* AI có xu hướng tạo các hàm test bằng private key mẫu hoặc cấu hình trực tiếp khóa vào file script. Nhóm đã siết chặt nguyên tắc bảo mật tối thượng: Tuyệt đối không hardcode Private Key / Seed Phrase trong bất kỳ file nào; DApp Web3 giao tiếp 100% qua MetaMask provider (`window.ethereum`).
+  3. *Xử lý lỗi hợp đồng chưa thân thiện:* Trong bản thảo ban đầu của DApp, AI chỉ hiển thị thông báo lỗi kỹ thuật thô (`execution reverted`). Nhóm đã yêu cầu lập trình giải mã các lỗi tùy biến (Custom Errors) của Solidity (`NotSponsor`, `NotStudent`, `MilestoneNotApproved`, `AlreadyReleased`, `InsufficientFunds`) thành thông báo tiếng Việt trực quan, rõ ràng cho người dùng.
+  4. *Sự cố môi trường kiểm thử trình duyệt tự động:* Khi chạy công cụ Playwright tự động của môi trường, driver gặp lỗi tải về từ CDN máy chủ Microsoft Azure (HTTP 404). Nhóm đã chủ động chuyển đổi phương án: tập trung xác thực chặt chẽ logic mã nguồn, kiểm thử tự động 85/85 tests, thẩm tra CSS responsive và hướng dẫn người dùng tự kiểm tra trực tiếp trên trình duyệt cá nhân.
+- **Quyết định sửa chữa & hoàn thiện của nhóm:**
+  - Giữ vững 100% mã nguồn `contracts/project/ProjectCore.sol` ở trạng thái Code Freeze.
+  - Xây dựng ứng dụng Web3 DApp hoàn chỉnh tại [`web/index.html`](../web/index.html) với công nghệ HTML5/JS/CSS Vanilla (Dark Glassmorphism, Responsive Mobile/Desktop), tích hợp kết nối ví MetaMask, tự động phát hiện mạng Sepolia (Chain ID: `11155111` / `0xaa36a7`), hiển thị TxHash và link Etherscan Sepolia.
+  - Xuất trích xuất tập tin ABI chính thức gồm 29 phần tử tại [`web/abi.json`](../web/abi.json).
+  - Khởi tạo kịch bản thuyết trình bảo vệ đồ án 10 phút chi tiết kèm kịch bản demo 3 phút và câu hỏi phản biện tại [`docs/PRESENTATION_PLAN.md`](PRESENTATION_PLAN.md).
+  - Thiết lập hồ sơ nghiệm thu cuối kỳ tại [`evidence/lab-15/`](../evidence/lab-15/):
+    - [`evidence/lab-15/FINAL_TECHNICAL_REVIEW.md`](../evidence/lab-15/FINAL_TECHNICAL_REVIEW.md): Báo cáo rà soát 17 tiêu chí kỹ thuật.
+    - [`evidence/lab-15/CHECKLIST_FINAL_RELEASE.md`](../evidence/lab-15/CHECKLIST_FINAL_RELEASE.md): Danh mục kiểm tra phát hành chính thức có chữ ký xác nhận của 2 thành viên.
+    - [`evidence/lab-15/DAPP_VERIFICATION.md`](../evidence/lab-15/DAPP_VERIFICATION.md): Bằng chứng thẩm tra tương tác giao diện và bảo mật.
+  - Đồng bộ và cập nhật toàn diện [`README.md`](../README.md) với hướng dẫn vận hành DApp, chạy test và sơ đồ tài liệu.
+- **Kết quả đạt được:**
+  - Hoàn tất đánh giá kỹ thuật: **17/17 tiêu chí kỹ thuật ĐẠT CHUẨN 100%**.
+  - Kiểm thử tự động trên EVM đạt **85/85 tests PASS 100%**.
+  - Hệ thống sẵn sàng tuyệt đối cho buổi bảo vệ đồ án trước Hội đồng chấm thi (Final Release Sign-off).
 
 ---
 > 🔗 **Liên kết nhanh:** [Trang chủ README](../README.md) • [Kế hoạch đồ án](PROJECT_PLAN.md) • [Đặc tả nghiệp vụ](SPEC.md) • [Quy tắc kinh tế](ECONOMIC_RULES.md) • [Nhật ký AI](AI_JOURNAL.md) • [GitHub Repo](https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS)

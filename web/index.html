@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TrustScholar — Nền Tảng Giải Ngân Học Bổng Minh Bạch Trên Blockchain</title>
+  <meta name="description" content="DApp giải ngân học bổng minh bạch phi lưu ký trên blockchain Sepolia Testnet thuộc đồ án TrustScholar.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- Ethers.js v6 UMD CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
+
+  <style>
+    :root {
+      --bg-primary: #0b0f19;
+      --bg-secondary: #111827;
+      --bg-card: rgba(17, 24, 39, 0.75);
+      --bg-card-hover: rgba(31, 41, 55, 0.85);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-focus: #6366f1;
+      
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --text-dim: #6b7280;
+      
+      --accent-primary: #6366f1;
+      --accent-primary-hover: #4f46e5;
+      --accent-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+      --accent-success: #10b981;
+      --accent-warning: #f59e0b;
+      --accent-danger: #ef4444;
+      --accent-info: #06b6d4;
+
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-full: 9999px;
+
+      --shadow-card: 0 10px 30px -10px rgba(0, 0, 0, 0.5), 0 0 1px 1px rgba(255, 255, 255, 0.05);
+      --shadow-glow: 0 0 25px rgba(99, 102, 241, 0.25);
+      --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Ambient background gradient orbs */
+    body::before {
+      content: "";
+      position: fixed;
+      top: -20%;
+      left: 15%;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(11, 15, 25, 0) 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::after {
+      content: "";
+      position: fixed;
+      bottom: -15%;
+      right: 10%;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(236, 72, 153, 0.12) 0%, rgba(11, 15, 25, 0) 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header & Navigation */
+    header {
+      background: rgba(11, 15, 25, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      padding: 16px 0;
+    }
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 44px;
+      height: 44px;
+      background: var(--accent-gradient);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: var(--shadow-glow);
+    }
+
+    .brand-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-subtitle {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: var(--radius-full);
+      font-size: 0.8rem;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+    }
+
+    .badge-sepolia {
+      background: rgba(99, 102, 241, 0.15);
+      border-color: rgba(99, 102, 241, 0.35);
+      color: #a5b4fc;
+    }
+
+    .badge-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-success);
+      box-shadow: 0 0 8px var(--accent-success);
+    }
+
+    .badge-dot.error {
+      background: var(--accent-danger);
+      box-shadow: 0 0 8px var(--accent-danger);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: 600;
+      padding: 10px 18px;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: var(--accent-gradient);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+    }
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-main);
+      border-color: var(--border-color);
+    }
+    .btn-secondary:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: #ffffff;
+    }
+    .btn-success:hover:not(:disabled) {
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .btn-warning {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: #ffffff;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+
+    /* Contract Config Bar */
+    .config-bar {
+      margin-top: 16px;
+      padding: 12px 18px;
+      background: rgba(17, 24, 39, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: 0.85rem;
+    }
+
+    .config-address {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-muted);
+    }
+
+    .code-pill {
+      font-family: 'JetBrains Mono', monospace;
+      color: #93c5fd;
+      background: rgba(59, 130, 246, 0.12);
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: 1px solid rgba(59, 130, 246, 0.25);
+    }
+
+    /* Network Alert Box */
+    #networkAlert {
+      display: none;
+      margin-top: 16px;
+      padding: 14px 18px;
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      border-radius: var(--radius-md);
+      color: #fca5a5;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* Tabs */
+    .tab-navigation {
+      display: flex;
+      gap: 8px;
+      margin: 24px 0 20px 0;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 8px;
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 10px 18px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all var(--transition-fast);
+      white-space: nowrap;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .tab-btn.active {
+      color: #ffffff;
+      background: rgba(99, 102, 241, 0.18);
+      border: 1px solid rgba(99, 102, 241, 0.35);
+    }
+
+    /* Card Panels */
+    .tab-pane {
+      display: none;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .tab-pane.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow-card);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* Form Fields */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .form-hint {
+      font-size: 0.74rem;
+      color: var(--text-dim);
+    }
+
+    .form-input {
+      font-family: inherit;
+      font-size: 0.9rem;
+      padding: 10px 14px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      color: var(--text-main);
+      transition: border-color var(--transition-fast);
+      width: 100%;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    }
+
+    /* Status & Feedback box */
+    #statusNotification {
+      margin: 20px 0;
+      padding: 16px 20px;
+      border-radius: var(--radius-md);
+      background: rgba(17, 24, 39, 0.8);
+      border: 1px solid var(--border-color);
+      display: none;
+    }
+
+    .status-content {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .status-spinner {
+      width: 22px;
+      height: 22px;
+      border: 3px solid rgba(255, 255, 255, 0.15);
+      border-top-color: var(--accent-primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .status-text {
+      flex: 1;
+      font-size: 0.9rem;
+    }
+
+    .tx-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: #93c5fd;
+      text-decoration: underline;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.84rem;
+      word-break: break-all;
+    }
+
+    /* Explorer Details */
+    .scholarship-card {
+      margin-top: 14px;
+      padding: 18px;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .info-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .info-label {
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+      font-weight: 700;
+    }
+
+    .info-value {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #ffffff;
+      font-family: 'JetBrains Mono', monospace;
+      word-break: break-all;
+    }
+
+    /* Milestone list table */
+    .milestone-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 0.85rem;
+    }
+
+    .milestone-table th, .milestone-table td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .milestone-table th {
+      color: var(--text-dim);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+    }
+
+    .status-pill {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: var(--radius-full);
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .status-pill.pending { background: rgba(156, 163, 175, 0.15); color: #9ca3af; }
+    .status-pill.submitted { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+    .status-pill.approved { background: rgba(6, 182, 212, 0.15); color: #67e8f9; }
+    .status-pill.disbursed { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+
+    /* Footer */
+    footer {
+      margin-top: auto;
+      border-top: 1px solid var(--border-color);
+      padding: 24px 0;
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      background: rgba(11, 15, 25, 0.9);
+    }
+
+    .footer-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    /* Responsive */
+    @media (max-width: 860px) {
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+      .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .header-actions {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .config-bar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="container header-content">
+      <div class="brand-group">
+        <div class="brand-logo">🎓</div>
+        <div>
+          <h1 class="brand-title">TrustScholar</h1>
+          <div class="brand-subtitle">Nền Tảng Giải Ngân Học Bổng Minh Bạch Blockchain</div>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- Network Badge -->
+        <div id="networkBadge" class="badge badge-sepolia">
+          <span id="networkDot" class="badge-dot"></span>
+          <span id="networkText">Sepolia Testnet (11155111)</span>
+        </div>
+
+        <!-- Connect Wallet Button -->
+        <button id="btnConnectWallet" class="btn btn-primary">
+          <span id="walletIcon">🦊</span>
+          <span id="walletBtnText">Kết Nối Ví MetaMask</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Network Warning Alert -->
+    <div id="networkAlert">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 1.2rem;">⚠️</span>
+        <div>
+          <strong>Chưa kết nối đúng mạng Sepolia Testnet!</strong>
+          <div style="font-size: 0.8rem; opacity: 0.9;">Hệ thống yêu cầu mạng Sepolia (Chain ID: 11155111 / 0xaa36a7).</div>
+        </div>
+      </div>
+      <button id="btnSwitchNetwork" class="btn btn-warning">Chuyển sang Sepolia</button>
+    </div>
+
+    <!-- Contract Config Bar -->
+    <div class="config-bar">
+      <div class="config-address">
+        <span>📍 Smart Contract:</span>
+        <span id="contractAddressDisplay" class="code-pill">0x71C8360f089f24E1F034C7f6424e86a51d45C522</span>
+        <button id="btnEditContract" class="btn btn-secondary" style="padding: 3px 8px; font-size: 0.75rem;">Đổi Address</button>
+      </div>
+      <div style="display: flex; gap: 8px; align-items: center; font-size: 0.8rem; color: var(--text-dim);">
+        <span>Trạng thái:</span>
+        <span id="contractStatusText" style="color: var(--accent-success); font-weight: 600;">Sẵn sàng tương tác</span>
+      </div>
+    </div>
+
+    <!-- Live Status / Transaction Notification -->
+    <div id="statusNotification">
+      <div class="status-content">
+        <div id="statusSpinner" class="status-spinner" style="display: none;"></div>
+        <div class="status-text">
+          <div id="statusMessage" style="font-weight: 600;">Thông báo giao dịch</div>
+          <div id="statusDetail" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;"></div>
+        </div>
+        <div id="statusAction"></div>
+      </div>
+    </div>
+
+    <!-- Role-based Navigation Tabs -->
+    <nav class="tab-navigation">
+      <button id="tabBtnSponsor" class="tab-btn active" onclick="switchTab('sponsor')">
+        🏢 1. Nhà Tài Trợ (Sponsor)
+      </button>
+      <button id="tabBtnStudent" class="tab-btn" onclick="switchTab('student')">
+        🎓 2. Sinh Viên (Student)
+      </button>
+      <button id="tabBtnVerifier" class="tab-btn" onclick="switchTab('verifier')">
+        ⚖️ 3. Thẩm Định Viên (Verifier)
+      </button>
+      <button id="tabBtnExplorer" class="tab-btn" onclick="switchTab('explorer')">
+        🔍 4. Tra Cứu Minh Bạch (Explorer)
+      </button>
+    </nav>
+
+    <!-- TAB 1: SPONSOR -->
+    <section id="tabSponsor" class="tab-pane active">
+      <div class="grid-2">
+        <!-- Card 1A: Create Scholarship -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">✨ Tạo Suất Học Bổng</h2>
+              <p class="card-desc">Khởi tạo hợp đồng Escrow cam kết giải ngân theo các mốc học tập.</p>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inpStudentAddress">Địa chỉ ví Sinh viên (Student Wallet)</label>
+            <input id="inpStudentAddress" class="form-input" type="text" placeholder="0x..." />
+            <span class="form-hint">Ví dụ: 0x70997970C51812dc3A010C7d01b50e0d17dc79C8</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inpMilestones">Định mức các mốc giải ngân (ETH)</label>
+            <input id="inpMilestones" class="form-input" type="text" placeholder="0.05, 0.05" value="0.05, 0.05" />
+            <span class="form-hint">Nhập các mốc phân tách bằng dấu phẩy. Ví dụ: "0.05, 0.05" = 2 mốc 0.1 ETH.</span>
+          </div>
+
+          <button id="btnCreateScholarship" class="btn btn-primary" onclick="handleCreateScholarship()">
+            🚀 Khởi Tạo Suất Học Bổng (createScholarship)
+          </button>
+        </div>
+
+        <!-- Card 1B: Fund Scholarship -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">💰 Nạp Quỹ Escrow (Fund)</h2>
+              <p class="card-desc">Nhà tài trợ nạp Native ETH bảo chứng vào Smart Contract.</p>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inpFundScholarshipId">Mã Suất Học Bổng (Scholarship ID)</label>
+            <input id="inpFundScholarshipId" class="form-input" type="number" min="1" placeholder="1" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inpFundAmount">Số lượng ETH muốn nạp (ETH)</label>
+            <input id="inpFundAmount" class="form-input" type="number" step="0.001" placeholder="0.1" />
+            <span class="form-hint">Hạn mức tối đa bằng tổng định mức cam kết của suất học bổng.</span>
+          </div>
+
+          <button id="btnFundScholarship" class="btn btn-success" onclick="handleFundScholarship()">
+            📥 Nạp Tiền Vào Escrow (fundScholarship)
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: STUDENT -->
+    <section id="tabStudent" class="tab-pane">
+      <div class="grid-2">
+        <!-- Card 2A: Submit Milestone Proof -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">📑 Nộp Minh Chứng Mốc (Submit)</h2>
+              <p class="card-desc">Sinh viên nộp bằng chứng chứng chỉ / bảng điểm (IPFS CID).</p>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inpSubmitId">Mã Suất Học Bổng (Scholarship ID)</label>
+            <input id="inpSubmitId" class="form-input" type="number" min="1" placeholder="1" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inpSubmitIndex">Chỉ số Mốc (Milestone Index)</label>
+            <input id="inpSubmitIndex" class="form-input" type="number" min="0" placeholder="0 (Mốc đầu tiên)" value="0" />
+            <span class="form-hint">Chỉ số đếm từ 0 (Mốc 1 = 0, Mốc 2 = 1).</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inpProofHash">Mã Băm / IPFS CID Minh Chứng</label>
+            <input id="inpProofHash" class="form-input" type="text" placeholder="QmZ4tDuvesekSs4qM5ZBKpXiZGun7S2CYtEZRB3DYXkjGx" value="QmZ4tDuvesekSs4qM5ZBKpXiZGun7S2CYtEZRB3DYXkjGx" />
+            <span class="form-hint">Hash định danh phi tập trung minh chứng học tập trên IPFS.</span>
+          </div>
+
+          <button id="btnSubmitMilestone" class="btn btn-primary" onclick="handleSubmitMilestone()">
+            📤 Gửi Minh Chứng (submitMilestone)
+          </button>
+        </div>
+
+        <!-- Card 2B: Release Milestone -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">💸 Nhận Giải Ngân (Release)</h2>
+              <p class="card-desc">Kích hoạt chuyển Native ETH trực tiếp về ví Sinh viên chính chủ.</p>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inpReleaseId">Mã Suất Học Bổng (Scholarship ID)</label>
+            <input id="inpReleaseId" class="form-input" type="number" min="1" placeholder="1" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inpReleaseIndex">Chỉ số Mốc (Milestone Index)</label>
+            <input id="inpReleaseIndex" class="form-input" type="number" min="0" placeholder="0" value="0" />
+          </div>
+
+          <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); padding: 12px; border-radius: 8px; font-size: 0.8rem; color: #a7f3d0;">
+            🛡️ <strong>Bảo vệ tự động:</strong> Tiền sẽ được gửi thẳng đến ví Sinh viên đã khai báo lúc tạo suất học bổng, đảm bảo 0% nguy cơ chuyển nhầm cho người khác.
+          </div>
+
+          <button id="btnReleaseMilestone" class="btn btn-success" onclick="handleReleaseMilestone()">
+            💰 Kích Hoạt Giải Ngân (releaseMilestone)
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: VERIFIER -->
+    <section id="tabVerifier" class="tab-pane">
+      <div class="card" style="max-width: 640px; margin: 0 auto;">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">⚖️ Phê Duyệt Mốc Học Tập (Approve)</h2>
+            <p class="card-desc">Thẩm định viên hoặc Nhà tài trợ kiểm tra minh chứng và phê duyệt giải ngân.</p>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="inpApproveId">Mã Suất Học Bổng (Scholarship ID)</label>
+          <input id="inpApproveId" class="form-input" type="number" min="1" placeholder="1" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="inpApproveIndex">Chỉ số Mốc (Milestone Index)</label>
+          <input id="inpApproveIndex" class="form-input" type="number" min="0" placeholder="0" value="0" />
+          <span class="form-hint">Mốc phải ở trạng thái "Submitted" mới có thể phê duyệt.</span>
+        </div>
+
+        <button id="btnApproveMilestone" class="btn btn-primary" onclick="handleApproveMilestone()">
+          ✅ Phê Duyệt Mốc (approveMilestone)
+        </button>
+      </div>
+    </section>
+
+    <!-- TAB 4: EXPLORER -->
+    <section id="tabExplorer" class="tab-pane">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">🔍 Tra Cứu Minh Bạch Suất Học Bổng</h2>
+            <p class="card-desc">Xem thông tin toàn vẹn on-chain, tiến độ và trạng thái giải ngân từng mốc.</p>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+          <input id="inpLookupId" class="form-input" style="max-width: 280px;" type="number" min="1" placeholder="Nhập Scholarship ID" value="1" />
+          <button id="btnLookup" class="btn btn-primary" onclick="handleLookupScholarship()">
+            Tra Cứu Dữ Liệu
+          </button>
+        </div>
+
+        <!-- Details Container -->
+        <div id="lookupResult" style="display: none;">
+          <div class="scholarship-card">
+            <h3 style="font-size: 1rem; color: #93c5fd; margin-bottom: 12px;">📊 Thông Tin Suất Học Bổng #<span id="resId">1</span></h3>
+            
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="info-label">Nhà Tài Trợ (Sponsor)</span>
+                <span id="resSponsor" class="info-value">-</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Sinh Viên Thụ Hưởng (Student)</span>
+                <span id="resStudent" class="info-value">-</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Tổng Cam Kết</span>
+                <span id="resTotal" class="info-value">0 ETH</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Đã Nạp Quỹ (Funded)</span>
+                <span id="resFunded" class="info-value">0 ETH</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Đã Giải Ngân (Released)</span>
+                <span id="resReleased" class="info-value">0 ETH</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Số Lượng Mốc</span>
+                <span id="resMilestoneCount" class="info-value">0</span>
+              </div>
+            </div>
+
+            <h4 style="font-size: 0.9rem; color: #e2e8f0; margin-top: 16px;">Danh Sách Các Mốc Học Tập:</h4>
+            <div style="overflow-x: auto;">
+              <table class="milestone-table">
+                <thead>
+                  <tr>
+                    <th>Mốc #</th>
+                    <th>Định mức (ETH)</th>
+                    <th>Trạng Thái</th>
+                    <th>Minh Chứng (Proof CID)</th>
+                    <th>Thời Điểm Duyệt</th>
+                    <th>Thời Điểm Giải Ngân</th>
+                  </tr>
+                </thead>
+                <tbody id="milestoneTableBody">
+                  <!-- Generated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container footer-content">
+      <div>
+        <strong>TrustScholar Project</strong> — Sinh viên: Nguyễn Minh Khánh Linh & Trần Thị Như Huỳnh
+      </div>
+      <div>
+        <span>Sepolia Chain ID: <code>11155111</code></span> • 
+        <span>Bảo mật: Checks-Effects-Interactions & Mutex ReentrancyGuard</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- DApp Logic Script -->
+  <script>
+    // Configuration
+    const SEPOLIA_CHAIN_ID_DEC = 11155111;
+    const SEPOLIA_CHAIN_ID_HEX = "0xaa36a7";
+    const DEFAULT_CONTRACT_ADDRESS = "0x71C8360f089f24E1F034C7f6424e86a51d45C522";
+
+    // Standard ABI for ProjectCore
+    const PROJECT_CORE_ABI = [
+      "function createScholarship(address student, uint256[] calldata milestoneAmounts) external returns (uint256)",
+      "function createScholarship(address student, uint256 totalAmount, uint256[] calldata milestoneAmounts) external returns (uint256)",
+      "function fundScholarship(uint256 scholarshipId) external payable",
+      "function submitMilestone(uint256 scholarshipId, uint256 milestoneIndex, string calldata proofHash) external",
+      "function approveMilestone(uint256 scholarshipId, uint256 milestoneIndex) external",
+      "function releaseMilestone(uint256 scholarshipId, uint256 milestoneIndex) external",
+      "function getScholarship(uint256 scholarshipId) external view returns (tuple(uint256 id, address sponsor, address student, uint256 totalAmount, uint256 fundedAmount, uint256 releasedAmount, uint256 milestoneCount))",
+      "function getMilestone(uint256 scholarshipId, uint256 milestoneIndex) external view returns (tuple(uint256 amount, string proofHash, uint8 status, uint256 approvedAt, uint256 disbursedAt))",
+      "function getMilestoneStatus(uint256 scholarshipId, uint256 milestoneIndex) external view returns (uint8)",
+      "function scholarshipCount() external view returns (uint256)",
+      "function verifier() external view returns (address)",
+      "event ScholarshipCreated(uint256 indexed scholarshipId, address indexed sponsor, address indexed student, uint256 totalAmount, uint256 milestoneCount)",
+      "event ScholarshipFunded(uint256 indexed scholarshipId, address indexed sponsor, uint256 amount, uint256 totalFunded)",
+      "event MilestoneSubmitted(uint256 indexed scholarshipId, uint256 indexed milestoneIndex, address indexed student, string proofHash)",
+      "event MilestoneApproved(uint256 indexed scholarshipId, uint256 indexed milestoneIndex, address indexed verifier)",
+      "event ScholarshipReleased(uint256 indexed scholarshipId, uint256 indexed milestoneIndex, address indexed student, uint256 amount)"
+    ];
+
+    // State Variables
+    let currentContractAddress = localStorage.getItem("trustscholar_address") || DEFAULT_CONTRACT_ADDRESS;
+    let provider = null;
+    let signer = null;
+    let userAddress = null;
+    let coreContract = null;
+    let isCorrectNetwork = false;
+
+    // Elements
+    const btnConnectWallet = document.getElementById("btnConnectWallet");
+    const walletBtnText = document.getElementById("walletBtnText");
+    const networkBadge = document.getElementById("networkBadge");
+    const networkDot = document.getElementById("networkDot");
+    const networkText = document.getElementById("networkText");
+    const networkAlert = document.getElementById("networkAlert");
+    const btnSwitchNetwork = document.getElementById("btnSwitchNetwork");
+    const contractAddressDisplay = document.getElementById("contractAddressDisplay");
+    const btnEditContract = document.getElementById("btnEditContract");
+    const statusNotification = document.getElementById("statusNotification");
+    const statusSpinner = document.getElementById("statusSpinner");
+    const statusMessage = document.getElementById("statusMessage");
+    const statusDetail = document.getElementById("statusDetail");
+    const statusAction = document.getElementById("statusAction");
+
+    // Initialize UI
+    contractAddressDisplay.textContent = currentContractAddress;
+
+    // Tab Navigation
+    function switchTab(tabName) {
+      document.querySelectorAll(".tab-pane").forEach(el => el.classList.remove("active"));
+      document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("active"));
+
+      const targetPane = document.getElementById("tab" + tabName.charAt(0).toUpperCase() + tabName.slice(1));
+      const targetBtn = document.getElementById("tabBtn" + tabName.charAt(0).toUpperCase() + tabName.slice(1));
+      if (targetPane) targetPane.classList.add("active");
+      if (targetBtn) targetBtn.classList.add("active");
+    }
+
+    // Status Notifier Helper
+    function showStatus(msg, detail = "", type = "info", txHash = null) {
+      statusNotification.style.display = "block";
+      statusSpinner.style.display = (type === "loading") ? "block" : "none";
+      statusMessage.textContent = msg;
+      
+      let detailHtml = detail;
+      if (txHash) {
+        detailHtml += `<br><a class="tx-link" href="https://sepolia.etherscan.io/tx/${txHash}" target="_blank" rel="noopener noreferrer">🔍 Xem trên Etherscan Sepolia (${txHash.slice(0, 10)}...${txHash.slice(-8)}) ↗</a>`;
+      }
+      statusDetail.innerHTML = detailHtml;
+
+      if (type === "success") {
+        statusNotification.style.borderColor = "var(--accent-success)";
+        statusNotification.style.background = "rgba(16, 185, 129, 0.12)";
+      } else if (type === "error") {
+        statusNotification.style.borderColor = "var(--accent-danger)";
+        statusNotification.style.background = "rgba(239, 68, 68, 0.14)";
+      } else {
+        statusNotification.style.borderColor = "var(--accent-primary)";
+        statusNotification.style.background = "rgba(99, 102, 241, 0.12)";
+      }
+    }
+
+    // Connect Wallet Handler
+    async function connectWallet() {
+      if (!window.ethereum) {
+        showStatus("Chưa phát hiện ví Web3!", "Vui lòng cài đặt MetaMask hoặc tiện ích ví Web3 trên trình duyệt để sử dụng.", "error");
+        return;
+      }
+
+      try {
+        showStatus("Đang kết nối ví...", "Vui lòng phê duyệt kết nối tài khoản trên popup MetaMask.", "loading");
+        provider = new ethers.BrowserProvider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        signer = await provider.getSigner();
+        userAddress = await signer.getAddress();
+
+        walletBtnText.textContent = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
+        btnConnectWallet.classList.replace("btn-primary", "btn-secondary");
+
+        await checkNetwork();
+        initContract();
+        showStatus("Kết nối ví thành công!", `Địa chỉ ví: ${userAddress}`, "success");
+      } catch (err) {
+        console.error("Lỗi kết nối ví:", err);
+        showStatus("Kết nối thất bại!", err.message || "Người dùng từ chối kết nối.", "error");
+      }
+    }
+
+    // Network Checker
+    async function checkNetwork() {
+      if (!provider) return;
+      const network = await provider.getNetwork();
+      const chainId = Number(network.chainId);
+
+      if (chainId === SEPOLIA_CHAIN_ID_DEC) {
+        isCorrectNetwork = true;
+        networkBadge.className = "badge badge-sepolia";
+        networkDot.className = "badge-dot";
+        networkText.textContent = "Sepolia Testnet (11155111)";
+        networkAlert.style.display = "none";
+      } else {
+        isCorrectNetwork = false;
+        networkBadge.className = "badge";
+        networkBadge.style.borderColor = "var(--accent-danger)";
+        networkDot.className = "badge-dot error";
+        networkText.textContent = `Sai mạng (Chain ID: ${chainId})`;
+        networkAlert.style.display = "flex";
+      }
+    }
+
+    // Switch Network to Sepolia
+    async function switchNetwork() {
+      if (!window.ethereum) return;
+      try {
+        await window.ethereum.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: SEPOLIA_CHAIN_ID_HEX }],
+        });
+        await checkNetwork();
+      } catch (switchError) {
+        // Chain chưa được thêm vào MetaMask
+        if (switchError.code === 4902) {
+          try {
+            await window.ethereum.request({
+              method: "wallet_addEthereumChain",
+              params: [{
+                chainId: SEPOLIA_CHAIN_ID_HEX,
+                chainName: "Ethereum Sepolia",
+                nativeCurrency: { name: "Sepolia ETH", symbol: "ETH", decimals: 18 },
+                rpcUrls: ["https://rpc.sepolia.org", "https://ethereum-sepolia-rpc.publicnode.com"],
+                blockExplorerUrls: ["https://sepolia.etherscan.io"]
+              }],
+            });
+            await checkNetwork();
+          } catch (addError) {
+            console.error("Thêm mạng thất bại:", addError);
+          }
+        }
+      }
+    }
+
+    // Contract Initialization
+    function initContract() {
+      if (signer) {
+        coreContract = new ethers.Contract(currentContractAddress, PROJECT_CORE_ABI, signer);
+      }
+    }
+
+    // Edit Contract Address
+    btnEditContract.onclick = () => {
+      const newAddr = prompt("Nhập địa chỉ hợp đồng ProjectCore trên Sepolia:", currentContractAddress);
+      if (newAddr && ethers.isAddress(newAddr)) {
+        currentContractAddress = newAddr;
+        localStorage.setItem("trustscholar_address", newAddr);
+        contractAddressDisplay.textContent = newAddr;
+        initContract();
+        showStatus("Đã cập nhật địa chỉ hợp đồng!", newAddr, "info");
+      } else if (newAddr !== null) {
+        alert("Địa chỉ Ethereum không hợp lệ!");
+      }
+    };
+
+    // --- SMART CONTRACT INTERACTIONS ---
+
+    // 1. Create Scholarship
+    async function handleCreateScholarship() {
+      if (!validatePreconditions()) return;
+
+      const studentAddr = document.getElementById("inpStudentAddress").value.trim();
+      const milestonesRaw = document.getElementById("inpMilestones").value.trim();
+
+      if (!ethers.isAddress(studentAddr)) {
+        alert("Vui lòng nhập địa chỉ ví sinh viên hợp lệ!");
+        return;
+      }
+
+      const amountsStr = milestonesRaw.split(",").map(s => s.trim()).filter(Boolean);
+      if (amountsStr.length === 0) {
+        alert("Vui lòng nhập ít nhất 1 mốc giải ngân!");
+        return;
+      }
+
+      try {
+        const amountsWei = amountsStr.map(a => ethers.parseEther(a));
+        showStatus("Đang gửi giao dịch tạo suất học bổng...", "Vui lòng xác nhận giao dịch trên MetaMask.", "loading");
+
+        const tx = await coreContract.createScholarship(studentAddr, amountsWei);
+        showStatus("Giao dịch đang chờ xác nhận trên blockchain...", `TxHash: ${tx.hash}`, "loading", tx.hash);
+
+        const receipt = await tx.wait();
+        showStatus("Tạo suất học bổng thành công! 🎉", `Block: ${receipt.blockNumber}`, "success", tx.hash);
+      } catch (err) {
+        handleContractError(err, "Tạo suất học bổng thất bại");
+      }
+    }
+
+    // 2. Fund Scholarship
+    async function handleFundScholarship() {
+      if (!validatePreconditions()) return;
+
+      const id = document.getElementById("inpFundScholarshipId").value;
+      const ethAmount = document.getElementById("inpFundAmount").value;
+
+      if (!id || id <= 0) {
+        alert("Vui lòng nhập ID suất học bổng hợp lệ!");
+        return;
+      }
+      if (!ethAmount || ethAmount <= 0) {
+        alert("Vui lòng nhập số ETH nạp hợp lệ!");
+        return;
+      }
+
+      try {
+        const valueWei = ethers.parseEther(ethAmount);
+        showStatus(`Đang nạp ${ethAmount} ETH vào suất #${id}...`, "Xác nhận giao dịch trên MetaMask.", "loading");
+
+        const tx = await coreContract.fundScholarship(id, { value: valueWei });
+        showStatus("Giao dịch nạp tiền đang chờ xác thực...", `TxHash: ${tx.hash}`, "loading", tx.hash);
+
+        const receipt = await tx.wait();
+        showStatus(`Nạp thành công ${ethAmount} ETH vào suất #${id}! 💰`, `Block: ${receipt.blockNumber}`, "success", tx.hash);
+      } catch (err) {
+        handleContractError(err, "Nạp tiền thất bại");
+      }
+    }
+
+    // 3. Submit Milestone
+    async function handleSubmitMilestone() {
+      if (!validatePreconditions()) return;
+
+      const id = document.getElementById("inpSubmitId").value;
+      const index = document.getElementById("inpSubmitIndex").value;
+      const proof = document.getElementById("inpProofHash").value.trim();
+
+      if (!id || id <= 0 || index === "" || index < 0 || !proof) {
+        alert("Vui lòng điền đầy đủ ID, chỉ số mốc và CID minh chứng!");
+        return;
+      }
+
+      try {
+        showStatus(`Đang nộp minh chứng cho suất #${id} (Mốc ${index})...`, "Xác nhận giao dịch trên MetaMask.", "loading");
+        const tx = await coreContract.submitMilestone(id, index, proof);
+        showStatus("Đang chờ xác nhận trên Sepolia...", `TxHash: ${tx.hash}`, "loading", tx.hash);
+
+        const receipt = await tx.wait();
+        showStatus(`Đã nộp minh chứng mốc ${index} thành công! 📑`, `Block: ${receipt.blockNumber}`, "success", tx.hash);
+      } catch (err) {
+        handleContractError(err, "Nộp minh chứng thất bại");
+      }
+    }
+
+    // 4. Approve Milestone
+    async function handleApproveMilestone() {
+      if (!validatePreconditions()) return;
+
+      const id = document.getElementById("inpApproveId").value;
+      const index = document.getElementById("inpApproveIndex").value;
+
+      if (!id || id <= 0 || index === "" || index < 0) {
+        alert("Vui lòng nhập đầy đủ ID và chỉ số mốc!");
+        return;
+      }
+
+      try {
+        showStatus(`Đang phê duyệt mốc ${index} của suất #${id}...`, "Xác nhận giao dịch trên MetaMask.", "loading");
+        const tx = await coreContract.approveMilestone(id, index);
+        showStatus("Đang chờ xác nhận trên Sepolia...", `TxHash: ${tx.hash}`, "loading", tx.hash);
+
+        const receipt = await tx.wait();
+        showStatus(`Phê duyệt mốc ${index} thành công! ✅`, `Block: ${receipt.blockNumber}`, "success", tx.hash);
+      } catch (err) {
+        handleContractError(err, "Phê duyệt mốc thất bại");
+      }
+    }
+
+    // 5. Release Milestone
+    async function handleReleaseMilestone() {
+      if (!validatePreconditions()) return;
+
+      const id = document.getElementById("inpReleaseId").value;
+      const index = document.getElementById("inpReleaseIndex").value;
+
+      if (!id || id <= 0 || index === "" || index < 0) {
+        alert("Vui lòng nhập đầy đủ ID và chỉ số mốc!");
+        return;
+      }
+
+      try {
+        showStatus(`Đang kích hoạt giải ngân mốc ${index} của suất #${id}...`, "Tiền sẽ được chuyển thẳng đến ví sinh viên thụ hưởng.", "loading");
+        const tx = await coreContract.releaseMilestone(id, index);
+        showStatus("Đang xác thực giao dịch giải ngân...", `TxHash: ${tx.hash}`, "loading", tx.hash);
+
+        const receipt = await tx.wait();
+        showStatus(`Giải ngân mốc ${index} thành công về ví sinh viên! 💸`, `Block: ${receipt.blockNumber}`, "success", tx.hash);
+      } catch (err) {
+        handleContractError(err, "Giải ngân thất bại");
+      }
+    }
+
+    // 6. Lookup Scholarship (Explorer)
+    async function handleLookupScholarship() {
+      const id = document.getElementById("inpLookupId").value;
+      if (!id || id <= 0) {
+        alert("Vui lòng nhập ID hợp lệ!");
+        return;
+      }
+
+      try {
+        const readProvider = provider || new ethers.JsonRpcProvider("https://ethereum-sepolia-rpc.publicnode.com");
+        const readContract = new ethers.Contract(currentContractAddress, PROJECT_CORE_ABI, readProvider);
+
+        showStatus(`Đang tải dữ liệu suất học bổng #${id}...`, "", "loading");
+        const s = await readContract.getScholarship(id);
+
+        document.getElementById("resId").textContent = s.id.toString();
+        document.getElementById("resSponsor").textContent = s.sponsor;
+        document.getElementById("resStudent").textContent = s.student;
+        document.getElementById("resTotal").textContent = `${ethers.formatEther(s.totalAmount)} ETH`;
+        document.getElementById("resFunded").textContent = `${ethers.formatEther(s.fundedAmount)} ETH`;
+        document.getElementById("resReleased").textContent = `${ethers.formatEther(s.releasedAmount)} ETH`;
+        document.getElementById("resMilestoneCount").textContent = s.milestoneCount.toString();
+
+        const count = Number(s.milestoneCount);
+        const tbody = document.getElementById("milestoneTableBody");
+        tbody.innerHTML = "";
+
+        const statusNames = ["Pending", "Submitted", "Approved", "Disbursed"];
+        const statusClasses = ["pending", "submitted", "approved", "disbursed"];
+
+        for (let i = 0; i < count; i++) {
+          const m = await readContract.getMilestone(id, i);
+          const st = Number(m.status);
+
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td><strong>Mốc ${i}</strong></td>
+            <td>${ethers.formatEther(m.amount)} ETH</td>
+            <td><span class="status-pill ${statusClasses[st]}">${statusNames[st]}</span></td>
+            <td><span class="code-pill">${m.proofHash || "Chưa có"}</span></td>
+            <td>${m.approvedAt > 0 ? new Date(Number(m.approvedAt) * 1000).toLocaleString("vi-VN") : "-"}</td>
+            <td>${m.disbursedAt > 0 ? new Date(Number(m.disbursedAt) * 1000).toLocaleString("vi-VN") : "-"}</td>
+          `;
+          tbody.appendChild(row);
+        }
+
+        document.getElementById("lookupResult").style.display = "block";
+        showStatus(`Đã tải thành công dữ liệu suất #${id}!`, "", "info");
+      } catch (err) {
+        console.error("Lỗi tra cứu:", err);
+        showStatus("Không tìm thấy dữ liệu suất học bổng!", `ID #${id} chưa tồn tại hoặc lỗi kết nối RPC.`, "error");
+      }
+    }
+
+    // Helper: Preconditions check
+    function validatePreconditions() {
+      if (!signer) {
+        alert("Vui lòng kết nối ví MetaMask trước!");
+        return false;
+      }
+      if (!isCorrectNetwork) {
+        alert("Vui lòng chuyển sang mạng Sepolia Testnet (Chain ID 11155111) trước khi thao tác!");
+        return false;
+      }
+      return true;
+    }
+
+    // Helper: Contract Error Decoding
+    function handleContractError(err, prefix) {
+      console.error(prefix, err);
+      let msg = err.reason || err.shortMessage || err.message || "Giao dịch bị từ chối.";
+      
+      // Map custom errors
+      if (msg.includes("NotSponsor")) msg = "Lỗi quyền: Bạn không phải là Nhà tài trợ (Sponsor) của suất học bổng này!";
+      else if (msg.includes("NotStudent")) msg = "Lỗi quyền: Bạn không phải là Sinh viên thụ hưởng của suất học bổng này!";
+      else if (msg.includes("MilestoneNotApproved")) msg = "Chặn giao dịch: Mốc này chưa được phê duyệt (MilestoneNotApproved)!";
+      else if (msg.includes("AlreadyReleased")) msg = "Chặn giao dịch: Mốc này đã được giải ngân trước đó (AlreadyReleased)!";
+      else if (msg.includes("InsufficientFunds")) msg = "Chặn giao dịch: Quỹ escrow chưa nạp đủ tiền giải ngân (InsufficientFunds)!";
+      else if (msg.includes("InvalidAmount")) msg = "Số tiền không hợp lệ hoặc vượt định mức cho phép!";
+
+      showStatus(`${prefix}!`, msg, "error");
+    }
+
+    // Event Listeners
+    btnConnectWallet.onclick = connectWallet;
+    btnSwitchNetwork.onclick = switchNetwork;
+
+    if (window.ethereum) {
+      window.ethereum.on("accountsChanged", (accounts) => {
+        if (accounts.length === 0) {
+          userAddress = null;
+          walletBtnText.textContent = "Kết Nối Ví MetaMask";
+          btnConnectWallet.classList.replace("btn-secondary", "btn-primary");
+        } else {
+          userAddress = accounts[0];
+          walletBtnText.textContent = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
+        }
+      });
+      window.ethereum.on("chainChanged", () => {
+        window.location.reload();
+      });
+    }
+  </script>
+</body>
+</html>
