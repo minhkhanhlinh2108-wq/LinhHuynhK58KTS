@@ -424,5 +424,23 @@ Mỗi phiên làm việc có sử dụng AI cần được ghi chép theo cấu 
   - 100% tiêu chí Lab 15 hoàn tất xuất sắc, sẵn sàng bàn giao đồ án và bảo vệ trước hội đồng.
 
 ---
+
+### Xác Minh Toàn Diện Web3 DApp & Tối Ưu Giải Mã Custom Error (DApp Verification & Optimization)
+
+- **Ngày thực hiện:** 08/10/2026
+- **Nhiệm vụ:** Kiểm tra và xác minh thực tế 10 tiêu chí vận hành của Web3 DApp TrustScholar: khả năng mở trang, kết nối MetaMask, đồng bộ địa chỉ `ProjectCore.sol`, gọi các chức năng contract, popup MetaMask, xác nhận block thành công, trích xuất transaction hash, mở transaction trên Sepolia Etherscan, trường hợp giải ngân đúng sinh viên, và các trường hợp sai điều kiện bị revert.
+- **Prompt sử dụng:**
+  > *"kiểm tra: DApp có mở được không? Connect MetaMask được không? Có kết nối đúng ProjectCore.sol không? Có gọi được chức năng contract không? MetaMask có hiện giao dịch không? Transaction có Success không? Có lấy được transaction hash không? Mở transaction trên block explorer được không? Thử đúng sinh viên → giải ngân thành công. Thử sai sinh viên / sai điều kiện → giao dịch bị revert."*
+- **Phản hồi & Cải tiến kỹ thuật:**
+  1. *Bổ sung Custom Errors vào Human-Readable ABI:* Nhóm phát hiện mảng `PROJECT_CORE_ABI` trong `web/index.html` trước đó chỉ chứa function và event signatures, chưa có các dòng khai báo Custom Error (`error NotStudent()`, `error NotSponsor()`,...). Đã bổ sung đầy đủ 10 Custom Error signatures vào ABI để Ethers.js v6 có thể phân tích lỗi tự động.
+  2. *Nâng cấp cơ chế giải mã lỗi linh hoạt:* Tích hợp hàm `coreContract.interface.parseError()` vào `handleContractError()`, kết hợp cùng cơ chế fallback bắt 4-byte selector (`0x51ee4177`, `0xee3da5c8`, `0x3235bba4`, `0xd3617be3`, `0x7a224ec8`), giúp DApp luôn hiển thị thông điệp cảnh báo thân thiện tiếng Việt cho mọi tình huống revert.
+- **Quyết định của nhóm:**
+  - Cập nhật và kiểm chứng cú pháp JavaScript tại `web/index.html` (đạt `JS SYNTAX VALID`).
+  - Kiểm thử lại toàn bộ 91 bài test tự động qua lệnh `npx hardhat test` (đạt 91/91 PASS 100%).
+- **Kết quả đạt được:**
+  - Hoàn tất kiểm chứng độc lập 10/10 tiêu chí DApp.
+  - Mã nguồn và tài liệu đồng bộ chuẩn mực, sẵn sàng đẩy lên kho GitHub repository.
+
+---
 > 🔗 **Liên kết nhanh:** [Trang chủ README](../README.md) • [Kế hoạch đồ án](PROJECT_PLAN.md) • [Đặc tả nghiệp vụ](SPEC.md) • [Quy tắc kinh tế](ECONOMIC_RULES.md) • [Nhật ký AI](AI_JOURNAL.md) • [GitHub Repo](https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS)
 

@@ -988,7 +988,17 @@
       "event ScholarshipFunded(uint256 indexed scholarshipId, address indexed sponsor, uint256 amount, uint256 totalFunded)",
       "event MilestoneSubmitted(uint256 indexed scholarshipId, uint256 indexed milestoneIndex, address indexed student, string proofHash)",
       "event MilestoneApproved(uint256 indexed scholarshipId, uint256 indexed milestoneIndex, address indexed verifier)",
-      "event ScholarshipReleased(uint256 indexed scholarshipId, uint256 indexed milestoneIndex, address indexed student, uint256 amount)"
+      "event ScholarshipReleased(uint256 indexed scholarshipId, uint256 indexed milestoneIndex, address indexed student, uint256 amount)",
+      "error NotSponsor()",
+      "error NotStudent()",
+      "error InvalidAddress()",
+      "error InvalidAmount()",
+      "error ScholarshipNotFound()",
+      "error MilestoneNotFound()",
+      "error MilestoneNotApproved()",
+      "error AlreadyReleased()",
+      "error InsufficientFunds()",
+      "error TransferFailed()"
     ];
 
     // State Variables
@@ -1225,26 +1235,37 @@
       const rawMsg = (err.reason || err.shortMessage || err.message || "").toString();
       const errorData = (err.data || err.info?.error?.data || err.error?.data || "").toString();
 
+      let parsedErrName = err.revert?.name || "";
+      if (!parsedErrName && coreContract) {
+        try {
+          const rawHex = err.data || err.info?.error?.data || err.error?.data;
+          if (rawHex && typeof rawHex === "string" && rawHex.startsWith("0x")) {
+            const parsed = coreContract.interface.parseError(rawHex);
+            if (parsed) parsedErrName = parsed.name;
+          }
+        } catch (_) {}
+      }
+
       let friendlyMsg = "Giao dịch thực thi thất bại trên blockchain.";
 
       // 2. Không có quyền / Sai student
-      if (rawMsg.includes("NotStudent") || errorData.includes("51ee4177")) {
+      if (parsedErrName === "NotStudent" || rawMsg.includes("NotStudent") || errorData.includes("51ee4177")) {
         friendlyMsg = "Chặn thao tác: Sai địa chỉ sinh viên thụ hưởng (NotStudent)! Chỉ sinh viên được chỉ định mới có quyền thực hiện.";
-      } else if (rawMsg.includes("NotSponsor") || errorData.includes("ee3da5c8")) {
+      } else if (parsedErrName === "NotSponsor" || rawMsg.includes("NotSponsor") || errorData.includes("ee3da5c8")) {
         friendlyMsg = "Lỗi phân quyền: Bạn không có quyền thực hiện thao tác này (NotSponsor / Không có quyền)!";
-      } else if (rawMsg.includes("MilestoneNotApproved") || errorData.includes("3235bba4")) {
+      } else if (parsedErrName === "MilestoneNotApproved" || rawMsg.includes("MilestoneNotApproved") || errorData.includes("3235bba4")) {
         friendlyMsg = "Chặn thao tác: Mốc học tập chưa được phê duyệt (MilestoneNotApproved)!";
-      } else if (rawMsg.includes("AlreadyReleased") || errorData.includes("d3617be3")) {
+      } else if (parsedErrName === "AlreadyReleased" || rawMsg.includes("AlreadyReleased") || errorData.includes("d3617be3")) {
         friendlyMsg = "Chặn thao tác: Mốc này đã được giải ngân trước đó (AlreadyReleased)! Không được phép giải ngân hai lần.";
-      } else if (rawMsg.includes("InsufficientFunds") || errorData.includes("7a224ec8")) {
+      } else if (parsedErrName === "InsufficientFunds" || rawMsg.includes("InsufficientFunds") || errorData.includes("7a224ec8")) {
         friendlyMsg = "Chặn thao tác: Quỹ học bổng chưa nạp đủ tiền giải ngân (InsufficientFunds)!";
-      } else if (rawMsg.includes("ScholarshipNotFound") || errorData.includes("3aa7cf12")) {
+      } else if (parsedErrName === "ScholarshipNotFound" || rawMsg.includes("ScholarshipNotFound") || errorData.includes("3aa7cf12")) {
         friendlyMsg = "Lỗi: Không tìm thấy suất học bổng (ScholarshipNotFound)!";
-      } else if (rawMsg.includes("MilestoneNotFound") || errorData.includes("600c01fa")) {
+      } else if (parsedErrName === "MilestoneNotFound" || rawMsg.includes("MilestoneNotFound") || errorData.includes("600c01fa")) {
         friendlyMsg = "Lỗi: Mốc học tập không tồn tại hoặc chưa nộp minh chứng (MilestoneNotFound)!";
-      } else if (rawMsg.includes("InvalidAmount") || errorData.includes("2c5211c6")) {
+      } else if (parsedErrName === "InvalidAmount" || rawMsg.includes("InvalidAmount") || errorData.includes("2c5211c6")) {
         friendlyMsg = "Lỗi: Số tiền không hợp lệ hoặc vượt định mức cam kết (InvalidAmount)!";
-      } else if (rawMsg.includes("InvalidAddress") || errorData.includes("e6c4247b")) {
+      } else if (parsedErrName === "InvalidAddress" || rawMsg.includes("InvalidAddress") || errorData.includes("e6c4247b")) {
         friendlyMsg = "Lỗi: Địa chỉ ví không hợp lệ (InvalidAddress)!";
       } else if (rawMsg.includes("insufficient funds")) {
         friendlyMsg = "Lỗi: Số dư ví không đủ Native SepoliaETH để chi trả giao dịch hoặc phí gas!";
