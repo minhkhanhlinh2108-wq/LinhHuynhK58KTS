@@ -1159,17 +1159,32 @@
     }
 
     // Contract Initialization
-    function initContract() {
+    async function initContract() {
       if (signer) {
         const validAddr = normalizeAddress(currentContractAddress) || DEFAULT_CONTRACT_ADDRESS;
         currentContractAddress = validAddr;
         contractAddressDisplay.textContent = validAddr;
         coreContract = new ethers.Contract(validAddr, PROJECT_CORE_ABI, signer);
+
+        // Kiểm tra trạng thái bytecode on-chain
+        try {
+          const code = await provider.getCode(validAddr);
+          const statusEl = document.getElementById("contractStatusText");
+          if (statusEl) {
+            if (code && code !== "0x" && code !== "0x0") {
+              statusEl.textContent = "Đã xác thực on-chain (Bytecode OK)";
+              statusEl.style.color = "var(--accent-success)";
+            } else {
+              statusEl.textContent = "Chưa deploy bytecode trên Sepolia (EOA)";
+              statusEl.style.color = "var(--accent-warning)";
+            }
+          }
+        } catch (_) {}
       }
     }
 
     // Edit Contract Address
-    btnEditContract.onclick = () => {
+    btnEditContract.onclick = async () => {
       const newAddr = prompt("Nhập địa chỉ hợp đồng ProjectCore trên Sepolia:", currentContractAddress);
       if (newAddr !== null) {
         const validated = normalizeAddress(newAddr);
@@ -1177,7 +1192,7 @@
           currentContractAddress = validated;
           localStorage.setItem("trustscholar_address", validated);
           contractAddressDisplay.textContent = validated;
-          initContract();
+          await initContract();
           showStatus("Đã cập nhật địa chỉ hợp đồng!", validated, "info");
         } else {
           alert("Địa chỉ Ethereum không hợp lệ (yêu cầu đúng định dạng 40 ký tự hex)! ");
@@ -1256,8 +1271,19 @@
       }
       currentContractAddress = validContractAddr;
 
+      // Kiểm tra xem địa chỉ hợp đồng đã có bytecode on-chain trên Sepolia hay chưa
+      try {
+        const code = await provider.getCode(validContractAddr);
+        if (!code || code === "0x" || code === "0x0") {
+          const warnMsg = `Địa chỉ ${validContractAddr.slice(0, 8)}...${validContractAddr.slice(-6)} chưa có mã bytecode Smart Contract trên Sepolia! Bạn cần deploy ProjectCore.sol lên Sepolia hoặc dùng nút 'Đổi Address' để kết nối contract thật.`;
+          showStatus("Chưa tìm thấy Smart Contract on-chain!", warnMsg, "error");
+          const proceed = confirm(`CẢNH BÁO: Địa chỉ contract (${validContractAddr}) chưa có mã bytecode trên Sepolia!\n\nNếu tiếp tục gửi giao dịch, bạn sẽ bị mất phí gas (hoặc mất ETH nạp vào EOA) mà không thực thi logic hợp đồng.\n\nBạn có chắc chắn muốn tiếp tục không?`);
+          if (!proceed) return false;
+        }
+      } catch (_) {}
+
       if (!coreContract || coreContract.target !== validContractAddr) {
-        initContract();
+        await initContract();
       }
 
       return true;
@@ -1294,6 +1320,8 @@
       // 2. Phân loại lỗi
       if (rawMsg.includes("bad address checksum") || (err.message && err.message.includes("bad address checksum"))) {
         friendlyMsg = "Lỗi địa chỉ (bad address checksum): Địa chỉ ví hoặc hợp đồng không khớp chuẩn EIP-55 checksum!";
+      } else if (rawMsg.includes("could not decode result data") || rawMsg.includes("value=\"0x\"") || err.code === "BAD_DATA") {
+        friendlyMsg = "Lỗi đọc dữ liệu on-chain: Địa chỉ hiện tại chưa deploy mã bytecode ProjectCore.sol trên Sepolia (Trả về 0x)!";
       } else if (parsedErrName === "NotStudent" || rawMsg.includes("NotStudent") || errorData.includes("51ee4177")) {
         friendlyMsg = "Chặn thao tác: Sai địa chỉ sinh viên thụ hưởng (NotStudent)! Chỉ sinh viên được chỉ định mới có quyền thực hiện.";
       } else if (parsedErrName === "NotSponsor" || rawMsg.includes("NotSponsor") || errorData.includes("ee3da5c8")) {
@@ -1309,9 +1337,9 @@
       } else if (parsedErrName === "MilestoneNotFound" || rawMsg.includes("MilestoneNotFound") || errorData.includes("600c01fa")) {
         friendlyMsg = "Lỗi: Mốc học tập không tồn tại hoặc chưa nộp minh chứng (MilestoneNotFound)!";
       } else if (parsedErrName === "InvalidAmount" || rawMsg.includes("InvalidAmount") || errorData.includes("2c5211c6")) {
-        friendlyMsg = "Lỗi: Số tiền không hợp lệ hoặc vượt định mức cam kết (InvalidAmount)!";
+        friendlyMsg = "Lỗi: Số tiền không hợp lệ hoặc vượt định mức cam kết (InvalidAmount)! Mốc giải ngân phải lớn hơn 0.";
       } else if (parsedErrName === "InvalidAddress" || rawMsg.includes("InvalidAddress") || errorData.includes("e6c4247b")) {
-        friendlyMsg = "Lỗi: Địa chỉ ví không hợp lệ (InvalidAddress)!";
+        friendlyMsg = "Lỗi: Địa chỉ ví không hợp lệ (InvalidAddress)! Không được là ví 0x0 hoặc ví contract.";
       } else if (rawMsg.includes("insufficient funds")) {
         friendlyMsg = "Lỗi: Số dư ví không đủ Native SepoliaETH để chi trả giao dịch hoặc phí gas!";
       } else if (rawMsg) {
@@ -1346,22 +1374,51 @@
         const amountsWei = amountsStr.map(a => ethers.parseEther(a));
         showStatus("Đang gửi giao dịch tạo suất học bổng...", "Vui lòng xác nhận giao dịch trên MetaMask.", "loading");
 
-        const tx = await coreContract.createScholarship(studentAddr, amountsWei);
+        // Gọi hàm với signature tường minh createScholarship(address,uint256[])
+        const tx = await coreContract["createScholarship(address,uint256[])"](studentAddr, amountsWei);
         showStatus("Giao dịch đang chờ xác nhận trên blockchain...", `TxHash: ${tx.hash}`, "loading", tx.hash);
 
         const receipt = await tx.wait();
-        const nextId = (await coreContract.scholarshipCount()).toString();
-        showStatus(`Tạo suất học bổng #${nextId} thành công! 🎉`, `Block: ${receipt.blockNumber}`, "success", tx.hash);
-        recordSessionTx("Tạo Suất Học Bổng", "Thành công", tx.hash, `Đã tạo suất #${nextId} cho ${studentAddr.slice(0, 8)}...`, nextId);
-        
-        // Cập nhật sẵn ID sang các ô nhập liệu khác
-        document.getElementById("inpFundScholarshipId").value = nextId;
-        document.getElementById("inpSponsorCheckId").value = nextId;
-        document.getElementById("inpSubmitId").value = nextId;
-        document.getElementById("inpReleaseId").value = nextId;
-        document.getElementById("inpApproveId").value = nextId;
-        document.getElementById("inpStudentCheckId").value = nextId;
-        document.getElementById("inpLookupId").value = nextId;
+
+        // 1. Phân tích event ScholarshipCreated trực tiếp từ receipt.logs
+        let nextId = null;
+        if (receipt && receipt.logs) {
+          for (const log of receipt.logs) {
+            try {
+              const parsed = coreContract.interface.parseLog(log);
+              if (parsed && parsed.name === "ScholarshipCreated") {
+                nextId = parsed.args.scholarshipId.toString();
+                break;
+              }
+            } catch (_) {}
+          }
+        }
+
+        // 2. Dự phòng: nếu không parse được từ logs, thử đọc scholarshipCount() an toàn
+        if (!nextId) {
+          try {
+            nextId = (await coreContract.scholarshipCount()).toString();
+          } catch (_) {}
+        }
+
+        if (nextId) {
+          showStatus(`Tạo suất học bổng #${nextId} thành công! 🎉`, `Block: ${receipt.blockNumber}`, "success", tx.hash);
+          recordSessionTx("Tạo Suất Học Bổng", "Thành công", tx.hash, `Đã tạo suất #${nextId} cho ${studentAddr.slice(0, 8)}...`, nextId);
+          
+          // Cập nhật sẵn ID sang các ô nhập liệu khác
+          document.getElementById("inpFundScholarshipId").value = nextId;
+          document.getElementById("inpSponsorCheckId").value = nextId;
+          document.getElementById("inpSubmitId").value = nextId;
+          document.getElementById("inpReleaseId").value = nextId;
+          document.getElementById("inpApproveId").value = nextId;
+          document.getElementById("inpStudentCheckId").value = nextId;
+          document.getElementById("inpLookupId").value = nextId;
+        } else {
+          // Giao dịch được khai thác trên chain nhưng không phát sinh Event từ hợp đồng ProjectCore
+          const warnDetail = `Giao dịch đã xác nhận (Block: ${receipt.blockNumber}), nhưng không phát sinh Event ScholarshipCreated! Địa chỉ hiện tại (${currentContractAddress.slice(0, 8)}...) chưa có bytecode ProjectCore.sol trên Sepolia.`;
+          showStatus("Giao dịch xác nhận nhưng không phát sinh Event!", warnDetail, "error", tx.hash);
+          recordSessionTx("Tạo Suất Học Bổng", "Chưa Có Contract", tx.hash, warnDetail, "-");
+        }
       } catch (err) {
         handleContractError(err, "Tạo suất học bổng thất bại", "Mới");
       }

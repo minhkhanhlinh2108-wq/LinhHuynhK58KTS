@@ -469,6 +469,36 @@ Mỗi phiên làm việc có sử dụng AI cần được ghi chép theo cấu 
   - Không vi phạm Code Freeze của `ProjectCore.sol`, bảo toàn tính phi lưu ký và kiến trúc an ninh CEI.
 
 ---
+
+### Khắc Phục Lỗi Khởi Tạo Suất Học Bổng `createScholarship` & Chẩn Đoán Trạng Thái On-Chain Sepolia
+
+- **Ngày thực hiện:** 13/10/2026
+- **Nhiệm vụ:** Debug chuyên sâu chức năng `createScholarship` tại `web/index.html`; làm rõ chữ ký hàm trong `ProjectCore.sol`; đối soát on-chain giao dịch nạp quỹ `fundScholarship` và các giao dịch tạo suất; giải mã lỗi `could not decode result data (value="0x")` và kiểm tra bytecode Sepolia; nâng cấp cơ chế trích xuất Event an toàn trong DApp.
+- **Prompt sử dụng:**
+  > *"Hãy debug riêng chức năng createScholarship trong DApp TrustScholar tại web/index.html. Tình trạng hiện tại: DApp mở được trên http://127.0.0.1:3000. MetaMask kết nối với Sepolia Testnet, chainId 11155111. Chức năng nạp quỹ fundScholarship đã gửi giao dịch và MetaMask hiển thị Confirmed transaction. Chức năng khởi tạo suất học bổng createScholarship vẫn thất bại. Giao diện đang nhập địa chỉ sinh viên và các mốc 0.005, 0.045 ETH. Yêu cầu: 1. Đọc ABI và contracts/project/ProjectCore.sol xác định chính xác chữ ký hàm, tham số, require/revert. 2. Kiểm tra hàm JS xử lý nút createScholarship. 3. Kiểm tra địa chỉ contract trên Sepolia. 4. Xác định transaction nạp quỹ vừa thành công thuộc contract nào và liên quan đến ID nào. 5. Bổ sung thông báo lỗi chính xác. 6. Sửa đúng nguyên nhân, không xóa bảo mật, không tạo contract giả. 7. Chạy npx hardhat compile và npx hardhat test. 8. Báo cáo nguyên nhân và hướng dẫn kiểm tra. Không tuyên bố thành công khi chưa có hash hợp lệ."*
+- **Phát hiện kỹ thuật & Thiếu sót phát hiện được:**
+  1. *Phát hiện về bytecode on-chain Sepolia:* Địa chỉ `0x71c8360f089f24e1f034c7f6424E86a51D45C522` trả về `eth_getCode` là `0x` (độ dài 2 byte - tài khoản EOA hoặc chưa deploy contract bytecode).
+  2. *Giải thích giao dịch `fundScholarship` thành công trên MetaMask:* Giao dịch `0xad550e511a5913b7f6ef1ce955e2001fa24359587a78ebdc5fff809c1be35f80` nạp 0.05 ETH đến địa chỉ đích. Trong máy ảo EVM, một giao dịch chuyển Native ETH kèm calldata gửi tới tài khoản không có mã hợp đồng (EOA) vẫn được xem là một chuyển khoản ETH thông thường thành công (Status: `0x1`). Tuy nhiên, không có hợp đồng thông minh nào thực thi, không có Event `ScholarshipFunded` nào phát sinh, và trên thực tế không có suất học bổng #1 nào tồn tại trên on-chain.
+  3. *Nguyên nhân DApp báo lỗi thất bại ở `createScholarship`:* Các giao dịch `createScholarship` (`0x550a0499...`, `0xba3091de...`, `0x9f3ff531...`) đã được MetaMask ký gửi và đưa vào block thành công (gas used: 25,496, status: `0x1`). Tuy nhiên, ngay sau `await tx.wait()`, mã nguồn tại `web/index.html` gọi:  
+     `(await coreContract.scholarshipCount()).toString()`.  
+     Khi gọi hàm `view` này đến tài khoản không có bytecode (`0x`), nút RPC trả về dữ liệu rỗng `0x`. Ethers.js v6 không thể giải mã kiểu `uint256` từ `0x` và ném ngoại lệ:  
+     `code=BAD_DATA, could not decode result data (value="0x")`.  
+     Ngoại lệ này khiến luồng nhảy thẳng vào khối `catch (err)`, hiển thị thông báo "Tạo suất học bổng thất bại" dù MetaMask đã hiển thị Confirmed!
+  4. *Đa hình hàm (Function Overload):* Hợp đồng `ProjectCore.sol` có 2 chữ ký hàm nạp chồng:  
+     - `createScholarship(address student, uint256[] calldata milestoneAmounts)`  
+     - `createScholarship(address student, uint256 totalAmount, uint256[] calldata milestoneAmounts)`  
+     Cần chỉ định tường minh chữ ký hàm `coreContract["createScholarship(address,uint256[])"](...)` để tránh nhầm lẫn overload trong Ethers.js.
+- **Quyết định sửa chữa của nhóm:**
+  - Nâng cấp `web/index.html`: Chuyển sang trích xuất ID trực tiếp từ Event `ScholarshipCreated` trong `receipt.logs` thay vì gọi `scholarshipCount()`.
+  - Bọc an toàn lệnh đọc `scholarshipCount()` bằng khối `try/catch` dự phòng.
+  - Tích hợp kiểm tra tự động `provider.getCode(address)` trong hàm `initContract()` và `validatePreconditions()` để hiển thị thông báo/cảnh báo trực quan nếu địa chỉ đích chưa có Smart Contract trên Sepolia.
+  - Bổ sung thông điệp lỗi trực quan cho `BAD_DATA` ("Địa chỉ hiện tại chưa deploy mã bytecode ProjectCore.sol trên Sepolia").
+  - Kiểm thử toàn diện qua Hardhat: **91/91 tests PASS 100%**.
+- **Kết quả đạt được:**
+  - Loại bỏ hoàn toàn lỗi crash JavaScript do decode dữ liệu rỗng `0x`.
+  - Luồng DApp hiển thị chính xác trạng thái giao dịch và hướng dẫn người dùng kết nối contract thật trên Sepolia.
+
+---
 > 🔗 **Liên kết nhanh:** [Trang chủ README](../README.md) • [Kế hoạch đồ án](PROJECT_PLAN.md) • [Đặc tả nghiệp vụ](SPEC.md) • [Quy tắc kinh tế](ECONOMIC_RULES.md) • [Nhật ký AI](AI_JOURNAL.md) • [GitHub Repo](https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS)
 
 
