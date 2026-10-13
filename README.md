@@ -135,7 +135,7 @@ cmd /c npx hardhat test
 | **Mạng Blockchain** | Ethereum Sepolia Testnet |
 | **Chain ID** | `11155111` (Thập lục phân: `0xaa36a7`) |
 | **Đơn Vị Tiền Tệ** | Native SepoliaETH (18 chữ số thập phân) |
-| **Địa Chỉ Hợp Đồng Mặc Định** | `0x71C8360f089f24E1F034C7f6424e86a51d45C522` *(có thể thay đổi linh hoạt trên giao diện DApp)* |
+| **Địa Chỉ Hợp Đồng Mặc Định** | `0x71c8360f089f24e1f034c7f6424E86a51D45C522` *(có thể thay đổi linh hoạt trên giao diện DApp)* |
 | **Block Explorer** | [https://sepolia.etherscan.io](https://sepolia.etherscan.io) |
 | **An Toàn Khóa Riêng Tư** | **100% Phi Lưu Ký** — Không lưu trữ hay yêu cầu Private Key trên hệ thống |
 

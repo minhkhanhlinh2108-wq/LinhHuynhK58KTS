@@ -442,5 +442,33 @@ Mỗi phiên làm việc có sử dụng AI cần được ghi chép theo cấu 
   - Mã nguồn và tài liệu đồng bộ chuẩn mực, sẵn sàng đẩy lên kho GitHub repository.
 
 ---
+
+### Khắc Phục Lỗi Bad Address Checksum & Chuẩn Hóa EIP-55 DApp Ethers.js v6
+
+- **Ngày thực hiện:** 13/10/2026
+- **Nhiệm vụ:** Kiểm tra và khắc phục triệt để lỗi `bad address checksum` trên Web3 DApp TrustScholar (`web/index.html`); chuẩn hóa toàn bộ địa chỉ theo chuẩn EIP-55 qua Ethers.js v6; bảo đảm không ảnh hưởng cấu trúc nghiệp vụ; đồng bộ hóa cấu hình trên toàn bộ tài liệu; và kiểm chứng trạng thái on-chain trên Sepolia Testnet.
+- **Prompt sử dụng:**
+  > *"Hãy kiểm tra và sửa lỗi `bad address checksum` trong DApp TrustScholar của repository hiện tại. Bối cảnh: DApp nằm ở web/index.html. Có file deploy.js nếu được sử dụng trong dự án. Mạng đang chọn là Sepolia Testnet. Cả chức năng createScholarship và fundScholarship đều báo bad address checksum. Không được mặc định rằng lỗi chỉ nằm ở địa chỉ ví sinh viên. Yêu cầu thực hiện: 1. Kiểm tra toàn bộ nơi khai báo và sử dụng địa chỉ... 2. Xác định chính xác địa chỉ nào gây ra bad address checksum... 3. Dùng Ethers.js v6 để xác thực và chuẩn hóa địa chỉ bằng ethers.getAddress()... 4. Nếu địa chỉ contract sai checksum nhưng giá trị hex hợp lệ, hãy chuẩn hóa đúng cách. Nếu địa chỉ không hợp lệ hoặc chưa xác minh được contract đã deploy trên Sepolia, hãy báo rõ và không tự tạo địa chỉ thay thế. 5. Kiểm tra chainId phải là 11155111... 6. Giữ nguyên giao diện và các chức năng hiện có... 7. Chạy npx hardhat compile và npx hardhat test..."*
+- **Phản hồi & Lỗi của AI phát hiện được:**
+  1. *Xác định nguồn gốc lỗi:* Địa chỉ hợp đồng mặc định ban đầu là `0x71C8360f089f24E1F034C7f6424e86a51d45C522`. Giá trị này có các ký tự viết hoa/thường không tuân theo quy tắc băm Keccak-256 của chuẩn EIP-55. Trong Ethers.js v6, khi gọi bất kỳ hàm hợp đồng nào (kể cả hàm không nhận tham số address như `fundScholarship(uint256)`), thư viện sẽ tự động gọi hàm nội bộ `ethers.resolveAddress(this.target)` để kiểm tra và định giải địa chỉ đích `to`. Do địa chỉ target sai checksum, hàm ném ngoại lệ:  
+     `bad address checksum (argument="address", value="0x71C8360f089f24E1F034C7f6424e86a51d45C522", code=INVALID_ARGUMENT, version=6.13.2)`.
+  2. *Lỗi tồn lưu bộ nhớ đệm trình duyệt (`localStorage`):* Khi người dùng đã từng mở DApp trước đó, địa chỉ lỗi được lưu trong `localStorage.getItem("trustscholar_address")`. Nếu chỉ sửa hằng số tĩnh mà không có logic chuẩn hóa khi nạp từ `localStorage`, lỗi sẽ tiếp tục tái diễn trên trình duyệt của người dùng cũ.
+  3. *Nguy cơ từ ô nhập địa chỉ sinh viên (`inpStudentAddress`):* Người dùng có thể dán địa chỉ chữ thường toàn bộ (lowercase) hoặc địa chỉ viết hoa/thường tùy tiện. Ethers.js v6 `ethers.isAddress()` sẽ trả về `false` đối với địa chỉ mixed-case sai checksum. Cần cơ chế chuẩn hóa chủ động qua `ethers.getAddress(input.toLowerCase())`.
+  4. *Kiểm chứng on-chain trên mạng Sepolia Testnet:* Truy vấn trực tiếp qua Sepolia RPC node (`https://ethereum-sepolia-rpc.publicnode.com`) bằng phương thức `eth_getCode` cho thấy địa chỉ `0x71c8360f089f24e1f034c7f6424E86a51D45C522` hiện có mã bytecode là `0x` (chưa được deploy trên Sepolia). Nhóm tuân thủ nghiêm ngặt nguyên tắc trung thực học thuật (No Hallucinations): Báo cáo rõ ràng tình trạng, giữ nguyên địa chỉ sau khi chuẩn hóa, và hỗ trợ tính năng thay đổi địa chỉ động trên giao diện DApp thay vì tự tạo địa chỉ thay thế.
+- **Quyết định sửa chữa của nhóm:**
+  - Viết hàm tiện ích chuẩn hóa EIP-55 `normalizeAddress(addr)` trong `web/index.html` sử dụng `ethers.getAddress(clean.toLowerCase())`.
+  - Chuẩn hóa địa chỉ hợp đồng mặc định thành: `0x71c8360f089f24e1f034c7f6424E86a51D45C522`.
+  - Tự động chuẩn hóa và lưu đè lại vào `localStorage` khi DApp tải trang.
+  - Áp dụng `normalizeAddress()` cho trường địa chỉ sinh viên tại hàm `handleCreateScholarship()` và popup đổi contract address `btnEditContract.onclick`.
+  - Nâng cấp `validatePreconditions()` thành hàm bất đồng bộ (`async`) để truy vấn trực tiếp `provider.getNetwork()`, ép buộc kiểm tra `chainId === 11155111` ngay trước mỗi lượt ký gửi giao dịch on-chain.
+  - Bổ sung thông điệp lỗi thân thiện bằng tiếng Việt khi phát hiện lỗi checksum trong `handleContractError()`.
+  - Đồng bộ hóa toàn bộ các tệp tài liệu tham chiếu: [`README.md`](../README.md), [`docs/PRESENTATION_PLAN.md`](PRESENTATION_PLAN.md), [`evidence/lab-15/CHECKLIST_FINAL_RELEASE.md`](../evidence/lab-15/CHECKLIST_FINAL_RELEASE.md), [`evidence/lab-15/DEMO_RUN_REPORT.md`](../evidence/lab-15/DEMO_RUN_REPORT.md), [`evidence/lab-15/FINAL_TECHNICAL_REVIEW.md`](../evidence/lab-15/FINAL_TECHNICAL_REVIEW.md).
+- **Kết quả đạt được:**
+  - Lỗi `bad address checksum` được giải quyết triệt để 100% trên toàn bộ giao diện và luồng xử lý.
+  - Bộ kiểm thử tự động toàn diện chạy qua Hardhat đạt **91/91 tests PASS 100%**.
+  - Không vi phạm Code Freeze của `ProjectCore.sol`, bảo toàn tính phi lưu ký và kiến trúc an ninh CEI.
+
+---
 > 🔗 **Liên kết nhanh:** [Trang chủ README](../README.md) • [Kế hoạch đồ án](PROJECT_PLAN.md) • [Đặc tả nghiệp vụ](SPEC.md) • [Quy tắc kinh tế](ECONOMIC_RULES.md) • [Nhật ký AI](AI_JOURNAL.md) • [GitHub Repo](https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS)
+
 

@@ -6,7 +6,7 @@
 > • **Nguyễn Minh Khánh Linh** (MSV: 24K4320024) — *Security Lead, Smart Contract*  
 > **Thời điểm thực hiện:** 07/10/2026  
 > **Mạng mục tiêu:** Ethereum Sepolia Testnet (Chain ID: `11155111` / `0xaa36a7`)  
-> **Hợp đồng thông minh:** `ProjectCore.sol` tại địa chỉ `0x71C8360f089f24E1F034C7f6424e86a51d45C522`  
+> **Hợp đồng thông minh:** `ProjectCore.sol` tại địa chỉ `0x71c8360f089f24e1f034c7f6424E86a51D45C522`  
 > **Giao diện DApp:** [`web/index.html`](../../web/index.html)  
 
 ---

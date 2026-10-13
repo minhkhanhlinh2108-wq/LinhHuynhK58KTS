@@ -625,7 +625,7 @@
     <div class="config-bar">
       <div class="config-address">
         <span>📍 Smart Contract:</span>
-        <span id="contractAddressDisplay" class="code-pill">0x71C8360f089f24E1F034C7f6424e86a51d45C522</span>
+        <span id="contractAddressDisplay" class="code-pill">0x71c8360f089f24e1f034c7f6424E86a51D45C522</span>
         <button id="btnEditContract" class="btn btn-secondary" style="padding: 3px 8px; font-size: 0.75rem;">Đổi Address</button>
       </div>
       <div style="display: flex; gap: 8px; align-items: center; font-size: 0.8rem; color: var(--text-dim);">
@@ -969,7 +969,19 @@
     // Configuration
     const SEPOLIA_CHAIN_ID_DEC = 11155111;
     const SEPOLIA_CHAIN_ID_HEX = "0xaa36a7";
-    const DEFAULT_CONTRACT_ADDRESS = "0x71C8360f089f24E1F034C7f6424e86a51d45C522";
+    const DEFAULT_CONTRACT_ADDRESS = "0x71c8360f089f24e1f034c7f6424E86a51D45C522";
+
+    // EIP-55 Checksum & Address Normalization Helper using Ethers v6
+    function normalizeAddress(addr) {
+      if (!addr || typeof addr !== "string") return null;
+      const clean = addr.trim();
+      if (!/^0x[0-9a-fA-F]{40}$/i.test(clean)) return null;
+      try {
+        return ethers.getAddress(clean.toLowerCase());
+      } catch (_) {
+        return null;
+      }
+    }
 
     // Standard ABI for ProjectCore
     const PROJECT_CORE_ABI = [
@@ -1002,7 +1014,11 @@
     ];
 
     // State Variables
-    let currentContractAddress = localStorage.getItem("trustscholar_address") || DEFAULT_CONTRACT_ADDRESS;
+    let rawStoredAddr = localStorage.getItem("trustscholar_address");
+    let currentContractAddress = normalizeAddress(rawStoredAddr) || DEFAULT_CONTRACT_ADDRESS;
+    if (rawStoredAddr && rawStoredAddr !== currentContractAddress) {
+      localStorage.setItem("trustscholar_address", currentContractAddress);
+    }
     let provider = null;
     let signer = null;
     let userAddress = null;
@@ -1145,21 +1161,27 @@
     // Contract Initialization
     function initContract() {
       if (signer) {
-        coreContract = new ethers.Contract(currentContractAddress, PROJECT_CORE_ABI, signer);
+        const validAddr = normalizeAddress(currentContractAddress) || DEFAULT_CONTRACT_ADDRESS;
+        currentContractAddress = validAddr;
+        contractAddressDisplay.textContent = validAddr;
+        coreContract = new ethers.Contract(validAddr, PROJECT_CORE_ABI, signer);
       }
     }
 
     // Edit Contract Address
     btnEditContract.onclick = () => {
       const newAddr = prompt("Nhập địa chỉ hợp đồng ProjectCore trên Sepolia:", currentContractAddress);
-      if (newAddr && ethers.isAddress(newAddr)) {
-        currentContractAddress = newAddr;
-        localStorage.setItem("trustscholar_address", newAddr);
-        contractAddressDisplay.textContent = newAddr;
-        initContract();
-        showStatus("Đã cập nhật địa chỉ hợp đồng!", newAddr, "info");
-      } else if (newAddr !== null) {
-        alert("Địa chỉ Ethereum không hợp lệ!");
+      if (newAddr !== null) {
+        const validated = normalizeAddress(newAddr);
+        if (validated) {
+          currentContractAddress = validated;
+          localStorage.setItem("trustscholar_address", validated);
+          contractAddressDisplay.textContent = validated;
+          initContract();
+          showStatus("Đã cập nhật địa chỉ hợp đồng!", validated, "info");
+        } else {
+          alert("Địa chỉ Ethereum không hợp lệ (yêu cầu đúng định dạng 40 ký tự hex)! ");
+        }
       }
     };
 
@@ -1206,17 +1228,38 @@
     }
 
     // Helper: Preconditions check
-    function validatePreconditions() {
-      if (!signer) {
+    async function validatePreconditions() {
+      if (!signer || !provider) {
         showStatus("Chưa kết nối ví!", "Vui lòng kết nối ví MetaMask trước!", "error");
         alert("Vui lòng kết nối ví MetaMask trước!");
         return false;
       }
-      if (!isCorrectNetwork) {
-        showStatus("Sai mạng!", "Vui lòng chuyển MetaMask sang Sepolia.", "error");
-        alert("Vui lòng chuyển MetaMask sang Sepolia.");
+
+      // Kiểm tra chuỗi mạng Chain ID
+      const network = await provider.getNetwork();
+      const currentChainId = Number(network.chainId);
+      if (currentChainId !== SEPOLIA_CHAIN_ID_DEC) {
+        isCorrectNetwork = false;
+        await checkNetwork();
+        showStatus("Sai mạng!", `Vui lòng chuyển MetaMask sang Sepolia Testnet (Chain ID: 11155111). Mạng hiện tại: ${currentChainId}`, "error");
+        alert(`Vui lòng chuyển MetaMask sang Sepolia Testnet (Chain ID: 11155111)! Mạng hiện tại: ${currentChainId}`);
         return false;
       }
+      isCorrectNetwork = true;
+
+      // Xác thực và chuẩn hóa địa chỉ smart contract trước khi tương tác
+      const validContractAddr = normalizeAddress(currentContractAddress);
+      if (!validContractAddr) {
+        showStatus("Lỗi địa chỉ hợp đồng!", "Địa chỉ Smart Contract không hợp lệ.", "error");
+        alert("Địa chỉ Smart Contract không đúng định dạng hex 20-byte!");
+        return false;
+      }
+      currentContractAddress = validContractAddr;
+
+      if (!coreContract || coreContract.target !== validContractAddr) {
+        initContract();
+      }
+
       return true;
     }
 
@@ -1248,8 +1291,10 @@
 
       let friendlyMsg = "Giao dịch thực thi thất bại trên blockchain.";
 
-      // 2. Không có quyền / Sai student
-      if (parsedErrName === "NotStudent" || rawMsg.includes("NotStudent") || errorData.includes("51ee4177")) {
+      // 2. Phân loại lỗi
+      if (rawMsg.includes("bad address checksum") || (err.message && err.message.includes("bad address checksum"))) {
+        friendlyMsg = "Lỗi địa chỉ (bad address checksum): Địa chỉ ví hoặc hợp đồng không khớp chuẩn EIP-55 checksum!";
+      } else if (parsedErrName === "NotStudent" || rawMsg.includes("NotStudent") || errorData.includes("51ee4177")) {
         friendlyMsg = "Chặn thao tác: Sai địa chỉ sinh viên thụ hưởng (NotStudent)! Chỉ sinh viên được chỉ định mới có quyền thực hiện.";
       } else if (parsedErrName === "NotSponsor" || rawMsg.includes("NotSponsor") || errorData.includes("ee3da5c8")) {
         friendlyMsg = "Lỗi phân quyền: Bạn không có quyền thực hiện thao tác này (NotSponsor / Không có quyền)!";
@@ -1280,12 +1325,13 @@
 
     // 1. Create Scholarship
     async function handleCreateScholarship() {
-      if (!validatePreconditions()) return;
+      if (!await validatePreconditions()) return;
 
-      const studentAddr = document.getElementById("inpStudentAddress").value.trim();
+      const studentAddrRaw = document.getElementById("inpStudentAddress").value.trim();
       const milestonesRaw = document.getElementById("inpMilestones").value.trim();
 
-      if (!ethers.isAddress(studentAddr)) {
+      const studentAddr = normalizeAddress(studentAddrRaw);
+      if (!studentAddr) {
         alert("Vui lòng nhập địa chỉ ví sinh viên hợp lệ!");
         return;
       }
@@ -1323,7 +1369,7 @@
 
     // 2. Fund Scholarship
     async function handleFundScholarship() {
-      if (!validatePreconditions()) return;
+      if (!await validatePreconditions()) return;
 
       const id = document.getElementById("inpFundScholarshipId").value;
       const ethAmount = document.getElementById("inpFundAmount").value;
@@ -1354,7 +1400,7 @@
 
     // 3. Submit Milestone
     async function handleSubmitMilestone() {
-      if (!validatePreconditions()) return;
+      if (!await validatePreconditions()) return;
 
       const id = document.getElementById("inpSubmitId").value;
       const index = document.getElementById("inpSubmitIndex").value;
@@ -1380,7 +1426,7 @@
 
     // 4. Approve Milestone
     async function handleApproveMilestone() {
-      if (!validatePreconditions()) return;
+      if (!await validatePreconditions()) return;
 
       const id = document.getElementById("inpApproveId").value;
       const index = document.getElementById("inpApproveIndex").value;
@@ -1405,7 +1451,7 @@
 
     // 5. Release Milestone
     async function handleReleaseMilestone() {
-      if (!validatePreconditions()) return;
+      if (!await validatePreconditions()) return;
 
       const id = document.getElementById("inpReleaseId").value;
       const index = document.getElementById("inpReleaseIndex").value;
@@ -1438,8 +1484,9 @@
       }
 
       try {
+        const validAddr = normalizeAddress(currentContractAddress) || DEFAULT_CONTRACT_ADDRESS;
         const readProvider = provider || new ethers.JsonRpcProvider("https://ethereum-sepolia-rpc.publicnode.com");
-        const readContract = new ethers.Contract(currentContractAddress, PROJECT_CORE_ABI, readProvider);
+        const readContract = new ethers.Contract(validAddr, PROJECT_CORE_ABI, readProvider);
         const s = await readContract.getScholarship(id);
 
         let html = `
@@ -1483,8 +1530,9 @@
       }
 
       try {
+        const validAddr = normalizeAddress(currentContractAddress) || DEFAULT_CONTRACT_ADDRESS;
         const readProvider = provider || new ethers.JsonRpcProvider("https://ethereum-sepolia-rpc.publicnode.com");
-        const readContract = new ethers.Contract(currentContractAddress, PROJECT_CORE_ABI, readProvider);
+        const readContract = new ethers.Contract(validAddr, PROJECT_CORE_ABI, readProvider);
         const s = await readContract.getScholarship(id);
 
         let studentBal = "0";
@@ -1532,8 +1580,9 @@
       }
 
       try {
+        const validAddr = normalizeAddress(currentContractAddress) || DEFAULT_CONTRACT_ADDRESS;
         const readProvider = provider || new ethers.JsonRpcProvider("https://ethereum-sepolia-rpc.publicnode.com");
-        const readContract = new ethers.Contract(currentContractAddress, PROJECT_CORE_ABI, readProvider);
+        const readContract = new ethers.Contract(validAddr, PROJECT_CORE_ABI, readProvider);
 
         showStatus(`Đang tải dữ liệu suất học bổng #${id}...`, "", "loading");
         const s = await readContract.getScholarship(id);

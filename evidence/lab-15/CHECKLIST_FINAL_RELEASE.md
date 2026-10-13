@@ -73,7 +73,7 @@
 | **Mạng Blockchain** | Ethereum Sepolia Testnet |
 | **Chain ID (Dec / Hex)** | `11155111` / `0xaa36a7` |
 | **Native Currency** | SepoliaETH (18 decimals) |
-| **Default Contract Address** | `0x71C8360f089f24E1F034C7f6424e86a51d45C522` *(hỗ trợ đổi tùy ý trên UI)* |
+| **Default Contract Address** | `0x71c8360f089f24e1f034c7f6424E86a51D45C522` *(hỗ trợ đổi tùy ý trên UI)* |
 | **Block Explorer** | [https://sepolia.etherscan.io](https://sepolia.etherscan.io) |
 | **Frontend Web DApp** | `web/index.html` (chạy qua local server hoặc web hosting công khai) |
 | **Thư Viện Kết Nối** | `ethers.js v6.13.2` UMD CDN |

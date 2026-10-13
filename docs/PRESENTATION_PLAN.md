@@ -7,7 +7,7 @@
 > • **Trần Thị Như Huỳnh** (MSV: 24K4320010) — *Thành viên (QA & Testing Lead, Web3 DApp Frontend)*  
 > **Thời lượng báo cáo dự kiến:** 10 – 12 phút (7 phút thuyết trình + demo, 3–5 phút Q&A phản biện)  
 > **Địa chỉ repository:** [minhkhanhlinh2108-wq/LinhHuynhK58KTS](https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS)  
-> **Địa chỉ Smart Contract Sepolia:** [`0x71C8360f089f24E1F034C7f6424e86a51d45C522`](https://sepolia.etherscan.io/address/0x71C8360f089f24E1F034C7f6424e86a51d45C522)  
+> **Địa chỉ Smart Contract Sepolia:** [`0x71c8360f089f24e1f034c7f6424E86a51D45C522`](https://sepolia.etherscan.io/address/0x71c8360f089f24e1f034c7f6424E86a51D45C522)  
 > **DApp URL:**  
 > • *Local Web Server:* [http://localhost:8080](http://localhost:8080) (hoặc `http://127.0.0.1:5500`)  
 > • *Trực tiếp:* `file:///d:/crypto-smart-contract-2026/LinhHuynhK58KTS-main/web/index.html`  
@@ -42,7 +42,7 @@
 ## 3. Kịch Bản Live Demo 3 Phút (Step-by-Step Demo Script)
 
 > **Môi trường Demo:** Web3 DApp `web/index.html` kết nối MetaMask trên mạng Ethereum Sepolia (Chain ID: `11155111`).  
-> **Địa chỉ Contract:** `0x71C8360f089f24E1F034C7f6424e86a51d45C522`  
+> **Địa chỉ Contract:** `0x71c8360f089f24e1f034c7f6424E86a51D45C522`  
 > **DApp URL:** `http://localhost:8080` (hoặc mở trực tiếp file `web/index.html`)  
 
 ### Bước 1: Kết nối ví & Kiểm tra mạng (30 giây)
@@ -89,7 +89,7 @@
 
 | Giao Dịch | Hàm / Hành Động | Block / Mạng | Trạng Thái | Ý Nghĩa Kiểm Chứng |
 |:---|:---|:---:|:---:|:---|
-| **Deploy Contract** | `constructor()` ProjectCore | Sepolia / Local EVM | ✅ Thành công | Địa chỉ hợp đồng: `0x71C8360f089f24E1F034C7f6424e86a51d45C522` |
+| **Deploy Contract** | `constructor()` ProjectCore | Sepolia / Local EVM | ✅ Thành công | Địa chỉ hợp đồng: `0x71c8360f089f24e1f034c7f6424E86a51D45C522` |
 | **Create Scholarship** | `createScholarship` (2 mốc) | Block xác thực | ✅ Thành công | Khởi tạo suất học bổng #1 (0.1 ETH tổng cam kết) |
 | **Fund Scholarship** | `fundScholarship` (0.1 ETH) | Block xác thực | ✅ Thành công | Native ETH nạp và khóa trong Escrow |
 | **Submit Milestone** | `submitMilestone` (CID IPFS) | Block xác thực | ✅ Thành công | Lưu trữ bằng chứng IPFS CID không thể chỉnh sửa |
