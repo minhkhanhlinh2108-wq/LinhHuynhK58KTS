@@ -628,9 +628,11 @@
         <span id="contractAddressDisplay" class="code-pill">0x71c8360f089f24e1f034c7f6424E86a51D45C522</span>
         <button id="btnEditContract" class="btn btn-secondary" style="padding: 3px 8px; font-size: 0.75rem;">Đổi Address</button>
       </div>
-      <div style="display: flex; gap: 8px; align-items: center; font-size: 0.8rem; color: var(--text-dim);">
+      <div style="display: flex; gap: 8px; align-items: center; font-size: 0.8rem; color: var(--text-dim); flex-wrap: wrap;">
         <span>Trạng thái:</span>
         <span id="contractStatusText" style="color: var(--accent-success); font-weight: 600;">Sẵn sàng tương tác</span>
+        <span>• Suất học bổng trên chain:</span>
+        <span id="contractScholarshipCountBadge" class="code-pill" style="color: #6ee7b7; font-weight: 700;">0</span>
       </div>
     </div>
 
@@ -669,8 +671,8 @@
         <div class="card">
           <div class="card-header">
             <div>
-              <h2 class="card-title">✨ Tạo Suất Học Bổng</h2>
-              <p class="card-desc">Khởi tạo hợp đồng Escrow cam kết giải ngân theo các mốc học tập.</p>
+              <h2 class="card-title">✨ Bước 1: Tạo Suất Học Bổng</h2>
+              <p class="card-desc">Bắt buộc thực hiện trước khi nạp tiền. Khởi tạo Escrow cam kết theo các mốc học tập.</p>
             </div>
           </div>
 
@@ -687,7 +689,7 @@
           </div>
 
           <button id="btnCreateScholarship" class="btn btn-primary" onclick="handleCreateScholarship()">
-            🚀 Khởi Tạo Suất Học Bổng (createScholarship)
+            🚀 Bước 1: Khởi Tạo Suất Học Bổng (createScholarship)
           </button>
         </div>
 
@@ -695,14 +697,15 @@
         <div class="card">
           <div class="card-header">
             <div>
-              <h2 class="card-title">💰 Nạp Quỹ Escrow (Fund)</h2>
-              <p class="card-desc">Nhà tài trợ nạp Native ETH bảo chứng vào Smart Contract.</p>
+              <h2 class="card-title">💰 Bước 2: Nạp Quỹ Escrow (Fund)</h2>
+              <p class="card-desc">Thực hiện sau Bước 1. Nạp Native ETH bảo chứng vào suất học bổng đã tạo.</p>
             </div>
           </div>
 
           <div class="form-group">
             <label class="form-label" for="inpFundScholarshipId">Mã Suất Học Bổng (Scholarship ID)</label>
             <input id="inpFundScholarshipId" class="form-input" type="number" min="1" placeholder="1" />
+            <span class="form-hint">Mã suất học bổng cần nạp (sẽ tự động điền ngay sau Bước 1).</span>
           </div>
 
           <div class="form-group">
@@ -712,7 +715,7 @@
           </div>
 
           <button id="btnFundScholarship" class="btn btn-success" onclick="handleFundScholarship()">
-            📥 Nạp Tiền Vào Escrow (fundScholarship)
+            📥 Bước 2: Nạp Tiền Vào Escrow (fundScholarship)
           </button>
         </div>
 
@@ -1166,7 +1169,7 @@
         contractAddressDisplay.textContent = validAddr;
         coreContract = new ethers.Contract(validAddr, PROJECT_CORE_ABI, signer);
 
-        // Kiểm tra trạng thái bytecode on-chain
+        // Kiểm tra trạng thái bytecode on-chain & đọc số lượng suất học bổng
         try {
           const code = await provider.getCode(validAddr);
           const statusEl = document.getElementById("contractStatusText");
@@ -1179,6 +1182,16 @@
               statusEl.style.color = "var(--accent-warning)";
             }
           }
+
+          // Cập nhật số suất học bổng on-chain hiện có
+          try {
+            const count = await coreContract.scholarshipCount();
+            const countEl = document.getElementById("contractScholarshipCountBadge");
+            if (countEl) countEl.textContent = count.toString();
+            if (count > 0n && !document.getElementById("inpFundScholarshipId").value) {
+              document.getElementById("inpFundScholarshipId").value = count.toString();
+            }
+          } catch (_) {}
         } catch (_) {}
       }
     }
@@ -1405,6 +1418,10 @@
           showStatus(`Tạo suất học bổng #${nextId} thành công! 🎉`, `Block: ${receipt.blockNumber}`, "success", tx.hash);
           recordSessionTx("Tạo Suất Học Bổng", "Thành công", tx.hash, `Đã tạo suất #${nextId} cho ${studentAddr.slice(0, 8)}...`, nextId);
           
+          // Cập nhật số suất học bổng trên thanh hiển thị
+          const countEl = document.getElementById("contractScholarshipCountBadge");
+          if (countEl) countEl.textContent = nextId;
+
           // Cập nhật sẵn ID sang các ô nhập liệu khác
           document.getElementById("inpFundScholarshipId").value = nextId;
           document.getElementById("inpSponsorCheckId").value = nextId;
@@ -1439,6 +1456,23 @@
         alert("Vui lòng nhập số ETH nạp hợp lệ!");
         return;
       }
+
+      // Tiền kiểm tra số suất học bổng on-chain để ngăn chặn revert ScholarshipNotFound
+      try {
+        const count = await coreContract.scholarshipCount();
+        if (count === 0n) {
+          const alertMsg = "Hợp đồng hiện chưa có suất học bổng nào (Tổng số suất: 0)!\n\nBạn vui lòng thực hiện 'Bước 1: Tạo Suất Học Bổng' ở khung bên trái trước khi nạp tiền.";
+          alert(alertMsg);
+          showStatus("Chưa có suất học bổng nào trên contract!", "Vui lòng hoàn tất Bước 1 (Tạo Suất Học Bổng) trước khi nạp tiền.", "error");
+          return;
+        }
+        if (BigInt(id) > count) {
+          const alertMsg = `Suất học bổng #${id} không tồn tại!\n\nHiện hợp đồng mới chỉ có ${count} suất học bổng (từ #1 đến #${count}). Vui lòng nhập đúng ID hoặc tạo suất mới tại Bước 1.`;
+          alert(alertMsg);
+          showStatus("Không tìm thấy suất học bổng!", `ID #${id} vượt quá tổng số suất hiện có (${count}).`, "error");
+          return;
+        }
+      } catch (_) {}
 
       try {
         const valueWei = ethers.parseEther(ethAmount);
