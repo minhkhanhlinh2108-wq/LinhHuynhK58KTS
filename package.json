@@ -23,6 +23,9 @@
   },
   "homepage": "https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS#readme",
   "devDependencies": {
+    "@nomicfoundation/hardhat-ethers": "^4.2.0",
+    "dotenv": "^18.0.7",
+    "ethers": "^6.17.0",
     "hardhat": "^3.18.1"
   }
 }

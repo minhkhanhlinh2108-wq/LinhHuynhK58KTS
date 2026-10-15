@@ -1,0 +1,103 @@
+﻿
+import { network } from "hardhat";
+
+async function main() {
+  console.log("==================================================");
+  console.log("   TrustScholar - ProjectCore Deployment Script");
+  console.log("==================================================");
+  console.log("Mang dich: Ethereum Sepolia (Chain ID: 11155111)");
+  console.log("Hop dong muc tieu: contracts/project/ProjectCore.sol");
+
+  // Tao ket noi Sepolia va lay ethers plugin
+  const connection = await network.create("sepolia");
+  const ethers = connection.ethers;
+
+  if (!ethers || typeof ethers.getSigners !== "function") {
+    throw new Error(
+      "Khong khoi tao duoc Hardhat Ethers plugin. Kiem tra hardhat.config.js"
+    );
+  }
+
+  const [deployer] = await ethers.getSigners();
+  const deployerAddress = await deployer.getAddress();
+
+  console.log("Deployer address:", deployerAddress);
+
+  // Kiem tra so du Sepolia ETH
+  const balance = await ethers.provider.getBalance(deployerAddress);
+  console.log("So du deployer:", ethers.formatEther(balance), "ETH");
+
+  if (balance === 0n) {
+    throw new Error(
+      "Vi deployer khong co Sepolia ETH. Hay nap tu faucet Sepolia."
+    );
+  }
+
+  // Deploy ProjectCore
+  console.log("\nDang trien khai ProjectCore...");
+
+  const ProjectCore = await ethers.getContractFactory("ProjectCore");
+  const contract = await ProjectCore.deploy();
+
+  await contract.waitForDeployment();
+
+  const contractAddress = await contract.getAddress();
+  const deployTx = contract.deploymentTransaction();
+
+  console.log("==================================================");
+  console.log("DEPLOY THANH CONG!");
+  console.log("Contract address:", contractAddress);
+  console.log("TX hash:", deployTx?.hash || "(unknown)");
+  console.log(
+    "Etherscan:",
+    "https://sepolia.etherscan.io/address/" + contractAddress
+  );
+
+  // Xac minh bytecode
+  const code = await ethers.provider.getCode(contractAddress);
+
+  if (code && code !== "0x" && code.length > 2) {
+    console.log("Bytecode xac minh: OK (length=" + code.length + ")");
+  } else {
+    throw new Error(
+      "Khong tim thay bytecode tai dia chi contract sau khi deploy."
+    );
+  }
+
+  // Kiem tra ham scholarshipCount
+  try {
+    const count = await contract.scholarshipCount();
+    console.log("scholarshipCount() =", count.toString());
+  } catch (error) {
+    console.warn(
+      "Khong goi duoc scholarshipCount():",
+      error.message
+    );
+  }
+
+  // Kiem tra verifier
+  try {
+    const verifier = await contract.verifier();
+    console.log("verifier() =", verifier);
+
+    if (verifier.toLowerCase() === deployerAddress.toLowerCase()) {
+      console.log("Verifier = Deployer: DUNG");
+    } else {
+      console.warn("Verifier khac deployer; can kiem tra lai.");
+    }
+  } catch (error) {
+    console.warn("Khong goi duoc verifier():", error.message);
+  }
+
+  console.log("\n*** BUOC TIEP THEO ***");
+  console.log("Chi cap nhat web/index.html sau khi xac minh contract.");
+  console.log(
+    'const DEFAULT_CONTRACT_ADDRESS = "' + contractAddress + '";'
+  );
+  console.log("==================================================");
+}
+
+main().catch((error) => {
+  console.error("Loi khi chay script:", error.message || error);
+  process.exitCode = 1;
+});
