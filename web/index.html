@@ -870,6 +870,7 @@
           <div class="form-group">
             <label class="form-label" for="inpSubmitId">Mã Suất Học Bổng (Scholarship ID)</label>
             <input id="inpSubmitId" class="form-input" type="number" min="1" placeholder="1" />
+            <div id="submitStudentMatchNotice" style="display: none; padding: 10px 12px; border-radius: var(--radius-sm); font-size: 0.8rem; margin-top: 6px; line-height: 1.5;"></div>
           </div>
 
           <div class="form-group">
@@ -1198,6 +1199,60 @@
       const targetBtn = document.getElementById("tabBtn" + tabName.charAt(0).toUpperCase() + tabName.slice(1));
       if (targetPane) targetPane.classList.add("active");
       if (targetBtn) targetBtn.classList.add("active");
+
+      if (tabName === "student") {
+        checkStudentMatchForSubmit();
+      }
+    }
+
+    // Helper: Đối soát trực tiếp ví MetaMask với ví sinh viên đã đăng ký cho suất học bổng
+    async function checkStudentMatchForSubmit() {
+      const notice = document.getElementById("submitStudentMatchNotice");
+      const id = document.getElementById("inpSubmitId")?.value;
+      if (!notice) return;
+      if (!id || id <= 0) {
+        notice.style.display = "none";
+        return;
+      }
+
+      try {
+        const validAddr = normalizeAddress(currentContractAddress) || DEFAULT_CONTRACT_ADDRESS;
+        const readProvider = provider || new ethers.JsonRpcProvider("https://ethereum-sepolia-rpc.publicnode.com");
+        const readContract = new ethers.Contract(validAddr, PROJECT_CORE_ABI, readProvider);
+        const s = await readContract.getScholarship(id);
+
+        let activeWallet = userAddress;
+        if (signer) {
+          try { activeWallet = await signer.getAddress(); } catch (_) {}
+        }
+
+        notice.style.display = "block";
+        if (!activeWallet) {
+          notice.style.background = "var(--bg-box)";
+          notice.style.border = "1px solid var(--border-color)";
+          notice.style.color = "var(--text-muted)";
+          notice.innerHTML = `🎓 <strong>Ví sinh viên của Suất #${id}:</strong> <span class="code-pill">${s.student}</span><br>⚠️ Chưa kết nối ví MetaMask để đối chiếu.`;
+        } else if (activeWallet.toLowerCase() === s.student.toLowerCase()) {
+          notice.style.background = "rgba(16, 185, 129, 0.1)";
+          notice.style.border = "1px solid rgba(16, 185, 129, 0.3)";
+          notice.style.color = "var(--accent-success)";
+          notice.innerHTML = `✅ <strong>Ví hợp lệ:</strong> Ví MetaMask đang kết nối (<span class="code-pill">${activeWallet.slice(0, 6)}...${activeWallet.slice(-4)}</span>) khớp chính xác với ví sinh viên thụ hưởng của Suất #${id}.`;
+        } else {
+          notice.style.background = "rgba(239, 68, 68, 0.1)";
+          notice.style.border = "1px solid rgba(239, 68, 68, 0.3)";
+          notice.style.color = "var(--accent-danger)";
+          notice.innerHTML = `⚠️ <strong>Lệch ví (Nguyên nhân lỗi NotStudent):</strong><br>` +
+            `• Ví MetaMask đang chọn: <span class="code-pill" style="color: var(--accent-danger); font-weight: 700;">${activeWallet}</span><br>` +
+            `• Ví Sinh viên của Suất #${id}: <span class="code-pill" style="color: var(--accent-success); font-weight: 700;">${s.student}</span><br>` +
+            `👉 <em>Vui lòng mở MetaMask và chuyển sang đúng ví sinh viên ở trên trước khi nộp minh chứng.</em>`;
+        }
+      } catch (e) {
+        notice.style.display = "block";
+        notice.style.background = "var(--bg-box)";
+        notice.style.border = "1px solid var(--border-color)";
+        notice.style.color = "var(--text-dim)";
+        notice.innerHTML = `ℹ️ Suất học bổng #${id} chưa tồn tại trên blockchain (Hoặc lỗi mạng).`;
+      }
     }
 
     // Status Notifier Helper
