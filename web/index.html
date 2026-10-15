@@ -16,11 +16,60 @@
 
   <style>
     :root {
+      /* Theme: LIGHT MODE (Mặc định) */
+      --bg-primary: #f8fafc;
+      --bg-secondary: #f1f5f9;
+      --bg-header: rgba(255, 255, 255, 0.9);
+      --bg-card: #ffffff;
+      --bg-card-hover: #fcfcfd;
+      --bg-input: #ffffff;
+      --bg-box: #f8fafc;
+      --bg-footer: #ffffff;
+      
+      --border-color: #e2e8f0;
+      --border-input: #cbd5e1;
+      --border-focus: #4f46e5;
+      
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-dim: #64748b;
+      
+      --accent-primary: #4f46e5;
+      --accent-primary-hover: #4338ca;
+      --accent-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%);
+      --accent-success: #059669;
+      --accent-warning: #d97706;
+      --accent-danger: #dc2626;
+      --accent-info: #0284c7;
+
+      --brand-title-color: linear-gradient(180deg, #0f172a 0%, #334155 100%);
+      --pill-bg: rgba(79, 70, 229, 0.08);
+      --pill-color: #4338ca;
+      --pill-border: rgba(79, 70, 229, 0.2);
+
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-full: 9999px;
+
+      --shadow-card: 0 4px 20px -2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04);
+      --shadow-glow: 0 4px 18px rgba(79, 70, 229, 0.25);
+      --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    [data-theme="dark"] {
+      /* Giao diện Tối (Dark Mode) */
       --bg-primary: #0b0f19;
       --bg-secondary: #111827;
+      --bg-header: rgba(11, 15, 25, 0.85);
       --bg-card: rgba(17, 24, 39, 0.75);
       --bg-card-hover: rgba(31, 41, 55, 0.85);
+      --bg-input: rgba(0, 0, 0, 0.35);
+      --bg-box: rgba(0, 0, 0, 0.35);
+      --bg-footer: rgba(11, 15, 25, 0.9);
+      
       --border-color: rgba(255, 255, 255, 0.08);
+      --border-input: rgba(255, 255, 255, 0.12);
       --border-focus: #6366f1;
       
       --text-main: #f3f4f6;
@@ -35,14 +84,13 @@
       --accent-danger: #ef4444;
       --accent-info: #06b6d4;
 
-      --radius-sm: 8px;
-      --radius-md: 14px;
-      --radius-lg: 20px;
-      --radius-full: 9999px;
+      --brand-title-color: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
+      --pill-bg: rgba(59, 130, 246, 0.12);
+      --pill-color: #93c5fd;
+      --pill-border: rgba(59, 130, 246, 0.25);
 
       --shadow-card: 0 10px 30px -10px rgba(0, 0, 0, 0.5), 0 0 1px 1px rgba(255, 255, 255, 0.05);
       --shadow-glow: 0 0 25px rgba(99, 102, 241, 0.25);
-      --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     * {
@@ -61,6 +109,7 @@
       flex-direction: column;
       position: relative;
       overflow-x: hidden;
+      transition: background-color 0.25s ease, color 0.25s ease;
     }
 
     /* Ambient background gradient orbs */
@@ -71,7 +120,7 @@
       left: 15%;
       width: 600px;
       height: 600px;
-      background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(11, 15, 25, 0) 70%);
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, rgba(248, 250, 252, 0) 70%);
       pointer-events: none;
       z-index: 0;
     }
@@ -82,9 +131,15 @@
       right: 10%;
       width: 500px;
       height: 500px;
-      background: radial-gradient(circle, rgba(236, 72, 153, 0.12) 0%, rgba(11, 15, 25, 0) 70%);
+      background: radial-gradient(circle, rgba(236, 72, 153, 0.06) 0%, rgba(248, 250, 252, 0) 70%);
       pointer-events: none;
       z-index: 0;
+    }
+    [data-theme="dark"] body::before {
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(11, 15, 25, 0) 70%);
+    }
+    [data-theme="dark"] body::after {
+      background: radial-gradient(circle, rgba(236, 72, 153, 0.12) 0%, rgba(11, 15, 25, 0) 70%);
     }
 
     .container {
@@ -98,7 +153,7 @@
 
     /* Header & Navigation */
     header {
-      background: rgba(11, 15, 25, 0.85);
+      background: var(--bg-header);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border-color);
@@ -106,6 +161,8 @@
       top: 0;
       z-index: 50;
       padding: 16px 0;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      transition: background-color 0.25s ease, border-color 0.25s ease;
     }
 
     .header-content {
@@ -138,7 +195,7 @@
       font-size: 1.35rem;
       font-weight: 800;
       letter-spacing: -0.02em;
-      background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
+      background: var(--brand-title-color);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
@@ -166,11 +223,17 @@
       border-radius: var(--radius-full);
       font-size: 0.8rem;
       font-weight: 600;
-      background: rgba(255, 255, 255, 0.05);
+      background: var(--bg-secondary);
       border: 1px solid var(--border-color);
+      color: var(--text-main);
     }
 
     .badge-sepolia {
+      background: rgba(79, 70, 229, 0.08);
+      border-color: rgba(79, 70, 229, 0.25);
+      color: var(--accent-primary);
+    }
+    [data-theme="dark"] .badge-sepolia {
       background: rgba(99, 102, 241, 0.15);
       border-color: rgba(99, 102, 241, 0.35);
       color: #a5b4fc;
@@ -210,34 +273,43 @@
     .btn-primary {
       background: var(--accent-gradient);
       color: #ffffff;
-      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
     }
     .btn-primary:hover:not(:disabled) {
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+      box-shadow: 0 6px 20px rgba(79, 70, 229, 0.45);
     }
 
     .btn-secondary {
-      background: rgba(255, 255, 255, 0.06);
+      background: var(--bg-card);
       color: var(--text-main);
-      border-color: var(--border-color);
+      border: 1px solid var(--border-color);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     }
     .btn-secondary:hover:not(:disabled) {
+      background: var(--bg-secondary);
+      border-color: var(--border-input);
+    }
+    [data-theme="dark"] .btn-secondary {
+      background: rgba(255, 255, 255, 0.06);
+      box-shadow: none;
+    }
+    [data-theme="dark"] .btn-secondary:hover:not(:disabled) {
       background: rgba(255, 255, 255, 0.12);
       border-color: rgba(255, 255, 255, 0.2);
     }
 
     .btn-success {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
       color: #ffffff;
     }
     .btn-success:hover:not(:disabled) {
-      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+      box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35);
       transform: translateY(-2px);
     }
 
     .btn-warning {
-      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
       color: #ffffff;
     }
 
@@ -252,9 +324,10 @@
     .config-bar {
       margin-top: 16px;
       padding: 12px 18px;
-      background: rgba(17, 24, 39, 0.6);
+      background: var(--bg-card);
       border: 1px solid var(--border-color);
       border-radius: var(--radius-md);
+      box-shadow: var(--shadow-card);
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -272,11 +345,11 @@
 
     .code-pill {
       font-family: 'JetBrains Mono', monospace;
-      color: #93c5fd;
-      background: rgba(59, 130, 246, 0.12);
+      color: var(--pill-color);
+      background: var(--pill-bg);
       padding: 3px 8px;
       border-radius: 4px;
-      border: 1px solid rgba(59, 130, 246, 0.25);
+      border: 1px solid var(--pill-border);
     }
 
     /* Network Alert Box */
@@ -284,10 +357,10 @@
       display: none;
       margin-top: 16px;
       padding: 14px 18px;
-      background: rgba(239, 68, 68, 0.12);
-      border: 1px solid rgba(239, 68, 68, 0.35);
+      background: rgba(239, 68, 68, 0.08);
+      border: 1px solid rgba(239, 68, 68, 0.25);
       border-radius: var(--radius-md);
-      color: #fca5a5;
+      color: var(--accent-danger);
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -307,7 +380,7 @@
 
     .tab-btn {
       background: none;
-      border: none;
+      border: 1px solid transparent;
       color: var(--text-muted);
       font-family: inherit;
       font-size: 0.95rem;
@@ -324,10 +397,16 @@
 
     .tab-btn:hover {
       color: var(--text-main);
-      background: rgba(255, 255, 255, 0.04);
+      background: var(--bg-secondary);
     }
 
     .tab-btn.active {
+      color: var(--accent-primary);
+      background: rgba(79, 70, 229, 0.1);
+      border: 1px solid rgba(79, 70, 229, 0.3);
+      font-weight: 700;
+    }
+    [data-theme="dark"] .tab-btn.active {
       color: #ffffff;
       background: rgba(99, 102, 241, 0.18);
       border: 1px solid rgba(99, 102, 241, 0.35);
@@ -365,6 +444,7 @@
       display: flex;
       flex-direction: column;
       gap: 16px;
+      transition: background-color 0.25s ease, border-color 0.25s ease;
     }
 
     .card-header {
@@ -377,7 +457,7 @@
     .card-title {
       font-size: 1.15rem;
       font-weight: 700;
-      color: #ffffff;
+      color: var(--text-main);
       display: flex;
       align-items: center;
       gap: 8px;
@@ -410,18 +490,18 @@
       font-family: inherit;
       font-size: 0.9rem;
       padding: 10px 14px;
-      background: rgba(0, 0, 0, 0.35);
-      border: 1px solid var(--border-color);
+      background: var(--bg-input);
+      border: 1.5px solid var(--border-input);
       border-radius: var(--radius-sm);
       color: var(--text-main);
-      transition: border-color var(--transition-fast);
+      transition: all var(--transition-fast);
       width: 100%;
     }
 
     .form-input:focus {
       outline: none;
       border-color: var(--border-focus);
-      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
     }
 
     /* Status & Feedback box */
@@ -429,8 +509,9 @@
       margin: 20px 0;
       padding: 16px 20px;
       border-radius: var(--radius-md);
-      background: rgba(17, 24, 39, 0.8);
+      background: var(--bg-card);
       border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-card);
       display: none;
     }
 
@@ -444,7 +525,7 @@
     .status-spinner {
       width: 22px;
       height: 22px;
-      border: 3px solid rgba(255, 255, 255, 0.15);
+      border: 3px solid rgba(79, 70, 229, 0.2);
       border-top-color: var(--accent-primary);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
@@ -463,18 +544,29 @@
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      color: #93c5fd;
+      color: var(--accent-primary);
       text-decoration: underline;
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.84rem;
       word-break: break-all;
     }
 
+    /* Status Box Panel */
+    .status-box-panel {
+      display: none;
+      background: var(--bg-box);
+      padding: 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      font-size: 0.88rem;
+      color: var(--text-main);
+    }
+
     /* Explorer Details */
     .scholarship-card {
       margin-top: 14px;
       padding: 18px;
-      background: rgba(0, 0, 0, 0.25);
+      background: var(--bg-box);
       border-radius: var(--radius-md);
       border: 1px solid var(--border-color);
     }
@@ -503,7 +595,7 @@
     .info-value {
       font-size: 0.95rem;
       font-weight: 600;
-      color: #ffffff;
+      color: var(--text-main);
       font-family: 'JetBrains Mono', monospace;
       word-break: break-all;
     }
@@ -526,6 +618,16 @@
       color: var(--text-dim);
       font-size: 0.75rem;
       text-transform: uppercase;
+      background: var(--bg-secondary);
+      font-weight: 700;
+    }
+
+    .milestone-table td {
+      color: var(--text-main);
+    }
+
+    .milestone-table tr:hover td {
+      background: var(--bg-secondary);
     }
 
     .status-pill {
@@ -536,10 +638,15 @@
       font-weight: 700;
     }
 
-    .status-pill.pending { background: rgba(156, 163, 175, 0.15); color: #9ca3af; }
-    .status-pill.submitted { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
-    .status-pill.approved { background: rgba(6, 182, 212, 0.15); color: #67e8f9; }
-    .status-pill.disbursed { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+    .status-pill.pending { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+    .status-pill.submitted { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+    .status-pill.approved { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+    .status-pill.disbursed { background: #d1fae5; color: #047857; border: 1px solid #a7f3d0; }
+
+    [data-theme="dark"] .status-pill.pending { background: rgba(156, 163, 175, 0.15); color: #9ca3af; border: none; }
+    [data-theme="dark"] .status-pill.submitted { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: none; }
+    [data-theme="dark"] .status-pill.approved { background: rgba(6, 182, 212, 0.15); color: #67e8f9; border: none; }
+    [data-theme="dark"] .status-pill.disbursed { background: rgba(16, 185, 129, 0.15); color: #34d399; border: none; }
 
     /* Footer */
     footer {
@@ -548,7 +655,8 @@
       padding: 24px 0;
       font-size: 0.82rem;
       color: var(--text-dim);
-      background: rgba(11, 15, 25, 0.9);
+      background: var(--bg-footer);
+      transition: background-color 0.25s ease;
     }
 
     .footer-content {
@@ -593,6 +701,12 @@
       </div>
 
       <div class="header-actions">
+        <!-- Theme Toggle Button -->
+        <button id="btnThemeToggle" class="btn btn-secondary" style="padding: 7px 12px; font-size: 0.82rem;" title="Chuyển chế độ sáng/tối">
+          <span id="themeToggleIcon">🌙</span>
+          <span id="themeToggleText">Chế độ tối</span>
+        </button>
+
         <!-- Network Badge -->
         <div id="networkBadge" class="badge badge-sepolia">
           <span id="networkDot" class="badge-dot"></span>
@@ -736,7 +850,7 @@
               🔎 Xem Trạng Thái
             </button>
           </div>
-          <div id="sponsorStatusBox" style="display: none; background: rgba(0,0,0,0.35); padding: 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); font-size: 0.88rem;"></div>
+          <div id="sponsorStatusBox" class="status-box-panel"></div>
         </div>
       </div>
     </section>
@@ -794,7 +908,7 @@
             <input id="inpReleaseIndex" class="form-input" type="number" min="0" placeholder="0" value="0" />
           </div>
 
-          <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); padding: 12px; border-radius: 8px; font-size: 0.8rem; color: #a7f3d0;">
+          <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); padding: 12px; border-radius: 8px; font-size: 0.8rem; color: var(--accent-success); font-weight: 500;">
             🛡️ <strong>Bảo vệ tự động:</strong> Tiền sẽ được gửi thẳng đến ví Sinh viên đã khai báo lúc tạo suất học bổng, đảm bảo 0% nguy cơ chuyển nhầm cho người khác.
           </div>
 
@@ -820,7 +934,7 @@
               👀 Xem Tiến Độ & Số Dư
             </button>
           </div>
-          <div id="studentStatusBox" style="display: none; background: rgba(0,0,0,0.35); padding: 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); font-size: 0.88rem;"></div>
+          <div id="studentStatusBox" class="status-box-panel"></div>
         </div>
       </div>
     </section>
@@ -924,7 +1038,7 @@
 
         <!-- Live Transaction History & Transparency Feed -->
         <div style="margin-top: 24px; border-top: 1px solid var(--border-color); padding-top: 20px;">
-          <h3 style="font-size: 1.05rem; color: #ffffff; display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+          <h3 style="font-size: 1.05rem; color: var(--text-main); display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
             <span>📜</span> Lịch Sử Giao Dịch & Minh Bạch (Live Session Ledger)
           </h3>
           <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 12px;">
@@ -1043,6 +1157,34 @@
     const statusMessage = document.getElementById("statusMessage");
     const statusDetail = document.getElementById("statusDetail");
     const statusAction = document.getElementById("statusAction");
+
+    // Theme Management (Light Mode là mặc định)
+    const btnThemeToggle = document.getElementById("btnThemeToggle");
+    const themeToggleIcon = document.getElementById("themeToggleIcon");
+    const themeToggleText = document.getElementById("themeToggleText");
+
+    function applyTheme(theme) {
+      if (theme === "dark") {
+        document.documentElement.setAttribute("data-theme", "dark");
+        if (themeToggleIcon) themeToggleIcon.textContent = "☀️";
+        if (themeToggleText) themeToggleText.textContent = "Chế độ sáng";
+      } else {
+        document.documentElement.removeAttribute("data-theme");
+        if (themeToggleIcon) themeToggleIcon.textContent = "🌙";
+        if (themeToggleText) themeToggleText.textContent = "Chế độ tối";
+      }
+      localStorage.setItem("trustscholar_theme", theme);
+    }
+
+    const savedTheme = localStorage.getItem("trustscholar_theme") || "light";
+    applyTheme(savedTheme);
+
+    if (btnThemeToggle) {
+      btnThemeToggle.onclick = () => {
+        const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+        applyTheme(isDark ? "light" : "dark");
+      };
+    }
 
     // Initialize UI
     contractAddressDisplay.textContent = currentContractAddress;
@@ -1237,7 +1379,7 @@
         const row = document.createElement("tr");
         const statusBadge = tx.status === "Thành công" 
           ? `<span class="status-pill disbursed">Thành công</span>`
-          : `<span class="status-pill pending" style="background: rgba(239, 68, 68, 0.2); color: #fca5a5; border-color: rgba(239, 68, 68, 0.4);">${tx.status}</span>`;
+          : `<span class="status-pill pending" style="background: rgba(239, 68, 68, 0.12); color: var(--accent-danger); border: 1px solid rgba(239, 68, 68, 0.3); font-weight: 700;">${tx.status}</span>`;
 
         const linkHtml = tx.hash
           ? `<a class="tx-link" href="https://sepolia.etherscan.io/tx/${tx.hash}" target="_blank" rel="noopener noreferrer">${tx.hash.slice(0, 10)}...${tx.hash.slice(-8)} ↗</a>`
