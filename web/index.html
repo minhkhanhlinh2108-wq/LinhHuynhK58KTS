@@ -1,16 +1,20 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TrustScholar — Nền Tảng Giải Ngân Học Bổng Minh Bạch Trên Blockchain</title>
-  <meta name="description" content="DApp giải ngân học bổng minh bạch phi lưu ký trên blockchain Sepolia Testnet thuộc đồ án TrustScholar.">
-  
+  <meta name="description"
+    content="DApp giải ngân học bổng minh bạch phi lưu ký trên blockchain Sepolia Testnet thuộc đồ án TrustScholar.">
+
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
+
   <!-- Ethers.js v6 UMD CDN -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
 
@@ -25,15 +29,15 @@
       --bg-input: #ffffff;
       --bg-box: #f8fafc;
       --bg-footer: #ffffff;
-      
+
       --border-color: #e2e8f0;
       --border-input: #cbd5e1;
       --border-focus: #4f46e5;
-      
+
       --text-main: #0f172a;
       --text-muted: #475569;
       --text-dim: #64748b;
-      
+
       --accent-primary: #4f46e5;
       --accent-primary-hover: #4338ca;
       --accent-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%);
@@ -67,15 +71,15 @@
       --bg-input: rgba(0, 0, 0, 0.35);
       --bg-box: rgba(0, 0, 0, 0.35);
       --bg-footer: rgba(11, 15, 25, 0.9);
-      
+
       --border-color: rgba(255, 255, 255, 0.08);
       --border-input: rgba(255, 255, 255, 0.12);
       --border-focus: #6366f1;
-      
+
       --text-main: #f3f4f6;
       --text-muted: #9ca3af;
       --text-dim: #6b7280;
-      
+
       --accent-primary: #6366f1;
       --accent-primary-hover: #4f46e5;
       --accent-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
@@ -124,6 +128,7 @@
       pointer-events: none;
       z-index: 0;
     }
+
     body::after {
       content: "";
       position: fixed;
@@ -135,9 +140,11 @@
       pointer-events: none;
       z-index: 0;
     }
+
     [data-theme="dark"] body::before {
       background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(11, 15, 25, 0) 70%);
     }
+
     [data-theme="dark"] body::after {
       background: radial-gradient(circle, rgba(236, 72, 153, 0.12) 0%, rgba(11, 15, 25, 0) 70%);
     }
@@ -233,6 +240,7 @@
       border-color: rgba(79, 70, 229, 0.25);
       color: var(--accent-primary);
     }
+
     [data-theme="dark"] .badge-sepolia {
       background: rgba(99, 102, 241, 0.15);
       border-color: rgba(99, 102, 241, 0.35);
@@ -275,6 +283,7 @@
       color: #ffffff;
       box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
     }
+
     .btn-primary:hover:not(:disabled) {
       transform: translateY(-2px);
       box-shadow: 0 6px 20px rgba(79, 70, 229, 0.45);
@@ -286,14 +295,17 @@
       border: 1px solid var(--border-color);
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     }
+
     .btn-secondary:hover:not(:disabled) {
       background: var(--bg-secondary);
       border-color: var(--border-input);
     }
+
     [data-theme="dark"] .btn-secondary {
       background: rgba(255, 255, 255, 0.06);
       box-shadow: none;
     }
+
     [data-theme="dark"] .btn-secondary:hover:not(:disabled) {
       background: rgba(255, 255, 255, 0.12);
       border-color: rgba(255, 255, 255, 0.2);
@@ -303,6 +315,7 @@
       background: linear-gradient(135deg, #059669 0%, #047857 100%);
       color: #ffffff;
     }
+
     .btn-success:hover:not(:disabled) {
       box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35);
       transform: translateY(-2px);
@@ -406,6 +419,7 @@
       border: 1px solid rgba(79, 70, 229, 0.3);
       font-weight: 700;
     }
+
     [data-theme="dark"] .tab-btn.active {
       color: #ffffff;
       background: rgba(99, 102, 241, 0.18);
@@ -423,8 +437,15 @@
     }
 
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .grid-2 {
@@ -532,7 +553,9 @@
     }
 
     @keyframes spin {
-      to { transform: rotate(360deg); }
+      to {
+        transform: rotate(360deg);
+      }
     }
 
     .status-text {
@@ -608,7 +631,8 @@
       font-size: 0.85rem;
     }
 
-    .milestone-table th, .milestone-table td {
+    .milestone-table th,
+    .milestone-table td {
       padding: 10px 12px;
       text-align: left;
       border-bottom: 1px solid var(--border-color);
@@ -638,15 +662,53 @@
       font-weight: 700;
     }
 
-    .status-pill.pending { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
-    .status-pill.submitted { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
-    .status-pill.approved { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
-    .status-pill.disbursed { background: #d1fae5; color: #047857; border: 1px solid #a7f3d0; }
+    .status-pill.pending {
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid #cbd5e1;
+    }
 
-    [data-theme="dark"] .status-pill.pending { background: rgba(156, 163, 175, 0.15); color: #9ca3af; border: none; }
-    [data-theme="dark"] .status-pill.submitted { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: none; }
-    [data-theme="dark"] .status-pill.approved { background: rgba(6, 182, 212, 0.15); color: #67e8f9; border: none; }
-    [data-theme="dark"] .status-pill.disbursed { background: rgba(16, 185, 129, 0.15); color: #34d399; border: none; }
+    .status-pill.submitted {
+      background: #fef3c7;
+      color: #b45309;
+      border: 1px solid #fde68a;
+    }
+
+    .status-pill.approved {
+      background: #e0f2fe;
+      color: #0369a1;
+      border: 1px solid #bae6fd;
+    }
+
+    .status-pill.disbursed {
+      background: #d1fae5;
+      color: #047857;
+      border: 1px solid #a7f3d0;
+    }
+
+    [data-theme="dark"] .status-pill.pending {
+      background: rgba(156, 163, 175, 0.15);
+      color: #9ca3af;
+      border: none;
+    }
+
+    [data-theme="dark"] .status-pill.submitted {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: none;
+    }
+
+    [data-theme="dark"] .status-pill.approved {
+      background: rgba(6, 182, 212, 0.15);
+      color: #67e8f9;
+      border: none;
+    }
+
+    [data-theme="dark"] .status-pill.disbursed {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: none;
+    }
 
     /* Footer */
     footer {
@@ -672,14 +734,17 @@
       .grid-2 {
         grid-template-columns: 1fr;
       }
+
       .header-content {
         flex-direction: column;
         align-items: flex-start;
       }
+
       .header-actions {
         width: 100%;
         justify-content: space-between;
       }
+
       .config-bar {
         flex-direction: column;
         align-items: flex-start;
@@ -687,6 +752,7 @@
     }
   </style>
 </head>
+
 <body>
 
   <!-- Header -->
@@ -702,7 +768,8 @@
 
       <div class="header-actions">
         <!-- Theme Toggle Button -->
-        <button id="btnThemeToggle" class="btn btn-secondary" style="padding: 7px 12px; font-size: 0.82rem;" title="Chuyển chế độ sáng/tối">
+        <button id="btnThemeToggle" class="btn btn-secondary" style="padding: 7px 12px; font-size: 0.82rem;"
+          title="Chuyển chế độ sáng/tối">
           <span id="themeToggleIcon">🌙</span>
           <span id="themeToggleText">Chế độ tối</span>
         </button>
@@ -729,7 +796,8 @@
         <span style="font-size: 1.2rem;">⚠️</span>
         <div>
           <strong id="networkAlertTitle">Vui lòng chuyển MetaMask sang Sepolia.</strong>
-          <div style="font-size: 0.8rem; opacity: 0.9;">Hệ thống yêu cầu mạng Sepolia Testnet (Chain ID: 11155111 / 0xaa36a7).</div>
+          <div style="font-size: 0.8rem; opacity: 0.9;">Hệ thống yêu cầu mạng Sepolia Testnet (Chain ID: 11155111 /
+            0xaa36a7).</div>
         </div>
       </div>
       <button id="btnSwitchNetwork" class="btn btn-warning">Chuyển sang Sepolia</button>
@@ -740,13 +808,16 @@
       <div class="config-address">
         <span>📍 Smart Contract:</span>
         <span id="contractAddressDisplay" class="code-pill">0x71c8360f089f24e1f034c7f6424E86a51D45C522</span>
-        <button id="btnEditContract" class="btn btn-secondary" style="padding: 3px 8px; font-size: 0.75rem;">Đổi Address</button>
+        <button id="btnEditContract" class="btn btn-secondary" style="padding: 3px 8px; font-size: 0.75rem;">Đổi
+          Address</button>
       </div>
-      <div style="display: flex; gap: 8px; align-items: center; font-size: 0.8rem; color: var(--text-dim); flex-wrap: wrap;">
+      <div
+        style="display: flex; gap: 8px; align-items: center; font-size: 0.8rem; color: var(--text-dim); flex-wrap: wrap;">
         <span>Trạng thái:</span>
         <span id="contractStatusText" style="color: var(--accent-success); font-weight: 600;">Sẵn sàng tương tác</span>
         <span>• Suất học bổng trên chain:</span>
-        <span id="contractScholarshipCountBadge" class="code-pill" style="color: #6ee7b7; font-weight: 700;">0</span>
+        <span id="contractScholarshipCountBadge" class="code-pill"
+          style="color: var(--accent-success); font-weight: 700;">0</span>
       </div>
     </div>
 
@@ -786,7 +857,8 @@
           <div class="card-header">
             <div>
               <h2 class="card-title">✨ Bước 1: Tạo Suất Học Bổng</h2>
-              <p class="card-desc">Bắt buộc thực hiện trước khi nạp tiền. Khởi tạo Escrow cam kết theo các mốc học tập.</p>
+              <p class="card-desc">Bắt buộc thực hiện trước khi nạp tiền. Khởi tạo Escrow cam kết theo các mốc học tập.
+              </p>
             </div>
           </div>
 
@@ -870,18 +942,23 @@
           <div class="form-group">
             <label class="form-label" for="inpSubmitId">Mã Suất Học Bổng (Scholarship ID)</label>
             <input id="inpSubmitId" class="form-input" type="number" min="1" placeholder="1" />
-            <div id="submitStudentMatchNotice" style="display: none; padding: 10px 12px; border-radius: var(--radius-sm); font-size: 0.8rem; margin-top: 6px; line-height: 1.5;"></div>
+            <div id="submitStudentMatchNotice"
+              style="display: none; padding: 10px 12px; border-radius: var(--radius-sm); font-size: 0.8rem; margin-top: 6px; line-height: 1.5;">
+            </div>
           </div>
 
           <div class="form-group">
             <label class="form-label" for="inpSubmitIndex">Chỉ số Mốc (Milestone Index)</label>
-            <input id="inpSubmitIndex" class="form-input" type="number" min="0" placeholder="0 (Mốc đầu tiên)" value="0" />
+            <input id="inpSubmitIndex" class="form-input" type="number" min="0" placeholder="0 (Mốc đầu tiên)"
+              value="0" />
             <span class="form-hint">Chỉ số đếm từ 0 (Mốc 1 = 0, Mốc 2 = 1).</span>
           </div>
 
           <div class="form-group">
             <label class="form-label" for="inpProofHash">Mã Băm / IPFS CID Minh Chứng</label>
-            <input id="inpProofHash" class="form-input" type="text" placeholder="QmZ4tDuvesekSs4qM5ZBKpXiZGun7S2CYtEZRB3DYXkjGx" value="QmZ4tDuvesekSs4qM5ZBKpXiZGun7S2CYtEZRB3DYXkjGx" />
+            <input id="inpProofHash" class="form-input" type="text"
+              placeholder="QmZ4tDuvesekSs4qM5ZBKpXiZGun7S2CYtEZRB3DYXkjGx"
+              value="QmZ4tDuvesekSs4qM5ZBKpXiZGun7S2CYtEZRB3DYXkjGx" />
             <span class="form-hint">Hash định danh phi tập trung minh chứng học tập trên IPFS.</span>
           </div>
 
@@ -909,8 +986,10 @@
             <input id="inpReleaseIndex" class="form-input" type="number" min="0" placeholder="0" value="0" />
           </div>
 
-          <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); padding: 12px; border-radius: 8px; font-size: 0.8rem; color: var(--accent-success); font-weight: 500;">
-            🛡️ <strong>Bảo vệ tự động:</strong> Tiền sẽ được gửi thẳng đến ví Sinh viên đã khai báo lúc tạo suất học bổng, đảm bảo 0% nguy cơ chuyển nhầm cho người khác.
+          <div
+            style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); padding: 12px; border-radius: 8px; font-size: 0.8rem; color: var(--accent-success); font-weight: 500;">
+            🛡️ <strong>Bảo vệ tự động:</strong> Tiền sẽ được gửi thẳng đến ví Sinh viên đã khai báo lúc tạo suất học
+            bổng, đảm bảo 0% nguy cơ chuyển nhầm cho người khác.
           </div>
 
           <button id="btnReleaseMilestone" class="btn btn-success" onclick="handleReleaseMilestone()">
@@ -923,7 +1002,8 @@
           <div class="card-header">
             <div>
               <h2 class="card-title">🎓 Xem Suất Học Bổng Của Tôi (My Scholarship Progress)</h2>
-              <p class="card-desc">Sinh viên theo dõi trạng thái từng mốc, tiến độ duyệt và số tiền đã giải ngân về ví.</p>
+              <p class="card-desc">Sinh viên theo dõi trạng thái từng mốc, tiến độ duyệt và số tiền đã giải ngân về ví.
+              </p>
             </div>
           </div>
           <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
@@ -978,7 +1058,8 @@
         </div>
 
         <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-          <input id="inpLookupId" class="form-input" style="max-width: 280px;" type="number" min="1" placeholder="Nhập Scholarship ID" value="1" />
+          <input id="inpLookupId" class="form-input" style="max-width: 280px;" type="number" min="1"
+            placeholder="Nhập Scholarship ID" value="1" />
           <button id="btnLookup" class="btn btn-primary" onclick="handleLookupScholarship()">
             Tra Cứu Dữ Liệu
           </button>
@@ -987,8 +1068,9 @@
         <!-- Details Container -->
         <div id="lookupResult" style="display: none;">
           <div class="scholarship-card">
-            <h3 style="font-size: 1rem; color: #93c5fd; margin-bottom: 12px;">📊 Thông Tin Suất Học Bổng #<span id="resId">1</span></h3>
-            
+            <h3 style="font-size: 1rem; color: var(--accent-primary); margin-bottom: 12px; font-weight: 700;">📊 Thông
+              Tin Suất Học Bổng #<span id="resId">1</span></h3>
+
             <div class="info-grid">
               <div class="info-item">
                 <span class="info-label">Nhà Tài Trợ (Sponsor)</span>
@@ -1016,7 +1098,8 @@
               </div>
             </div>
 
-            <h4 style="font-size: 0.9rem; color: #e2e8f0; margin-top: 16px;">Danh Sách Các Mốc Học Tập:</h4>
+            <h4 style="font-size: 0.9rem; color: var(--text-main); margin-top: 16px; font-weight: 700;">Danh Sách Các
+              Mốc Học Tập:</h4>
             <div style="overflow-x: auto;">
               <table class="milestone-table">
                 <thead>
@@ -1039,11 +1122,13 @@
 
         <!-- Live Transaction History & Transparency Feed -->
         <div style="margin-top: 24px; border-top: 1px solid var(--border-color); padding-top: 20px;">
-          <h3 style="font-size: 1.05rem; color: var(--text-main); display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+          <h3
+            style="font-size: 1.05rem; color: var(--text-main); display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
             <span>📜</span> Lịch Sử Giao Dịch & Minh Bạch (Live Session Ledger)
           </h3>
           <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 12px;">
-            Ghi nhận thời gian thực mọi giao dịch on-chain thành công và các giao dịch bị chặn / revert từ smart contract.
+            Ghi nhận thời gian thực mọi giao dịch on-chain thành công và các giao dịch bị chặn / revert từ smart
+            contract.
           </p>
           <div style="overflow-x: auto;">
             <table class="milestone-table">
@@ -1059,7 +1144,8 @@
               </thead>
               <tbody id="sessionTxTableBody">
                 <tr>
-                  <td colspan="6" style="text-align: center; color: var(--text-dim);">Chưa có giao dịch nào được thực hiện trong phiên làm việc này.</td>
+                  <td colspan="6" style="text-align: center; color: var(--text-dim);">Chưa có giao dịch nào được thực
+                    hiện trong phiên làm việc này.</td>
                 </tr>
               </tbody>
             </table>
@@ -1076,7 +1162,7 @@
         <strong>TrustScholar Project</strong> — Sinh viên: Nguyễn Minh Khánh Linh & Trần Thị Như Huỳnh
       </div>
       <div>
-        <span>Sepolia Chain ID: <code>11155111</code></span> • 
+        <span>Sepolia Chain ID: <code>11155111</code></span> •
         <span>Bảo mật: Checks-Effects-Interactions & Mutex ReentrancyGuard</span>
       </div>
     </div>
@@ -1177,7 +1263,11 @@
       localStorage.setItem("trustscholar_theme", theme);
     }
 
-    const savedTheme = localStorage.getItem("trustscholar_theme") || "light";
+    // Thiết lập giao diện Sáng (Light Mode) làm mặc định tối ưu
+    let savedTheme = localStorage.getItem("trustscholar_theme");
+    if (!savedTheme || savedTheme === "dark") {
+      savedTheme = "light";
+    }
     applyTheme(savedTheme);
 
     if (btnThemeToggle) {
@@ -1223,7 +1313,7 @@
 
         let activeWallet = userAddress;
         if (signer) {
-          try { activeWallet = await signer.getAddress(); } catch (_) {}
+          try { activeWallet = await signer.getAddress(); } catch (_) { }
         }
 
         notice.style.display = "block";
@@ -1260,7 +1350,7 @@
       statusNotification.style.display = "block";
       statusSpinner.style.display = (type === "loading") ? "block" : "none";
       statusMessage.textContent = msg;
-      
+
       let detailHtml = detail;
       if (txHash) {
         detailHtml += `<br><a class="tx-link" href="https://sepolia.etherscan.io/tx/${txHash}" target="_blank" rel="noopener noreferrer">🔍 Xem trên Etherscan Sepolia (${txHash.slice(0, 10)}...${txHash.slice(-8)}) ↗</a>`;
@@ -1388,8 +1478,8 @@
             if (count > 0n && !document.getElementById("inpFundScholarshipId").value) {
               document.getElementById("inpFundScholarshipId").value = count.toString();
             }
-          } catch (_) {}
-        } catch (_) {}
+          } catch (_) { }
+        } catch (_) { }
       }
     }
 
@@ -1432,7 +1522,7 @@
       tbody.innerHTML = "";
       sessionTransactions.forEach(tx => {
         const row = document.createElement("tr");
-        const statusBadge = tx.status === "Thành công" 
+        const statusBadge = tx.status === "Thành công"
           ? `<span class="status-pill disbursed">Thành công</span>`
           : `<span class="status-pill pending" style="background: rgba(239, 68, 68, 0.12); color: var(--accent-danger); border: 1px solid rgba(239, 68, 68, 0.3); font-weight: 700;">${tx.status}</span>`;
 
@@ -1490,7 +1580,7 @@
           const proceed = confirm(`CẢNH BÁO: Địa chỉ contract (${validContractAddr}) chưa có mã bytecode trên Sepolia!\n\nNếu tiếp tục gửi giao dịch, bạn sẽ bị mất phí gas (hoặc mất ETH nạp vào EOA) mà không thực thi logic hợp đồng.\n\nBạn có chắc chắn muốn tiếp tục không?`);
           if (!proceed) return false;
         }
-      } catch (_) {}
+      } catch (_) { }
 
       if (!coreContract || coreContract.target !== validContractAddr) {
         await initContract();
@@ -1522,7 +1612,7 @@
             const parsed = coreContract.interface.parseError(rawHex);
             if (parsed) parsedErrName = parsed.name;
           }
-        } catch (_) {}
+        } catch (_) { }
       }
 
       let friendlyMsg = "Giao dịch thực thi thất bại trên blockchain.";
@@ -1600,7 +1690,7 @@
                 nextId = parsed.args.scholarshipId.toString();
                 break;
               }
-            } catch (_) {}
+            } catch (_) { }
           }
         }
 
@@ -1608,13 +1698,13 @@
         if (!nextId) {
           try {
             nextId = (await coreContract.scholarshipCount()).toString();
-          } catch (_) {}
+          } catch (_) { }
         }
 
         if (nextId) {
           showStatus(`Tạo suất học bổng #${nextId} thành công! 🎉`, `Block: ${receipt.blockNumber}`, "success", tx.hash);
           recordSessionTx("Tạo Suất Học Bổng", "Thành công", tx.hash, `Đã tạo suất #${nextId} cho ${studentAddr.slice(0, 8)}...`, nextId);
-          
+
           // Cập nhật số suất học bổng trên thanh hiển thị
           const countEl = document.getElementById("contractScholarshipCountBadge");
           if (countEl) countEl.textContent = nextId;
@@ -1669,7 +1759,7 @@
           showStatus("Không tìm thấy suất học bổng!", `ID #${id} vượt quá tổng số suất hiện có (${count}).`, "error");
           return;
         }
-      } catch (_) {}
+      } catch (_) { }
 
       try {
         const valueWei = ethers.parseEther(ethAmount);
@@ -1827,14 +1917,14 @@
         try {
           const bal = await readProvider.getBalance(s.student);
           studentBal = ethers.formatEther(bal);
-        } catch (_) {}
+        } catch (_) { }
 
         let html = `
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 12px;">
             <div><strong>Học bổng:</strong> #${s.id}</div>
             <div><strong>Ví nhận tiền:</strong> <span class="code-pill">${s.student.slice(0, 6)}...${s.student.slice(-4)}</span></div>
             <div><strong>Số dư ví hiện tại:</strong> <span style="color: var(--accent-success); font-weight: 700;">${studentBal} ETH</span></div>
-            <div><strong>Đã giải ngân:</strong> <span style="color: #6ee7b7; font-weight: 700;">${ethers.formatEther(s.releasedAmount)} ETH</span></div>
+            <div><strong>Đã giải ngân:</strong> <span style="color: var(--accent-success); font-weight: 700;">${ethers.formatEther(s.releasedAmount)} ETH</span></div>
             <div><strong>Quỹ đã nạp:</strong> ${ethers.formatEther(s.fundedAmount)} / ${ethers.formatEther(s.totalAmount)} ETH</div>
           </div>
           <div style="font-weight: 600; margin-bottom: 6px;">Trạng thái từng mốc học tập:</div>
@@ -1935,4 +2025,5 @@
     }
   </script>
 </body>
+
 </html>
