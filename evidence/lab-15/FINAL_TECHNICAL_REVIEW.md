@@ -47,7 +47,7 @@
 
 ## 3. Bằng Chứng Thực Nghiệm Kiểm Thử Tự Động (Automated Test Suite Evidence)
 
-Toàn bộ hệ thống kiểm thử tự động của dự án gồm **85 test cases** được thực thi trên môi trường Hardhat EVM:
+Toàn bộ hệ thống kiểm thử tự động của dự án gồm **91 test cases** được thực thi trên môi trường Hardhat EVM:
 
 ```text
 Running Solidity tests
@@ -71,6 +71,27 @@ Running Solidity tests
     ✔ test_02_SponsorFundScholarship()
     ✔ test_01_SponsorCreateScholarship()
 
+  test/Lab10_Verify.t.sol:Lab10VerifyTest
+    ✔ test_VERIFY_WrongRecipient_SAFE()
+    ✔ test_VERIFY_SEC08_EventNameMismatch_INFO()
+    ✔ test_VERIFY_SEC07_WrongErrorCode_EXISTS()
+    ✔ test_VERIFY_SEC06_DoS_NoReceiveWallet_EXISTS()
+    ✔ test_VERIFY_SEC06_DoS_MaliciousStudentWallet_EXISTS()
+    ✔ test_VERIFY_SEC05_SubmitApproveWithZeroFund_EXISTS()
+    ✔ test_VERIFY_SEC04_AnyoneCreateScholarship_EXISTS()
+    ✔ test_VERIFY_SEC03_FundLocking_EXISTS()
+    ✔ test_VERIFY_SEC02_StateRegression_EXISTS()
+    ✔ test_VERIFY_SEC01_SponsorSelfApprove_EXISTS()
+    ✔ test_VERIFY_ReleaseBeforeApproval_SAFE()
+    ✔ test_VERIFY_ReentrancyAndCEI_SAFE()
+    ✔ test_VERIFY_DoubleRelease_SAFE()
+
+  test/Lab11_EconomicRules.t.sol:Lab11EconomicRulesTest
+    (34/34 tests PASS 100%)
+
+  test/Lab13_SecurityExperiments.t.sol:Lab13SecurityExperimentsTest
+    (15/15 tests PASS 100% - bao gồm 4 exploit tests ngân hàng đào tạo và 11 defense tests ProjectCore)
+
   test/Lab14_GasReport.t.sol:Lab14GasReportTest
     ✔ test_GAS06_FullLifecycle_TotalGas()
     ✔ test_GAS05_ReleaseMilestone_Benchmark()
@@ -79,34 +100,15 @@ Running Solidity tests
     ✔ test_GAS02_FundScholarship_Benchmark()
     ✔ test_GAS01_CreateScholarship_Benchmark()
 
-  test/Lab11_EconomicRules.t.sol:Lab11EconomicRulesTest
-    ✔ test_VIOLATION_WrongStudent_Reverts()
-    ✔ test_VIOLATION_UnauthorizedCaller_Reverts()
-    ✔ test_VIOLATION_ReleaseBeforeApprove_Reverts()
-    ✔ test_VIOLATION_InsufficientFund_Reverts()
-    ✔ test_VIOLATION_DoubleRelease_Reverts()
-    ✔ test_VALID_StudentReceivesExactAmount()
-    ✔ test_VALID_ScholarshipLifecycle_Success()
-    (34/34 tests PASS 100%)
+  test/Lab15_E2E_Demo.t.sol:Lab15E2EDemoTest
+    ✔ test_DEMO_01_FullLifecycleHappyPath()
+    ✔ test_DEMO_02_NegativeCase_WrongStudent()
+    ✔ test_DEMO_03_NegativeCase_ReleaseBeforeApproval()
+    ✔ test_DEMO_04_NegativeCase_DoubleRelease()
+    ✔ test_DEMO_05_NegativeCase_StrangerCannotApprove()
+    ✔ test_DEMO_06_Full2MilestoneLifecycle()
 
-  test/Lab13_SecurityExperiments.t.sol:Lab13SecurityExperimentsTest
-    ✔ test_NEG05_ProjectCore_InsufficientFunds_Reverts()
-    ✔ test_NEG04_ProjectCore_UnauthorizedCaller_Reverts()
-    ✔ test_NEG03_ProjectCore_WrongStudent_Reverts()
-    ✔ test_NEG02_ProjectCore_DoubleRelease_Reverts()
-    ✔ test_NEG01_ProjectCore_ReleaseBeforeApproval_Reverts()
-    ✔ test_AUDIT06_ProjectCore_ReentrancyAttack_Defeated()
-    ✔ test_AUDIT05_ProjectCore_ReleaseBeforeApprovalBlocked()
-    ✔ test_AUDIT04_ProjectCore_WrongStudentBlocked()
-    ✔ test_AUDIT03_ProjectCore_DoubleReleaseBlocked()
-    ✔ test_AUDIT02_ProjectCore_StateUpdateBeforeCall_CEI()
-    ✔ test_AUDIT01_ProjectCore_HasExternalCall_ToStudent()
-    (10/10 tests PASS 100%)
-
-  test/Lab10_Verify.t.sol:Lab10VerifyTest
-    (13/13 tests PASS 100%)
-
-Total: 85 passing (85 solidity tests) — 100% PASS
+Total: 91 passing (91 solidity tests) — 100% PASS
 ```
 
 ---

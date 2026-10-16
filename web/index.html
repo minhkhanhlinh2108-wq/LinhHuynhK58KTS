@@ -2004,9 +2004,41 @@
       }
     }
 
+    // Check initial contract status with fallback read-only provider
+    async function checkInitialContractStatus() {
+      try {
+        const validAddr = normalizeAddress(currentContractAddress) || DEFAULT_CONTRACT_ADDRESS;
+        const readProvider = provider || new ethers.JsonRpcProvider("https://ethereum-sepolia-rpc.publicnode.com");
+        const code = await readProvider.getCode(validAddr);
+        const statusEl = document.getElementById("contractStatusText");
+        if (statusEl) {
+          if (code && code !== "0x" && code !== "0x0") {
+            statusEl.textContent = "Đã xác thực on-chain (Bytecode OK)";
+            statusEl.style.color = "var(--accent-success)";
+          } else {
+            statusEl.textContent = "Chưa deploy bytecode trên Sepolia (EOA)";
+            statusEl.style.color = "var(--accent-warning)";
+          }
+        }
+        const tempContract = new ethers.Contract(validAddr, PROJECT_CORE_ABI, readProvider);
+        const count = await tempContract.scholarshipCount();
+        const countEl = document.getElementById("contractScholarshipCountBadge");
+        if (countEl) countEl.textContent = count.toString();
+        if (count > 0n && !document.getElementById("inpFundScholarshipId").value) {
+          document.getElementById("inpFundScholarshipId").value = count.toString();
+        }
+      } catch (_) { }
+    }
+
     // Event Listeners
     btnConnectWallet.onclick = connectWallet;
     btnSwitchNetwork.onclick = switchNetwork;
+
+    const inpSubmitIdEl = document.getElementById("inpSubmitId");
+    if (inpSubmitIdEl) {
+      inpSubmitIdEl.addEventListener("input", checkStudentMatchForSubmit);
+      inpSubmitIdEl.addEventListener("change", checkStudentMatchForSubmit);
+    }
 
     if (window.ethereum) {
       window.ethereum.on("accountsChanged", (accounts) => {
@@ -2018,10 +2050,26 @@
           userAddress = accounts[0];
           walletBtnText.textContent = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
         }
+        checkStudentMatchForSubmit();
       });
       window.ethereum.on("chainChanged", () => {
         window.location.reload();
       });
+
+      // Tự động khôi phục kết nối ví nếu người dùng đã từng ủy quyền trước đó
+      window.ethereum.request({ method: "eth_accounts" })
+        .then((accounts) => {
+          if (accounts && accounts.length > 0) {
+            connectWallet();
+          } else {
+            checkInitialContractStatus();
+          }
+        })
+        .catch(() => {
+          checkInitialContractStatus();
+        });
+    } else {
+      checkInitialContractStatus();
     }
   </script>
 </body>

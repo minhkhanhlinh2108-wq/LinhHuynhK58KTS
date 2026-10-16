@@ -33,10 +33,11 @@
 - [x] **B1. Unit Tests (Lab 09):** 17/17 tests PASS 100%.
 - [x] **B2. Security Verification Tests (Lab 10):** 13/13 tests PASS 100%.
 - [x] **B3. Economic Invariant Tests (Lab 11):** 34/34 tests PASS 100%.
-- [x] **B4. Advanced Exploit & CEI Defense Tests (Lab 13):** 10/10 tests PASS 100%.
+- [x] **B4. Advanced Exploit & CEI Defense Tests (Lab 13):** 15/15 tests PASS 100%.
 - [x] **B5. Gas Benchmark Tests (Lab 14):** 6/6 tests PASS 100%.
-- [x] **B6. Tổng số lượng Test Suite:** Toàn bộ **85/85 tests PASS 100%** trên Hardhat EVM.
-- [x] **B7. Hiệu năng Gas tối ưu:** Toàn bộ vòng đời suất học bổng 2 mốc tiêu thụ **485,976 gas** (< 500,000 gas mục tiêu).
+- [x] **B6. E2E Demo Walkthrough Tests (Lab 15):** 6/6 tests PASS 100%.
+- [x] **B7. Tổng số lượng Test Suite:** Toàn bộ **91/91 tests PASS 100%** trên Hardhat EVM.
+- [x] **B8. Hiệu năng Gas tối ưu:** Toàn bộ vòng đời suất học bổng 2 mốc tiêu thụ **485,976 gas** (< 500,000 gas mục tiêu).
 
 ### C. Ứng Dụng Web3 DApp & Trải Nghiệm Người Dùng (Frontend & UX)
 - [x] **C1. Khởi tạo DApp hoàn chỉnh:** File `web/index.html` tích hợp giao diện hiện đại (Dark Glassmorphism, Vanilla CSS/JS).
@@ -82,7 +83,7 @@
 
 ## 3. Chữ Ký Xác Nhận Nghiệm Thu (Sign-off)
 
-Hai thành viên nhóm phát triển TrustScholar cùng xác nhận và cam kết toàn bộ hệ thống đã hoàn thành đạt chuẩn, vượt qua 85/85 bài kiểm thử tự động, tuân thủ nghiêm ngặt các quy tắc an toàn bảo mật và sẵn sàng bảo vệ đồ án trước hội đồng chấm thi:
+Hai thành viên nhóm phát triển TrustScholar cùng xác nhận và cam kết toàn bộ hệ thống đã hoàn thành đạt chuẩn, vượt qua 91/91 bài kiểm thử tự động, tuân thủ nghiêm ngặt các quy tắc an toàn bảo mật và sẵn sàng bảo vệ đồ án trước hội đồng chấm thi:
 
 | Vai Trò | Họ và Tên | Mã Sinh Viên | Chữ Ký Xác Nhận |
 |:---|:---|:---:|:---:|

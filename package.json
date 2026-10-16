@@ -8,7 +8,8 @@
   },
   "scripts": {
     "compile": "hardhat compile",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "hardhat test",
+    "deploy": "node scripts/deploy.js"
   },
   "repository": {
     "type": "git",

@@ -499,6 +499,34 @@ Mỗi phiên làm việc có sử dụng AI cần được ghi chép theo cấu 
   - Luồng DApp hiển thị chính xác trạng thái giao dịch và hướng dẫn người dùng kết nối contract thật trên Sepolia.
 
 ---
+
+### Rà Soát Toàn Diện Mọi Tệp Trong Repository & Khắc Phục Lỗi Hệ Thống
+
+- **Ngày thực hiện:** 16/10/2026
+- **Nhiệm vụ:** Kiểm tra lại tất cả các tệp (Smart Contracts, Frontend Web DApp, Tests, Scripts, Configuration, Documents & Evidences) và khắc phục toàn bộ các lỗi phát hiện được.
+- **Prompt sử dụng:**
+  > *"kiểm tra lại tất cả các tệp và sửa lỗi"*
+- **Phát hiện & Lỗi được tìm thấy:**
+  1. *Lỗi cấu hình tại `package.json`:* Mục `"scripts"."test"` được cấu hình mặc định là `echo "Error: no test specified" && exit 1`, khiến lệnh chuẩn `npm test` luôn thất bại với exit code 1 mặc dù dự án có 91 bài test Hardhat chạy qua `npx hardhat test`.
+  2. *Lệch số liệu kiểm thử tại hồ sơ nghiệm thu Lab 15 (`evidence/lab-15/FINAL_TECHNICAL_REVIEW.md` và `CHECKLIST_FINAL_RELEASE.md`):* Tài liệu ghi nhận 85/85 tests (số liệu lịch sử của Lab 14 trước khi bổ sung `Lab15_E2E_Demo.t.sol` gồm 6 bài test và 5 bài test an ninh Lab 13), gây mâu thuẫn với kết quả thực tế 91 passing tests.
+  3. *Trải nghiệm người dùng và đối soát ví tại `web/index.html`:*
+     - Khi tải trang (`F5`), DApp không tự động nhận diện ví đã kết nối trước đó qua `eth_accounts`, buộc người dùng phải nhấn nút kết nối lại.
+     - Trạng thái bytecode và số suất học bổng ban đầu chỉ hiển thị mặc định (0 suất, "Sẵn sàng tương tác") nếu chưa kết nối ví; thiếu truy vấn khởi tạo qua RPC công khai.
+     - Tính năng đối soát ví sinh viên `checkStudentMatchForSubmit()` chỉ chạy một lần khi chuyển tab Sinh viên; nếu sinh viên nhập hoặc đổi ID suất học bổng trực tiếp trên ô `inpSubmitId` hoặc chuyển ví trên MetaMask (`accountsChanged`), cảnh báo lệch ví không tự động cập nhật lại.
+  4. *Toàn vẹn tệp và liên kết:* Kiểm tra tự động 25 tệp Markdown ghi nhận 0 liên kết hỏng (0 broken links) và 0 khối mã chưa đóng (0 unclosed code blocks). Tệp `web/abi.json` đồng bộ 100% với artifact `ProjectCore.sol`.
+- **Quyết định sửa chữa của nhóm:**
+  - Sửa `package.json`: Cập nhật `"test": "hardhat test"` và bổ sung `"deploy": "node scripts/deploy.js"`.
+  - Cập nhật `evidence/lab-15/FINAL_TECHNICAL_REVIEW.md` và `evidence/lab-15/CHECKLIST_FINAL_RELEASE.md`: Đồng bộ chính xác toàn bộ 91/91 test cases (17 Unit + 13 Verify + 34 Economic + 15 Security + 6 Gas + 6 E2E Demo).
+  - Nâng cấp `web/index.html`:
+    - Thêm hàm `checkInitialContractStatus()` chạy ngay khi tải trang qua Sepolia RPC công khai để hiển thị ngay trạng thái bytecode và số suất học bổng.
+    - Thêm logic tự động kiểm tra `eth_accounts` để tự động khôi phục kết nối ví không cần bấm nút.
+    - Gắn bộ lắng nghe sự kiện `input` và `change` cho `inpSubmitId` và kích hoạt lại tại `accountsChanged` để kiểm soát cảnh báo lỗi `NotStudent` theo thời gian thực.
+- **Kết quả đạt được:**
+  - Lệnh `npm test` chạy thành công mượt mà, trả về kết quả **91 passing (91 solidity)** không một cảnh báo hay lỗi.
+  - Mã JavaScript của `web/index.html` đạt 0 lỗi cú pháp, 0 trùng lặp ID, 0 tham chiếu phần tử rỗng.
+  - Toàn bộ hồ sơ tài liệu từ Lab 08 đến Lab 15 đồng bộ nhất quán 100%.
+
+---
 > 🔗 **Liên kết nhanh:** [Trang chủ README](../README.md) • [Kế hoạch đồ án](PROJECT_PLAN.md) • [Đặc tả nghiệp vụ](SPEC.md) • [Quy tắc kinh tế](ECONOMIC_RULES.md) • [Nhật ký AI](AI_JOURNAL.md) • [GitHub Repo](https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS)
 
 
