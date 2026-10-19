@@ -26,7 +26,7 @@
 | STT | Tiêu Chí Kỹ Thuật | Phương Pháp Kiểm Tra | Kết Quả Thực Tế | Đánh Giá |
 |:---:|:---|:---|:---|:---:|
 | **1** | **DApp kết nối đúng ProjectCore** | Kiểm tra mã nguồn `web/index.html` và khởi tạo `ethers.Contract(address, PROJECT_CORE_ABI, signer)`. | ABI khớp 100% với 29 phần tử ABI xuất từ `artifacts/contracts/project/ProjectCore.sol/ProjectCore.json`. | ✅ **ĐẠT** |
-| **2** | **Contract address đúng** | Đối chiếu địa chỉ cấu hình trên giao diện DApp và trên mạng Sepolia Testnet. | Địa chỉ mặc định `0x71c8360f089f24e1f034c7f6424E86a51D45C522` hiển thị rõ ràng trên thanh trạng thái, hỗ trợ tùy biến linh hoạt qua giao diện. | ✅ **ĐẠT** |
+| **2** | **Contract address đúng** | Đối chiếu địa chỉ cấu hình trên giao diện DApp và trên mạng Sepolia Testnet. | Địa chỉ mặc định `0x04B0e154Becb4E98b00E06DF86605A70f3F914c2` đã xác minh bytecode on-chain Sepolia, hiển thị rõ ràng trên thanh trạng thái, hỗ trợ tùy biến linh hoạt qua giao diện. | ✅ **ĐẠT** |
 | **3** | **Chain ID đúng Sepolia** | Kiểm tra mã kiểm tra mạng `SEPOLIA_CHAIN_ID_DEC = 11155111` (`0xaa36a7`) trong `web/index.html`. | Tự động phát hiện mạng, hiển thị huy hiệu xanh khi ở Sepolia; hiển thị cảnh báo đỏ và nút `wallet_switchEthereumChain` nếu sai mạng. | ✅ **ĐẠT** |
 | **4** | **Không có private key / seed phrase / secret** | Quét toàn bộ repository (`git grep`, regex scan `.env`, `.gitignore`). | Không có bất kỳ Private Key, Seed Phrase, hay Mnemonic nào trong mã nguồn hoặc git commit. Mọi giao dịch người dùng đều ký qua MetaMask. | ✅ **ĐẠT** |
 | **5** | **Create scholarship hoạt động** | Kiểm tra hàm `createScholarship` trong `ProjectCore.sol` & test suite `test_01_SponsorCreateScholarship`. | Cho phép tạo suất học bổng với danh sách mốc linh hoạt, lưu trữ chính xác thông tin `sponsor`, `student`, `totalAmount`, `milestoneCount`. | ✅ **ĐẠT** |
@@ -47,7 +47,7 @@
 
 ## 3. Bằng Chứng Thực Nghiệm Kiểm Thử Tự Động (Automated Test Suite Evidence)
 
-Toàn bộ hệ thống kiểm thử tự động của dự án gồm **91 test cases** được thực thi trên môi trường Hardhat EVM:
+Toàn bộ hệ thống kiểm thử tự động của dự án gồm **97 test cases** (tăng từ 91 sau khi bổ sung bộ test `MultiStudent_Verification.t.sol` kiểm chứng cách ly ví nhiều sinh viên) được thực thi trên môi trường Hardhat EVM:
 
 ```text
 Running Solidity tests
@@ -108,7 +108,15 @@ Running Solidity tests
     ✔ test_DEMO_05_NegativeCase_StrangerCannotApprove()
     ✔ test_DEMO_06_Full2MilestoneLifecycle()
 
-Total: 91 passing (91 solidity tests) — 100% PASS
+  test/MultiStudent_Verification.t.sol:MultiStudentVerificationTest
+    ✔ test_MultiStudent_01_CorrectBeneficiaryPerScholarship()
+    ✔ test_MultiStudent_02_EachStudentSubmitsTheirOwnScholarship_Success()
+    ✔ test_MultiStudent_03_Student0xzCannotSubmitForScholarship1_RevertsNotStudent()
+    ✔ test_MultiStudent_04_Student0xyCannotSubmitForScholarship9_RevertsNotStudent()
+    ✔ test_MultiStudent_05_StrangerAndSponsorCannotSubmit_RevertsNotStudent()
+    ✔ test_MultiStudent_06_IndependentApprovalAndDisbursement_StrictSolvency()
+
+Total: **97 passing** (97 solidity tests) — **100% PASS**
 ```
 
 ---
@@ -118,4 +126,5 @@ Total: 91 passing (91 solidity tests) — 100% PASS
 - Toàn bộ **17/17 tiêu chí kỹ thuật** đã được rà soát nghiêm ngặt và đạt chuẩn 100%.
 - Không phát hiện lỗ hổng an ninh mới; giữ vững trạng thái **Code Freeze** của `contracts/project/ProjectCore.sol`.
 - Ứng dụng Web3 DApp `web/index.html` vận hành ổn định, giao diện tối ưu hóa trải nghiệm người dùng, hỗ trợ đầy đủ thiết bị di động và máy tính bảng.
+- **Hỗ trợ nhiều ví sinh viên độc lập:** Mỗi suất học bổng có thể có địa chỉ sinh viên thụ hưởng khác nhau, và DApp tự động đọc đúng địa chỉ từng suất từ on-chain để đối chiếu với ví MetaMask đang kết nối, ngăn chặn tuyệt đối việc nộp thạy.
 - Hệ thống tài liệu và kịch bản thuyết trình tại `docs/PRESENTATION_PLAN.md` đã hoàn tất, sẵn sàng cho buổi bảo vệ đồ án cuối kỳ.
