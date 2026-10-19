@@ -1343,10 +1343,17 @@
         const readContract = new ethers.Contract(validAddr, PROJECT_CORE_ABI, readProvider);
         const s = await readContract.getScholarship(id);
 
-        let activeWallet = userAddress;
-        if (signer) {
+        let activeWallet = null;
+        if (window.ethereum) {
+          try {
+            const accs = await window.ethereum.request({ method: "eth_accounts" });
+            if (accs && accs.length > 0) activeWallet = ethers.getAddress(accs[0]);
+          } catch (_) { }
+        }
+        if (!activeWallet && signer) {
           try { activeWallet = await signer.getAddress(); } catch (_) { }
         }
+        if (!activeWallet) activeWallet = userAddress;
 
         notice.style.display = "block";
         if (!activeWallet) {
@@ -2105,6 +2112,48 @@
         return;
       }
 
+      // Tiền kiểm tra: Đọc trực tiếp sinh viên thụ hưởng từ smart contract và đối chiếu với ví MetaMask hiện tại
+      try {
+        const s = await coreContract.getScholarship(id);
+
+        let activeWallet = null;
+        if (window.ethereum) {
+          try {
+            const accs = await window.ethereum.request({ method: "eth_accounts" });
+            if (accs && accs.length > 0) activeWallet = ethers.getAddress(accs[0]);
+          } catch (_) { }
+        }
+        if (!activeWallet && signer) {
+          try { activeWallet = await signer.getAddress(); } catch (_) { }
+        }
+        if (!activeWallet) activeWallet = userAddress;
+
+        if (!activeWallet || activeWallet.toLowerCase() !== s.student.toLowerCase()) {
+          const msg = `LỆCH VÍ SINH VIÊN (CHẶN NỘP THAY)!\n\n` +
+            `• Suất học bổng: #${id}\n` +
+            `• Ví Sinh viên thụ hưởng (trên contract): ${s.student}\n` +
+            `• Ví MetaMask đang kết nối: ${activeWallet || "Chưa kết nối"}\n\n` +
+            `Quy định an ninh: Mỗi sinh viên chỉ được nộp minh chứng cho đúng suất học bổng mang địa chỉ ví của mình. Vui lòng chuyển MetaMask sang đúng ví sinh viên để tiếp tục.`;
+          alert(msg);
+          showStatus("Chặn nộp thay ví khác!", `Suất #${id} thuộc về ví sinh viên ${s.student.slice(0, 6)}...${s.student.slice(-4)}.`, "error");
+          return;
+        }
+
+        if (BigInt(index) >= s.milestoneCount) {
+          alert(`Chỉ số Mốc ${index} vượt quá số lượng mốc của Suất #${id} (Tổng số: ${s.milestoneCount} mốc)!`);
+          return;
+        }
+
+        const m = await coreContract.getMilestone(id, index);
+        if (Number(m.status) === 3) {
+          alert(`Mốc ${index} đã được giải ngân hoàn tất (Disbursed). Không thể nộp lại minh chứng.`);
+          showStatus("Mốc đã giải ngân!", "Không thể nộp lại minh chứng cho mốc đã giải ngân.", "error");
+          return;
+        }
+      } catch (err) {
+        console.error("Lỗi tiền kiểm tra nộp minh chứng:", err);
+      }
+
       try {
         showStatus(`Đang nộp minh chứng cho suất #${id} (Mốc ${index})...`, "Xác nhận giao dịch trên MetaMask.", "loading");
         const tx = await coreContract.submitMilestone(id, index, proof);
@@ -2479,14 +2528,21 @@
     }
 
     if (window.ethereum) {
-      window.ethereum.on("accountsChanged", (accounts) => {
+      window.ethereum.on("accountsChanged", async (accounts) => {
         if (accounts.length === 0) {
           userAddress = null;
+          signer = null;
           walletBtnText.textContent = "Kết Nối Ví MetaMask";
           btnConnectWallet.classList.replace("btn-secondary", "btn-primary");
         } else {
+          provider = new ethers.BrowserProvider(window.ethereum);
+          signer = await provider.getSigner();
           userAddress = accounts[0];
           walletBtnText.textContent = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
+          btnConnectWallet.classList.replace("btn-primary", "btn-secondary");
+          if (coreContract && currentContractAddress) {
+            coreContract = new ethers.Contract(currentContractAddress, PROJECT_CORE_ABI, signer);
+          }
         }
         checkStudentMatchForSubmit();
         checkFundStatus();
