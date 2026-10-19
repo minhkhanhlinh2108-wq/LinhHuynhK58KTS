@@ -807,7 +807,7 @@
     <div class="config-bar">
       <div class="config-address">
         <span>📍 Smart Contract:</span>
-        <span id="contractAddressDisplay" class="code-pill">0x71c8360f089f24e1f034c7f6424E86a51D45C522</span>
+        <span id="contractAddressDisplay" class="code-pill">0x04B0e154Becb4E98b00E06DF86605A70f3F914c2</span>
         <button id="btnEditContract" class="btn btn-secondary" style="padding: 3px 8px; font-size: 0.75rem;">Đổi
           Address</button>
       </div>
@@ -892,12 +892,13 @@
             <label class="form-label" for="inpFundScholarshipId">Mã Suất Học Bổng (Scholarship ID)</label>
             <input id="inpFundScholarshipId" class="form-input" type="number" min="1" placeholder="1" />
             <span class="form-hint">Mã suất học bổng cần nạp (sẽ tự động điền ngay sau Bước 1).</span>
+            <div id="fundStatusNotice" style="display: none; padding: 10px 12px; border-radius: var(--radius-sm); font-size: 0.82rem; margin-top: 6px; line-height: 1.6;"></div>
           </div>
 
           <div class="form-group">
             <label class="form-label" for="inpFundAmount">Số lượng ETH muốn nạp (ETH)</label>
-            <input id="inpFundAmount" class="form-input" type="number" step="0.001" placeholder="0.1" />
-            <span class="form-hint">Hạn mức tối đa bằng tổng định mức cam kết của suất học bổng.</span>
+            <input id="inpFundAmount" class="form-input" type="number" step="0.001" placeholder="0.05" />
+            <span class="form-hint" id="fundAmountHint">Hạn mức tối đa bằng số tiền còn thiếu của suất học bổng.</span>
           </div>
 
           <button id="btnFundScholarship" class="btn btn-success" onclick="handleFundScholarship()">
@@ -984,6 +985,7 @@
           <div class="form-group">
             <label class="form-label" for="inpReleaseIndex">Chỉ số Mốc (Milestone Index)</label>
             <input id="inpReleaseIndex" class="form-input" type="number" min="0" placeholder="0" value="0" />
+            <div id="releaseMilestoneStatusNotice" style="display: none; padding: 10px 12px; border-radius: var(--radius-sm); font-size: 0.82rem; margin-top: 6px; line-height: 1.6;"></div>
           </div>
 
           <div
@@ -1022,27 +1024,44 @@
 
     <!-- TAB 3: VERIFIER -->
     <section id="tabVerifier" class="tab-pane">
-      <div class="card" style="max-width: 640px; margin: 0 auto;">
+      <div class="card" style="max-width: 680px; margin: 0 auto;">
         <div class="card-header">
           <div>
-            <h2 class="card-title">⚖️ Phê Duyệt Mốc Học Tập (Approve)</h2>
-            <p class="card-desc">Thẩm định viên hoặc Nhà tài trợ kiểm tra minh chứng và phê duyệt giải ngân.</p>
+            <h2 class="card-title">⚖️ Thẩm Định & Phê Duyệt Mốc Học Tập</h2>
+            <p class="card-desc">Thẩm định viên (hoặc Nhà tài trợ) đối soát mã băm minh chứng on-chain và phê duyệt giải ngân.</p>
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label" for="inpApproveId">Mã Suất Học Bổng (Scholarship ID)</label>
-          <input id="inpApproveId" class="form-input" type="number" min="1" placeholder="1" />
+        <!-- Verifier Role & Address Indicator -->
+        <div id="verifierRoleNotice" style="padding: 12px 14px; border-radius: var(--radius-sm); font-size: 0.82rem; margin-bottom: 16px; line-height: 1.6; background: var(--bg-box); border: 1px solid var(--border-color);">
+          <div>🏛️ <strong>Verifier hợp đồng:</strong> <span id="valContractVerifier" class="code-pill">Đang đọc...</span></div>
+          <div style="margin-top: 4px;">👤 <strong>Ví MetaMask hiện tại:</strong> <span id="valCurrentWalletVerifier" class="code-pill">Chưa kết nối</span></div>
+          <div id="valVerifierRoleBadge" style="margin-top: 6px; font-weight: 600;"></div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label" for="inpApproveIndex">Chỉ số Mốc (Milestone Index)</label>
-          <input id="inpApproveIndex" class="form-input" type="number" min="0" placeholder="0" value="0" />
-          <span class="form-hint">Mốc phải ở trạng thái "Submitted" mới có thể phê duyệt.</span>
+        <div class="grid-2" style="gap: 12px;">
+          <div class="form-group">
+            <label class="form-label" for="inpApproveId">Mã Suất Học Bổng (Scholarship ID)</label>
+            <input id="inpApproveId" class="form-input" type="number" min="1" placeholder="1" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inpApproveIndex">Chỉ số Mốc (Milestone Index)</label>
+            <input id="inpApproveIndex" class="form-input" type="number" min="0" placeholder="0" value="0" />
+            <span class="form-hint">Mốc đếm từ 0 (Mốc 1 = 0, Mốc 2 = 1).</span>
+          </div>
         </div>
 
-        <button id="btnApproveMilestone" class="btn btn-primary" onclick="handleApproveMilestone()">
-          ✅ Phê Duyệt Mốc (approveMilestone)
+        <!-- Milestone Proof & Inspection Panel -->
+        <div id="verifierMilestoneInspection" style="margin-top: 12px; padding: 14px; border-radius: var(--radius-sm); font-size: 0.85rem; line-height: 1.6; display: none;"></div>
+
+        <!-- Academic Honesty Disclaimer -->
+        <div style="margin-top: 12px; margin-bottom: 16px; padding: 10px 12px; border-radius: var(--radius-sm); font-size: 0.78rem; color: var(--text-muted); background: var(--bg-box); border: 1px solid var(--border-color);">
+          ℹ️ <strong>Lưu ý thẩm định minh bạch:</strong> Giao diện chỉ đọc và đối soát mã băm / IPFS CID đã được sinh viên ghi nhận trên blockchain. Giao diện không tự động xác thực nội dung thực tế của tài liệu; Thẩm định viên có trách nhiệm đối chiếu tài liệu gốc ngoài đời thực tương ứng với CID trước khi phê duyệt.
+        </div>
+
+        <button id="btnApproveMilestone" class="btn btn-primary" style="width: 100%;" onclick="handleApproveMilestone()">
+          ✅ Phê Duyệt Mốc Giải Ngân (approveMilestone)
         </button>
       </div>
     </section>
@@ -1173,7 +1192,7 @@
     // Configuration
     const SEPOLIA_CHAIN_ID_DEC = 11155111;
     const SEPOLIA_CHAIN_ID_HEX = "0xaa36a7";
-    const DEFAULT_CONTRACT_ADDRESS = "0x71c8360f089f24e1f034c7f6424E86a51D45C522";
+    const DEFAULT_CONTRACT_ADDRESS = "0x04B0e154Becb4E98b00E06DF86605A70f3F914c2";
 
     // EIP-55 Checksum & Address Normalization Helper using Ethers v6
     function normalizeAddress(addr) {
@@ -1187,7 +1206,7 @@
       }
     }
 
-    // Standard ABI for ProjectCore
+    // Standard ABI for ProjectCore (khớp với hợp đồng Sepolia đã xác minh)
     const PROJECT_CORE_ABI = [
       "function createScholarship(address student, uint256[] calldata milestoneAmounts) external returns (uint256)",
       "function createScholarship(address student, uint256 totalAmount, uint256[] calldata milestoneAmounts) external returns (uint256)",
@@ -1195,6 +1214,7 @@
       "function submitMilestone(uint256 scholarshipId, uint256 milestoneIndex, string calldata proofHash) external",
       "function approveMilestone(uint256 scholarshipId, uint256 milestoneIndex) external",
       "function releaseMilestone(uint256 scholarshipId, uint256 milestoneIndex) external",
+      "function setVerifier(address newVerifier) external",
       "function getScholarship(uint256 scholarshipId) external view returns (tuple(uint256 id, address sponsor, address student, uint256 totalAmount, uint256 fundedAmount, uint256 releasedAmount, uint256 milestoneCount))",
       "function getMilestone(uint256 scholarshipId, uint256 milestoneIndex) external view returns (tuple(uint256 amount, string proofHash, uint8 status, uint256 approvedAt, uint256 disbursedAt))",
       "function getMilestoneStatus(uint256 scholarshipId, uint256 milestoneIndex) external view returns (uint8)",
@@ -1205,6 +1225,7 @@
       "event MilestoneSubmitted(uint256 indexed scholarshipId, uint256 indexed milestoneIndex, address indexed student, string proofHash)",
       "event MilestoneApproved(uint256 indexed scholarshipId, uint256 indexed milestoneIndex, address indexed verifier)",
       "event ScholarshipReleased(uint256 indexed scholarshipId, uint256 indexed milestoneIndex, address indexed student, uint256 amount)",
+      "event VerifierUpdated(address indexed previousVerifier, address indexed newVerifier)",
       "error NotSponsor()",
       "error NotStudent()",
       "error InvalidAddress()",
@@ -1218,7 +1239,13 @@
     ];
 
     // State Variables
+    const OLD_UNVERIFIED_ADDRESS = "0x71c8360f089f24e1f034c7f6424E86a51D45C522";
     let rawStoredAddr = localStorage.getItem("trustscholar_address");
+    // Nếu bộ nhớ trình duyệt còn lưu địa chỉ cũ chưa deploy bytecode, tự động chuyển về địa chỉ chuẩn
+    if (rawStoredAddr && rawStoredAddr.toLowerCase() === OLD_UNVERIFIED_ADDRESS.toLowerCase()) {
+      localStorage.removeItem("trustscholar_address");
+      rawStoredAddr = null;
+    }
     let currentContractAddress = normalizeAddress(rawStoredAddr) || DEFAULT_CONTRACT_ADDRESS;
     if (rawStoredAddr && rawStoredAddr !== currentContractAddress) {
       localStorage.setItem("trustscholar_address", currentContractAddress);
@@ -1292,6 +1319,11 @@
 
       if (tabName === "student") {
         checkStudentMatchForSubmit();
+        checkReleaseStatus();
+      } else if (tabName === "sponsor") {
+        checkFundStatus();
+      } else if (tabName === "verifier") {
+        checkVerifierInspection();
       }
     }
 
@@ -1342,6 +1374,245 @@
         notice.style.border = "1px solid var(--border-color)";
         notice.style.color = "var(--text-dim)";
         notice.innerHTML = `ℹ️ Suất học bổng #${id} chưa tồn tại trên blockchain (Hoặc lỗi mạng).`;
+      }
+    }
+
+    // Helper: Đối soát số tiền cam kết và số tiền còn thiếu cho Suất học bổng
+    async function checkFundStatus() {
+      const notice = document.getElementById("fundStatusNotice");
+      const id = document.getElementById("inpFundScholarshipId")?.value;
+      if (!notice) return;
+      if (!id || id <= 0) {
+        notice.style.display = "none";
+        return;
+      }
+
+      try {
+        const validAddr = normalizeAddress(currentContractAddress) || DEFAULT_CONTRACT_ADDRESS;
+        const readProvider = provider || new ethers.JsonRpcProvider("https://ethereum-sepolia-rpc.publicnode.com");
+        const readContract = new ethers.Contract(validAddr, PROJECT_CORE_ABI, readProvider);
+        const s = await readContract.getScholarship(id);
+
+        const totalEth = ethers.formatEther(s.totalAmount);
+        const fundedEth = ethers.formatEther(s.fundedAmount);
+        const remainingWei = s.totalAmount > s.fundedAmount ? (s.totalAmount - s.fundedAmount) : 0n;
+        const remainingEth = ethers.formatEther(remainingWei);
+
+        let activeWallet = userAddress;
+        if (signer) {
+          try { activeWallet = await signer.getAddress(); } catch (_) { }
+        }
+
+        notice.style.display = "block";
+
+        let roleWarning = "";
+        if (activeWallet && s.sponsor && activeWallet.toLowerCase() !== s.sponsor.toLowerCase()) {
+          roleWarning = `<div style="margin-top: 6px; color: var(--accent-danger); font-weight: 600;">⚠️ Ví MetaMask đang kết nối (<span class="code-pill">${activeWallet.slice(0, 6)}...${activeWallet.slice(-4)}</span>) không phải Sponsor của suất này (<span class="code-pill">${s.sponsor.slice(0, 6)}...${s.sponsor.slice(-4)}</span>). Chỉ Sponsor mới có quyền nạp tiền!</div>`;
+        }
+
+        if (remainingWei === 0n) {
+          notice.style.background = "rgba(16, 185, 129, 0.1)";
+          notice.style.border = "1px solid rgba(16, 185, 129, 0.3)";
+          notice.style.color = "var(--accent-success)";
+          notice.innerHTML = `✅ <strong>Suất #${id} đã nạp đủ 100%:</strong> Tổng cam kết: <strong>${totalEth} ETH</strong> | Đã nạp: <strong>${fundedEth} ETH</strong> (Còn thiếu: 0 ETH). Không cần nạp thêm.${roleWarning}`;
+        } else {
+          notice.style.background = "var(--bg-box)";
+          notice.style.border = "1px solid var(--border-color)";
+          notice.style.color = "var(--text-main)";
+          notice.innerHTML = `📊 <strong>Hạn mức nạp Suất #${id}:</strong><br>` +
+            `• Tổng cam kết: <strong>${totalEth} ETH</strong> | Đã nạp: <strong>${fundedEth} ETH</strong><br>` +
+            `• <strong>Số tiền còn thiếu:</strong> <span style="color: var(--accent-primary); font-weight: 700;">${remainingEth} ETH</span> ` +
+            `<button type="button" class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.75rem; margin-left: 6px;" onclick="fillRemainingFund('${remainingEth}')">Điền ${remainingEth} ETH</button>${roleWarning}`;
+        }
+      } catch (e) {
+        notice.style.display = "block";
+        notice.style.background = "var(--bg-box)";
+        notice.style.border = "1px solid var(--border-color)";
+        notice.style.color = "var(--text-dim)";
+        notice.innerHTML = `ℹ️ Suất học bổng #${id} chưa tồn tại trên blockchain (Hoặc lỗi mạng).`;
+      }
+    }
+
+    function fillRemainingFund(amount) {
+      const el = document.getElementById("inpFundAmount");
+      if (el) el.value = amount;
+    }
+
+    // Helper: Đối soát điều kiện giải ngân cho từng mốc học tập
+    async function checkReleaseStatus() {
+      const notice = document.getElementById("releaseMilestoneStatusNotice");
+      const id = document.getElementById("inpReleaseId")?.value;
+      const index = document.getElementById("inpReleaseIndex")?.value;
+      if (!notice) return;
+      if (!id || id <= 0 || index === "" || index < 0) {
+        notice.style.display = "none";
+        return;
+      }
+
+      try {
+        const validAddr = normalizeAddress(currentContractAddress) || DEFAULT_CONTRACT_ADDRESS;
+        const readProvider = provider || new ethers.JsonRpcProvider("https://ethereum-sepolia-rpc.publicnode.com");
+        const readContract = new ethers.Contract(validAddr, PROJECT_CORE_ABI, readProvider);
+        const s = await readContract.getScholarship(id);
+
+        if (BigInt(index) >= s.milestoneCount) {
+          notice.style.display = "block";
+          notice.style.background = "rgba(239, 68, 68, 0.1)";
+          notice.style.border = "1px solid rgba(239, 68, 68, 0.3)";
+          notice.style.color = "var(--accent-danger)";
+          notice.innerHTML = `⚠️ Chỉ số Mốc ${index} không hợp lệ (Suất #${id} chỉ có ${s.milestoneCount} mốc từ 0 đến ${Number(s.milestoneCount) - 1}).`;
+          return;
+        }
+
+        const m = await readContract.getMilestone(id, index);
+        const st = Number(m.status);
+        const amtEth = ethers.formatEther(m.amount);
+
+        notice.style.display = "block";
+        if (st === 0) {
+          notice.style.background = "rgba(245, 158, 11, 0.1)";
+          notice.style.border = "1px solid rgba(245, 158, 11, 0.3)";
+          notice.style.color = "var(--accent-warning)";
+          notice.innerHTML = `⏳ <strong>Chưa đủ điều kiện:</strong> Mốc ${index} (${amtEth} ETH) đang ở trạng thái <strong>Chờ nộp minh chứng (Pending)</strong>.<br>👉 Sinh viên cần nộp minh chứng tại Bước 2A trước khi có thể giải ngân.`;
+        } else if (st === 1) {
+          notice.style.background = "rgba(2, 132, 199, 0.1)";
+          notice.style.border = "1px solid rgba(2, 132, 199, 0.3)";
+          notice.style.color = "var(--accent-info)";
+          notice.innerHTML = `⏳ <strong>Chưa đủ điều kiện:</strong> Mốc ${index} (${amtEth} ETH) đang ở trạng thái <strong>Đã nộp minh chứng (Submitted)</strong>.<br>👉 Vui lòng chờ Thẩm định viên (Verifier) phê duyệt trước khi kích hoạt giải ngân.`;
+        } else if (st === 2) {
+          notice.style.background = "rgba(16, 185, 129, 0.1)";
+          notice.style.border = "1px solid rgba(16, 185, 129, 0.3)";
+          notice.style.color = "var(--accent-success)";
+          notice.innerHTML = `✅ <strong>Đủ điều kiện giải ngân:</strong> Mốc ${index} đã được <strong>Phê Duyệt (Approved)</strong>!<br>💰 Định mức giải ngân: <strong>${amtEth} ETH</strong> sẽ được chuyển trực tiếp về ví Sinh viên (<span class="code-pill">${s.student.slice(0, 6)}...${s.student.slice(-4)}</span>).`;
+        } else if (st === 3) {
+          notice.style.background = "var(--bg-box)";
+          notice.style.border = "1px solid var(--border-color)";
+          notice.style.color = "var(--text-dim)";
+          notice.innerHTML = `🎉 <strong>Đã giải ngân:</strong> Mốc ${index} (${amtEth} ETH) đã được chuyển về ví sinh viên thành công trước đó (Disbursed). Không thể giải ngân hai lần.`;
+        }
+      } catch (e) {
+        notice.style.display = "block";
+        notice.style.background = "var(--bg-box)";
+        notice.style.border = "1px solid var(--border-color)";
+        notice.style.color = "var(--text-dim)";
+        notice.innerHTML = `ℹ️ Không tìm thấy thông tin Suất #${id} / Mốc ${index}.`;
+      }
+    }
+
+    // Helper: Thẩm định minh chứng mốc và kiểm tra quyền Verifier
+    async function checkVerifierInspection() {
+      const panel = document.getElementById("verifierMilestoneInspection");
+      const valVerifier = document.getElementById("valContractVerifier");
+      const valWallet = document.getElementById("valCurrentWalletVerifier");
+      const badgeRole = document.getElementById("valVerifierRoleBadge");
+      const id = document.getElementById("inpApproveId")?.value;
+      const index = document.getElementById("inpApproveIndex")?.value;
+
+      let activeWallet = userAddress;
+      if (signer) {
+        try { activeWallet = await signer.getAddress(); } catch (_) { }
+      }
+      if (valWallet) {
+        valWallet.textContent = activeWallet || "Chưa kết nối ví";
+      }
+
+      let contractVerifier = null;
+      try {
+        const validAddr = normalizeAddress(currentContractAddress) || DEFAULT_CONTRACT_ADDRESS;
+        const readProvider = provider || new ethers.JsonRpcProvider("https://ethereum-sepolia-rpc.publicnode.com");
+        const readContract = new ethers.Contract(validAddr, PROJECT_CORE_ABI, readProvider);
+        contractVerifier = await readContract.verifier();
+        if (valVerifier) valVerifier.textContent = contractVerifier;
+      } catch (_) {
+        if (valVerifier) valVerifier.textContent = "Không đọc được";
+      }
+
+      if (!panel) return;
+      if (!id || id <= 0 || index === "" || index < 0) {
+        panel.style.display = "none";
+        return;
+      }
+
+      try {
+        const validAddr = normalizeAddress(currentContractAddress) || DEFAULT_CONTRACT_ADDRESS;
+        const readProvider = provider || new ethers.JsonRpcProvider("https://ethereum-sepolia-rpc.publicnode.com");
+        const readContract = new ethers.Contract(validAddr, PROJECT_CORE_ABI, readProvider);
+        const s = await readContract.getScholarship(id);
+
+        if (BigInt(index) >= s.milestoneCount) {
+          panel.style.display = "block";
+          panel.style.background = "rgba(239, 68, 68, 0.1)";
+          panel.style.border = "1px solid rgba(239, 68, 68, 0.3)";
+          panel.style.color = "var(--accent-danger)";
+          panel.innerHTML = `⚠️ Mốc ${index} vượt quá số lượng mốc của Suất #${id} (Tổng số: ${s.milestoneCount} mốc).`;
+          return;
+        }
+
+        const m = await readContract.getMilestone(id, index);
+        const st = Number(m.status);
+        const amtEth = ethers.formatEther(m.amount);
+
+        const isVerifier = activeWallet && contractVerifier && (activeWallet.toLowerCase() === contractVerifier.toLowerCase());
+        const isSponsor = activeWallet && s.sponsor && (activeWallet.toLowerCase() === s.sponsor.toLowerCase());
+
+        if (badgeRole) {
+          if (!activeWallet) {
+            badgeRole.innerHTML = `<span style="color: var(--text-dim);">⚠️ Vui lòng kết nối ví MetaMask để xác định quyền phê duyệt.</span>`;
+          } else if (isVerifier) {
+            badgeRole.innerHTML = `<span style="color: var(--accent-success);">✅ Ví MetaMask khớp với Verifier của Smart Contract (Có toàn quyền phê duyệt).</span>`;
+          } else if (isSponsor) {
+            badgeRole.innerHTML = `<span style="color: var(--accent-info);">✅ Ví MetaMask là Nhà tài trợ (Sponsor) của Suất #${id} (Có quyền phê duyệt suất này).</span>`;
+          } else {
+            badgeRole.innerHTML = `<span style="color: var(--accent-danger);">⚠️ Ví hiện tại KHÔNG có quyền phê duyệt (Không phải Verifier hợp đồng và không phải Sponsor của suất #${id}).</span>`;
+          }
+        }
+
+        panel.style.display = "block";
+        const statusPills = [
+          `<span class="status-pill pending">Pending (Chờ nộp)</span>`,
+          `<span class="status-pill submitted">Submitted (Đã nộp - Chờ duyệt)</span>`,
+          `<span class="status-pill approved">Approved (Đã duyệt)</span>`,
+          `<span class="status-pill disbursed">Disbursed (Đã giải ngân)</span>`
+        ];
+
+        let actionHint = "";
+        if (st === 0) {
+          panel.style.background = "rgba(245, 158, 11, 0.08)";
+          panel.style.border = "1px solid rgba(245, 158, 11, 0.25)";
+          actionHint = `<div style="margin-top: 8px; color: var(--accent-warning); font-weight: 600;">⛔ Chưa thể phê duyệt: Sinh viên chưa nộp minh chứng cho mốc này (trạng thái Pending).</div>`;
+        } else if (st === 1) {
+          panel.style.background = "rgba(2, 132, 199, 0.08)";
+          panel.style.border = "1px solid rgba(2, 132, 199, 0.25)";
+          actionHint = `<div style="margin-top: 8px; color: var(--accent-info); font-weight: 600;">✨ Mốc đã sẵn sàng: Minh chứng đã nộp on-chain, Verifier có thể xem CID bên dưới và bấm nút Phê Duyệt.</div>`;
+        } else if (st === 2) {
+          panel.style.background = "rgba(16, 185, 129, 0.08)";
+          panel.style.border = "1px solid rgba(16, 185, 129, 0.25)";
+          actionHint = `<div style="margin-top: 8px; color: var(--accent-success); font-weight: 600;">ℹ️ Mốc này đã được phê duyệt rồi (Approved).</div>`;
+        } else if (st === 3) {
+          panel.style.background = "var(--bg-box)";
+          panel.style.border = "1px solid var(--border-color)";
+          actionHint = `<div style="margin-top: 8px; color: var(--text-dim); font-weight: 600;">ℹ️ Mốc này đã giải ngân hoàn tất (Disbursed).</div>`;
+        }
+
+        panel.innerHTML = `
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; margin-bottom: 8px;">
+            <div><strong>Suất / Mốc:</strong> Suất #${id} — Mốc ${index}</div>
+            <div><strong>Trạng thái:</strong> ${statusPills[st]}</div>
+            <div><strong>Sinh viên:</strong> <span class="code-pill">${s.student.slice(0, 6)}...${s.student.slice(-4)}</span></div>
+            <div><strong>Định mức mốc:</strong> <strong>${amtEth} ETH</strong></div>
+          </div>
+          <div style="margin-top: 6px; word-break: break-all;">
+            <strong>Mã băm minh chứng (IPFS CID on-chain):</strong><br>
+            <span class="code-pill" style="font-size: 0.8rem; margin-top: 4px; display: inline-block;">${m.proofHash || "(Chưa có CID nào được nộp)"}</span>
+          </div>
+          ${actionHint}
+        `;
+      } catch (e) {
+        panel.style.display = "block";
+        panel.style.background = "var(--bg-box)";
+        panel.style.border = "1px solid var(--border-color)";
+        panel.style.color = "var(--text-dim)";
+        panel.innerHTML = `ℹ️ Suất học bổng #${id} / Mốc ${index} chưa tồn tại trên blockchain (Hoặc lỗi mạng).`;
       }
     }
 
@@ -1480,6 +1751,12 @@
             }
           } catch (_) { }
         } catch (_) { }
+
+        // Đồng bộ dữ liệu kiểm tra trên các tab
+        checkFundStatus();
+        checkStudentMatchForSubmit();
+        checkReleaseStatus();
+        checkVerifierInspection();
       }
     }
 
@@ -1493,6 +1770,10 @@
           localStorage.setItem("trustscholar_address", validated);
           contractAddressDisplay.textContent = validated;
           await initContract();
+          checkFundStatus();
+          checkStudentMatchForSubmit();
+          checkReleaseStatus();
+          checkVerifierInspection();
           showStatus("Đã cập nhật địa chỉ hợp đồng!", validated, "info");
         } else {
           alert("Địa chỉ Ethereum không hợp lệ (yêu cầu đúng định dạng 40 ký tự hex)! ");
@@ -1717,6 +1998,12 @@
           document.getElementById("inpApproveId").value = nextId;
           document.getElementById("inpStudentCheckId").value = nextId;
           document.getElementById("inpLookupId").value = nextId;
+
+          // Cập nhật trạng thái đối soát trên tất cả các tab
+          checkFundStatus();
+          checkStudentMatchForSubmit();
+          checkReleaseStatus();
+          checkVerifierInspection();
         } else {
           // Giao dịch được khai thác trên chain nhưng không phát sinh Event từ hợp đồng ProjectCore
           const warnDetail = `Giao dịch đã xác nhận (Block: ${receipt.blockNumber}), nhưng không phát sinh Event ScholarshipCreated! Địa chỉ hiện tại (${currentContractAddress.slice(0, 8)}...) chưa có bytecode ProjectCore.sol trên Sepolia.`;
@@ -1744,7 +2031,7 @@
         return;
       }
 
-      // Tiền kiểm tra số suất học bổng on-chain để ngăn chặn revert ScholarshipNotFound
+      // Tiền kiểm tra số suất học bổng on-chain, hạn mức nạp và quyền sponsor để ngăn chặn revert
       try {
         const count = await coreContract.scholarshipCount();
         if (count === 0n) {
@@ -1759,7 +2046,34 @@
           showStatus("Không tìm thấy suất học bổng!", `ID #${id} vượt quá tổng số suất hiện có (${count}).`, "error");
           return;
         }
-      } catch (_) { }
+
+        const s = await coreContract.getScholarship(id);
+
+        // Kiểm tra quyền sponsor
+        let activeWallet = userAddress;
+        if (signer) {
+          try { activeWallet = await signer.getAddress(); } catch (_) { }
+        }
+        if (activeWallet && s.sponsor && activeWallet.toLowerCase() !== s.sponsor.toLowerCase()) {
+          const msg = `Ví MetaMask hiện tại (${activeWallet.slice(0, 6)}...${activeWallet.slice(-4)}) không phải là Sponsor (${s.sponsor.slice(0, 6)}...${s.sponsor.slice(-4)}) của suất #${id}!\nChỉ Sponsor mới có quyền nạp tiền vào Escrow (Hợp đồng sẽ revert NotSponsor).`;
+          alert(msg);
+          showStatus("Từ chối quyền nạp tiền!", "Chỉ Sponsor của suất học bổng mới được nạp tiền.", "error");
+          return;
+        }
+
+        // Kiểm tra hạn mức nạp
+        const valueWei = ethers.parseEther(ethAmount);
+        if (s.fundedAmount + valueWei > s.totalAmount) {
+          const remainingWei = s.totalAmount > s.fundedAmount ? (s.totalAmount - s.fundedAmount) : 0n;
+          const remainingEth = ethers.formatEther(remainingWei);
+          const msg = `Số tiền nạp (${ethAmount} ETH) vượt quá hạn mức cam kết còn lại của suất #${id}!\n\n• Tổng cam kết: ${ethers.formatEther(s.totalAmount)} ETH\n• Đã nạp: ${ethers.formatEther(s.fundedAmount)} ETH\n• Còn thiếu tối đa: ${remainingEth} ETH\n\nVui lòng chỉ nạp tối đa ${remainingEth} ETH để tránh lỗi InvalidAmount từ Smart Contract.`;
+          alert(msg);
+          showStatus("Vượt hạn mức cam kết!", `Chỉ còn thiếu ${remainingEth} ETH.`, "error");
+          return;
+        }
+      } catch (err) {
+        console.error("Lỗi tiền kiểm tra Fund:", err);
+      }
 
       try {
         const valueWei = ethers.parseEther(ethAmount);
@@ -1771,6 +2085,8 @@
         const receipt = await tx.wait();
         showStatus(`Nạp thành công ${ethAmount} ETH vào suất #${id}! 💰`, `Block: ${receipt.blockNumber}`, "success", tx.hash);
         recordSessionTx("Nạp Tiền Escrow", "Thành công", tx.hash, `Nạp ${ethAmount} ETH vào suất #${id}`, id);
+        checkFundStatus();
+        checkReleaseStatus();
       } catch (err) {
         handleContractError(err, "Nạp tiền thất bại", id);
       }
@@ -1797,6 +2113,8 @@
         const receipt = await tx.wait();
         showStatus(`Đã nộp minh chứng mốc ${index} thành công! 📑`, `Block: ${receipt.blockNumber}`, "success", tx.hash);
         recordSessionTx("Nộp Minh Chứng", "Thành công", tx.hash, `Nộp IPFS CID cho Mốc ${index}`, id);
+        checkVerifierInspection();
+        checkReleaseStatus();
       } catch (err) {
         handleContractError(err, "Nộp minh chứng thất bại", id);
       }
@@ -1814,6 +2132,51 @@
         return;
       }
 
+      // Tiền kiểm tra trạng thái mốc và phân quyền để ngăn chặn revert
+      try {
+        const s = await coreContract.getScholarship(id);
+        if (BigInt(index) >= s.milestoneCount) {
+          alert(`Chỉ số Mốc ${index} không tồn tại trên Suất #${id}!`);
+          return;
+        }
+
+        const m = await coreContract.getMilestone(id, index);
+        const st = Number(m.status);
+
+        if (st === 0) {
+          alert(`Mốc ${index} chưa được sinh viên nộp minh chứng (đang ở trạng thái Pending)!\nChỉ mốc đã nộp (Submitted) mới có thể phê duyệt.`);
+          showStatus("Chưa thể phê duyệt!", "Mốc chưa nộp minh chứng (Pending).", "error");
+          return;
+        }
+        if (st === 2) {
+          alert(`Mốc ${index} đã được phê duyệt trước đó rồi (Approved)!`);
+          showStatus("Mốc đã được duyệt!", "Không cần phê duyệt lại.", "info");
+          return;
+        }
+        if (st === 3) {
+          alert(`Mốc ${index} đã được giải ngân hoàn tất (Disbursed)!`);
+          showStatus("Mốc đã giải ngân!", "Không thể phê duyệt lại mốc đã giải ngân.", "error");
+          return;
+        }
+
+        // Kiểm tra quyền verifier hoặc sponsor
+        const contractVerifier = await coreContract.verifier();
+        let activeWallet = userAddress;
+        if (signer) {
+          try { activeWallet = await signer.getAddress(); } catch (_) { }
+        }
+        const isVerifier = activeWallet && (activeWallet.toLowerCase() === contractVerifier.toLowerCase());
+        const isSponsor = activeWallet && (activeWallet.toLowerCase() === s.sponsor.toLowerCase());
+        if (!isVerifier && !isSponsor) {
+          const msg = `Ví MetaMask hiện tại (${activeWallet.slice(0, 6)}...${activeWallet.slice(-4)}) không phải là Verifier hợp đồng (${contractVerifier.slice(0, 6)}...${contractVerifier.slice(-4)}) hoặc Sponsor của suất #${id} (${s.sponsor.slice(0, 6)}...${s.sponsor.slice(-4)})!\nGiao dịch sẽ bị Smart Contract từ chối với lỗi NotSponsor.`;
+          alert(msg);
+          showStatus("Từ chối quyền phê duyệt!", "Chỉ Verifier hoặc Sponsor mới có quyền duyệt mốc này.", "error");
+          return;
+        }
+      } catch (err) {
+        console.error("Lỗi tiền kiểm tra:", err);
+      }
+
       try {
         showStatus(`Đang phê duyệt mốc ${index} của suất #${id}...`, "Xác nhận giao dịch trên MetaMask.", "loading");
         const tx = await coreContract.approveMilestone(id, index);
@@ -1822,6 +2185,8 @@
         const receipt = await tx.wait();
         showStatus(`Phê duyệt mốc ${index} thành công! ✅`, `Block: ${receipt.blockNumber}`, "success", tx.hash);
         recordSessionTx("Phê Duyệt Mốc", "Thành công", tx.hash, `Đã duyệt giải ngân cho Mốc ${index}`, id);
+        checkVerifierInspection();
+        checkReleaseStatus();
       } catch (err) {
         handleContractError(err, "Phê duyệt mốc thất bại", id);
       }
@@ -1839,6 +2204,43 @@
         return;
       }
 
+      // Tiền kiểm tra trạng thái mốc và số dư Escrow
+      try {
+        const s = await coreContract.getScholarship(id);
+        if (BigInt(index) >= s.milestoneCount) {
+          alert(`Chỉ số Mốc ${index} không tồn tại trên Suất #${id}!`);
+          return;
+        }
+
+        const m = await coreContract.getMilestone(id, index);
+        const st = Number(m.status);
+
+        if (st === 0) {
+          alert(`Mốc ${index} chưa được sinh viên nộp minh chứng (đang ở trạng thái Pending)!\nChưa thể giải ngân.`);
+          showStatus("Chưa đủ điều kiện giải ngân!", "Mốc chưa nộp minh chứng (Pending).", "error");
+          return;
+        }
+        if (st === 1) {
+          alert(`Mốc ${index} đang ở trạng thái Chờ Thẩm định viên phê duyệt (Submitted)!\nVui lòng chờ Verifier phê duyệt tại Tab 3 trước khi kích hoạt giải ngân.`);
+          showStatus("Chưa đủ điều kiện giải ngân!", "Mốc đang chờ Thẩm định viên phê duyệt (Submitted).", "error");
+          return;
+        }
+        if (st === 3) {
+          alert(`Mốc ${index} đã được giải ngân thành công về ví sinh viên trước đó (AlreadyReleased)!`);
+          showStatus("Mốc đã giải ngân!", "Không thể giải ngân hai lần cho cùng một mốc.", "error");
+          return;
+        }
+
+        // Kiểm tra xem quỹ đã nạp đủ cho mốc này chưa
+        if (s.fundedAmount < s.releasedAmount + m.amount) {
+          alert(`Quỹ Escrow của suất #${id} chưa nạp đủ tiền giải ngân cho mốc ${index}!\nĐã nạp: ${ethers.formatEther(s.fundedAmount)} ETH, Đã giải ngân: ${ethers.formatEther(s.releasedAmount)} ETH, Mốc cần: ${ethers.formatEther(m.amount)} ETH.`);
+          showStatus("Escrow chưa đủ tiền!", "Quỹ học bổng chưa nạp đủ tiền giải ngân cho mốc này.", "error");
+          return;
+        }
+      } catch (err) {
+        console.error("Lỗi tiền kiểm tra Release:", err);
+      }
+
       try {
         showStatus(`Đang kích hoạt giải ngân mốc ${index} của suất #${id}...`, "Tiền sẽ được chuyển thẳng đến ví sinh viên thụ hưởng.", "loading");
         const tx = await coreContract.releaseMilestone(id, index);
@@ -1847,6 +2249,8 @@
         const receipt = await tx.wait();
         showStatus(`Giải ngân mốc ${index} thành công về ví sinh viên! 💸`, `Block: ${receipt.blockNumber}`, "success", tx.hash);
         recordSessionTx("Giải Ngân Học Bổng", "Thành công", tx.hash, `Đã chuyển Native ETH mốc ${index} về ví sinh viên`, id);
+        checkReleaseStatus();
+        checkVerifierInspection();
       } catch (err) {
         handleContractError(err, "Giải ngân thất bại", id);
       }
@@ -2028,6 +2432,12 @@
           document.getElementById("inpFundScholarshipId").value = count.toString();
         }
       } catch (_) { }
+
+      // Cập nhật trạng thái đối soát toàn bộ các tab
+      checkFundStatus();
+      checkStudentMatchForSubmit();
+      checkReleaseStatus();
+      checkVerifierInspection();
     }
 
     // Event Listeners
@@ -2038,6 +2448,34 @@
     if (inpSubmitIdEl) {
       inpSubmitIdEl.addEventListener("input", checkStudentMatchForSubmit);
       inpSubmitIdEl.addEventListener("change", checkStudentMatchForSubmit);
+    }
+
+    const inpFundIdEl = document.getElementById("inpFundScholarshipId");
+    if (inpFundIdEl) {
+      inpFundIdEl.addEventListener("input", checkFundStatus);
+      inpFundIdEl.addEventListener("change", checkFundStatus);
+    }
+
+    const inpReleaseIdEl = document.getElementById("inpReleaseId");
+    const inpReleaseIdxEl = document.getElementById("inpReleaseIndex");
+    if (inpReleaseIdEl) {
+      inpReleaseIdEl.addEventListener("input", checkReleaseStatus);
+      inpReleaseIdEl.addEventListener("change", checkReleaseStatus);
+    }
+    if (inpReleaseIdxEl) {
+      inpReleaseIdxEl.addEventListener("input", checkReleaseStatus);
+      inpReleaseIdxEl.addEventListener("change", checkReleaseStatus);
+    }
+
+    const inpApproveIdEl = document.getElementById("inpApproveId");
+    const inpApproveIdxEl = document.getElementById("inpApproveIndex");
+    if (inpApproveIdEl) {
+      inpApproveIdEl.addEventListener("input", checkVerifierInspection);
+      inpApproveIdEl.addEventListener("change", checkVerifierInspection);
+    }
+    if (inpApproveIdxEl) {
+      inpApproveIdxEl.addEventListener("input", checkVerifierInspection);
+      inpApproveIdxEl.addEventListener("change", checkVerifierInspection);
     }
 
     if (window.ethereum) {
@@ -2051,6 +2489,9 @@
           walletBtnText.textContent = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
         }
         checkStudentMatchForSubmit();
+        checkFundStatus();
+        checkReleaseStatus();
+        checkVerifierInspection();
       });
       window.ethereum.on("chainChanged", () => {
         window.location.reload();
