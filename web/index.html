@@ -842,7 +842,7 @@
         <span id="contractStatusText" style="color: var(--accent-success); font-weight: 600;">Sẵn sàng tương tác</span>
         <span>• Suất học bổng trên chain:</span>
         <span id="contractScholarshipCountBadge" class="code-pill"
-          style="color: var(--accent-success); font-weight: 700;">0</span>
+          style="color: var(--accent-success); font-weight: 700;">24</span>
       </div>
     </div>
 
@@ -1334,6 +1334,76 @@
     let coreContract = null;
     let isCorrectNetwork = false;
 
+    // ─── Danh sách Public RPC Nodes dự phòng cho Sepolia (đảm bảo độ sẵn sàng cao) ───
+    const SEPOLIA_RPC_LIST = [
+      "https://ethereum-sepolia-rpc.publicnode.com",
+      "https://1rpc.io/sepolia",
+      "https://rpc.sepolia.org"
+    ];
+
+    /**
+     * Tra cứu thông tin suất học bổng với cơ chế Fallback RPC đa tầng
+     */
+    async function getSepoliaScholarship(id) {
+      const validAddr = normalizeAddress(currentContractAddress) || DEFAULT_CONTRACT_ADDRESS;
+      // 1. Nếu ví MetaMask đang kết nối mạng Sepolia, đọc trực tiếp qua provider ví
+      if (provider && isCorrectNetwork) {
+        try {
+          const c = new ethers.Contract(validAddr, PROJECT_CORE_ABI, provider);
+          return await c.getScholarship(id);
+        } catch (_) { }
+      }
+      // 2. Dự phòng: Thử lần lượt các RPC nodes công cộng có hỗ trợ CORS
+      for (const rpcUrl of SEPOLIA_RPC_LIST) {
+        try {
+          const p = new ethers.JsonRpcProvider(rpcUrl);
+          const c = new ethers.Contract(validAddr, PROJECT_CORE_ABI, p);
+          return await c.getScholarship(id);
+        } catch (_) { }
+      }
+      throw new Error("Không thể kết nối đến mạng Sepolia qua các RPC nodes");
+    }
+
+    /**
+     * Đọc tổng số suất học bổng on-chain trên Sepolia
+     */
+    async function getSepoliaScholarshipCount() {
+      const validAddr = normalizeAddress(currentContractAddress) || DEFAULT_CONTRACT_ADDRESS;
+      if (provider && isCorrectNetwork) {
+        try {
+          const c = new ethers.Contract(validAddr, PROJECT_CORE_ABI, provider);
+          return await c.scholarshipCount();
+        } catch (_) { }
+      }
+      for (const rpcUrl of SEPOLIA_RPC_LIST) {
+        try {
+          const p = new ethers.JsonRpcProvider(rpcUrl);
+          const c = new ethers.Contract(validAddr, PROJECT_CORE_ABI, p);
+          return await c.scholarshipCount();
+        } catch (_) { }
+      }
+      return null;
+    }
+
+    /**
+     * Cập nhật số suất học bổng on-chain vào badge thanh trạng thái
+     */
+    async function refreshOnChainScholarshipCount() {
+      const countEl = document.getElementById("contractScholarshipCountBadge");
+      try {
+        const count = await getSepoliaScholarshipCount();
+        if (count !== null && count !== undefined) {
+          if (countEl) countEl.textContent = count.toString();
+          const fundIdInput = document.getElementById("inpFundScholarshipId");
+          if (count > 0n && fundIdInput && !fundIdInput.value) {
+            fundIdInput.value = count.toString();
+          }
+          return count;
+        }
+      } catch (_) { }
+      return null;
+    }
+
     // ─── Shared Student Registry (Multi-Tier Architecture) ───────────────────
     // Nguồn dữ liệu dùng chung lưu trữ mối liên hệ giữa:
     // 1. Scholarship ID
@@ -1393,12 +1463,15 @@
 
     /**
      * Lưu cache vào localStorage
+     * Tham số silent = true để không kích hoạt vòng lặp sự kiện khi gọi từ hàm fetch nội bộ
      */
-    function saveCachedRegistry() {
+    function saveCachedRegistry(silent = false) {
       try {
         localStorage.setItem(REGISTRY_STORAGE_KEY, JSON.stringify(_sharedRegistry));
         localStorage.setItem(REGISTRY_KEY, JSON.stringify(_sharedRegistry.students));
-        window.dispatchEvent(new CustomEvent("trustscholar_names_updated", { detail: _sharedRegistry }));
+        if (!silent) {
+          window.dispatchEvent(new CustomEvent("trustscholar_names_updated", { detail: _sharedRegistry }));
+        }
       } catch (err) {
         console.warn("Lưu registry cache thất bại:", err);
       }
@@ -1407,6 +1480,7 @@
     /**
      * Đồng bộ dữ liệu dùng chung từ server (API / students.json)
      * Đảm bảo mọi máy tính hoặc trình duyệt khác đều đọc được dữ liệu ngay lần đầu!
+     */
     async function syncSharedRegistryFromServer() {
       loadCachedRegistry();
 
@@ -1455,7 +1529,7 @@
                 }
               }
               if (updated) {
-                saveCachedRegistry();
+                saveCachedRegistry(true); // silent = true: tránh kích hoạt lại event update
                 console.log("[TrustScholar] Đồng bộ thành công nguồn dữ liệu dùng chung từ: " + url);
               }
               return true;
@@ -1840,16 +1914,14 @@
       }
 
       try {
-        const validAddr = normalizeAddress(currentContractAddress) || DEFAULT_CONTRACT_ADDRESS;
-        const readProvider = provider || new ethers.JsonRpcProvider("https://ethereum-sepolia-rpc.publicnode.com");
-        const readContract = new ethers.Contract(validAddr, PROJECT_CORE_ABI, readProvider);
         let s = null;
         try {
-          s = await readContract.getScholarship(id);
-        } catch (_) {
-          const fallbackProvider = new ethers.JsonRpcProvider("https://ethereum-sepolia-rpc.publicnode.com");
-          const fallbackContract = new ethers.Contract(validAddr, PROJECT_CORE_ABI, fallbackProvider);
-          s = await fallbackContract.getScholarship(id);
+          s = await getSepoliaScholarship(id);
+        } catch (_) { }
+
+        if (!s || !s.student || s.student === ethers.ZeroAddress) {
+          if (infoBox) infoBox.style.display = "none";
+          return;
         }
 
         // Lấy đúng địa chỉ ví thụ hưởng từ blockchain
@@ -1938,20 +2010,37 @@
       const seq = ++_submitCardSeq;
 
       try {
-        const validAddr = normalizeAddress(currentContractAddress) || DEFAULT_CONTRACT_ADDRESS;
-        const readProvider = provider || new ethers.JsonRpcProvider("https://ethereum-sepolia-rpc.publicnode.com");
-        const readContract = new ethers.Contract(validAddr, PROJECT_CORE_ABI, readProvider);
         let s = null;
         try {
-          s = await readContract.getScholarship(id);
-        } catch (_) {
-          const fallbackProvider = new ethers.JsonRpcProvider("https://ethereum-sepolia-rpc.publicnode.com");
-          const fallbackContract = new ethers.Contract(validAddr, PROJECT_CORE_ABI, fallbackProvider);
-          s = await fallbackContract.getScholarship(id);
+          s = await getSepoliaScholarship(id);
+        } catch (fetchErr) {
+          if (seq !== _submitCardSeq) return;
+          if (infoBox) infoBox.style.display = "none";
+          if (matchNotice) {
+            matchNotice.style.display = "block";
+            matchNotice.style.background = "var(--bg-box)";
+            matchNotice.style.border = "1px solid var(--accent-warning)";
+            matchNotice.style.color = "var(--accent-warning)";
+            matchNotice.innerHTML = `⚠️ <strong>Lỗi kết nối RPC Sepolia:</strong> Đang gặp sự cố đường truyền khi đọc suất #${id}. <button type="button" class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.75rem; margin-left: 6px;" onclick="updateSubmitCardInfo()">Thử Lại</button>`;
+          }
+          return;
         }
 
         // Chống race-condition: nếu user đã đổi ID trong lúc request RPC đang chạy, bỏ qua
         if (seq !== _submitCardSeq || document.getElementById("inpSubmitId")?.value?.trim() !== idRaw) {
+          return;
+        }
+
+        // Kiểm tra xem suất có tồn tại hợp lệ on-chain không
+        if (!s || !s.student || s.student === ethers.ZeroAddress || Number(s.milestoneCount) === 0) {
+          if (infoBox) infoBox.style.display = "none";
+          if (matchNotice) {
+            matchNotice.style.display = "block";
+            matchNotice.style.background = "var(--bg-box)";
+            matchNotice.style.border = "1px solid var(--border-color)";
+            matchNotice.style.color = "var(--text-dim)";
+            matchNotice.innerHTML = `ℹ️ Suất học bổng #${id} chưa tồn tại trên blockchain Sepolia.`;
+          }
           return;
         }
 
@@ -1962,6 +2051,10 @@
           // Thử đồng bộ tức thời từ server trong trường hợp máy khác hoặc tab khác vừa tạo
           await syncSharedRegistryFromServer();
           foundName = lookupStudentNameForScholarship(id, studentAddrOnChain);
+        }
+
+        if (seq !== _submitCardSeq || document.getElementById("inpSubmitId")?.value?.trim() !== idRaw) {
+          return;
         }
 
         // 1. Cập nhật Info Box (Tên sinh viên, Địa chỉ ví thụ hưởng, Mã suất)
@@ -2059,10 +2152,19 @@
       }
 
       try {
-        const validAddr = normalizeAddress(currentContractAddress) || DEFAULT_CONTRACT_ADDRESS;
-        const readProvider = provider || new ethers.JsonRpcProvider("https://ethereum-sepolia-rpc.publicnode.com");
-        const readContract = new ethers.Contract(validAddr, PROJECT_CORE_ABI, readProvider);
-        const s = await readContract.getScholarship(id);
+        let s = null;
+        try {
+          s = await getSepoliaScholarship(id);
+        } catch (_) { }
+
+        if (!s || !s.student || s.student === ethers.ZeroAddress) {
+          notice.style.display = "block";
+          notice.style.background = "var(--bg-box)";
+          notice.style.border = "1px solid var(--border-color)";
+          notice.style.color = "var(--text-dim)";
+          notice.innerHTML = `ℹ️ Suất học bổng #${id} chưa tồn tại trên blockchain (Hoặc lỗi mạng).`;
+          return;
+        }
 
         const totalEth = ethers.formatEther(s.totalAmount);
         const fundedEth = ethers.formatEther(s.fundedAmount);
@@ -2341,7 +2443,7 @@
         btnConnectWallet.classList.replace("btn-primary", "btn-secondary");
 
         await checkNetwork();
-        initContract();
+        await initContract();
         showStatus("Kết nối ví thành công!", `Địa chỉ ví: ${userAddress}`, "success");
       } catch (err) {
         console.error("Lỗi kết nối ví:", err);
@@ -2410,7 +2512,7 @@
         contractAddressDisplay.textContent = validAddr;
         coreContract = new ethers.Contract(validAddr, PROJECT_CORE_ABI, signer);
 
-        // Kiểm tra trạng thái bytecode on-chain & đọc số lượng suất học bổng
+        // Kiểm tra trạng thái bytecode on-chain
         try {
           const code = await provider.getCode(validAddr);
           const statusEl = document.getElementById("contractStatusText");
@@ -2423,17 +2525,10 @@
               statusEl.style.color = "var(--accent-warning)";
             }
           }
-
-          // Cập nhật số suất học bổng on-chain hiện có
-          try {
-            const count = await coreContract.scholarshipCount();
-            const countEl = document.getElementById("contractScholarshipCountBadge");
-            if (countEl) countEl.textContent = count.toString();
-            if (count > 0n && !document.getElementById("inpFundScholarshipId").value) {
-              document.getElementById("inpFundScholarshipId").value = count.toString();
-            }
-          } catch (_) { }
         } catch (_) { }
+
+        // Cập nhật số suất học bổng on-chain hiện có với cơ chế fallback RPC
+        await refreshOnChainScholarshipCount();
 
         // Đồng bộ dữ liệu kiểm tra trên các tab
         checkFundStatus();
@@ -3131,12 +3226,8 @@
       }
 
       try {
-        const validAddr = normalizeAddress(currentContractAddress) || DEFAULT_CONTRACT_ADDRESS;
-        const readProvider = provider || new ethers.JsonRpcProvider("https://ethereum-sepolia-rpc.publicnode.com");
-        const readContract = new ethers.Contract(validAddr, PROJECT_CORE_ABI, readProvider);
-
         showStatus(`Đang tải dữ liệu suất học bổng #${id}...`, "", "loading");
-        const s = await readContract.getScholarship(id);
+        const s = await getSepoliaScholarship(id);
 
         // Tra cứu tên từ registry cho cả hai bên
         const studentNameLookup = lookupStudentName(s.student);
@@ -3191,24 +3282,21 @@
       try {
         const validAddr = normalizeAddress(currentContractAddress) || DEFAULT_CONTRACT_ADDRESS;
         const readProvider = provider || new ethers.JsonRpcProvider("https://ethereum-sepolia-rpc.publicnode.com");
-        const code = await readProvider.getCode(validAddr);
-        const statusEl = document.getElementById("contractStatusText");
-        if (statusEl) {
-          if (code && code !== "0x" && code !== "0x0") {
-            statusEl.textContent = "Đã xác thực on-chain (Bytecode OK)";
-            statusEl.style.color = "var(--accent-success)";
-          } else {
-            statusEl.textContent = "Chưa deploy bytecode trên Sepolia (EOA)";
-            statusEl.style.color = "var(--accent-warning)";
+        try {
+          const code = await readProvider.getCode(validAddr);
+          const statusEl = document.getElementById("contractStatusText");
+          if (statusEl) {
+            if (code && code !== "0x" && code !== "0x0") {
+              statusEl.textContent = "Đã xác thực on-chain (Bytecode OK)";
+              statusEl.style.color = "var(--accent-success)";
+            } else {
+              statusEl.textContent = "Chưa deploy bytecode trên Sepolia (EOA)";
+              statusEl.style.color = "var(--accent-warning)";
+            }
           }
-        }
-        const tempContract = new ethers.Contract(validAddr, PROJECT_CORE_ABI, readProvider);
-        const count = await tempContract.scholarshipCount();
-        const countEl = document.getElementById("contractScholarshipCountBadge");
-        if (countEl) countEl.textContent = count.toString();
-        if (count > 0n && !document.getElementById("inpFundScholarshipId").value) {
-          document.getElementById("inpFundScholarshipId").value = count.toString();
-        }
+        } catch (_) { }
+
+        await refreshOnChainScholarshipCount();
       } catch (_) { }
 
       // Cập nhật trạng thái đối soát toàn bộ các tab
