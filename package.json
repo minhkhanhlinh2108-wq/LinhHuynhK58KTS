@@ -9,7 +9,9 @@
   "scripts": {
     "compile": "hardhat compile",
     "test": "hardhat test",
-    "deploy": "node scripts/deploy.js"
+    "deploy": "node scripts/deploy.js",
+    "server": "node scripts/server.mjs",
+    "test:student-sync": "node scripts/test_student_name_sync.mjs"
   },
   "repository": {
     "type": "git",

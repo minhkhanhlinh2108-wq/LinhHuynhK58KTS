@@ -1,0 +1,64 @@
+{
+  "scholarships": {
+    "4": {
+      "scholarshipId": 4,
+      "studentAddress": "0xee917bc552f81fe4db72025e05f146919b3b4032",
+      "studentName": "Khánh Linh"
+    },
+    "5": {
+      "scholarshipId": 5,
+      "studentAddress": "0xee917bc552f81fe4db72025e05f146919b3b4032",
+      "studentName": "Khánh Linh"
+    },
+    "6": {
+      "scholarshipId": 6,
+      "studentAddress": "0xee917bc552f81fe4db72025e05f146919b3b4032",
+      "studentName": "Khánh Linh"
+    },
+    "12": {
+      "scholarshipId": 12,
+      "studentAddress": "0xee917bc552f81fe4db72025e05f146919b3b4032",
+      "studentName": "Khánh Linh"
+    },
+    "13": {
+      "scholarshipId": 13,
+      "studentAddress": "0xee917bc552f81fe4db72025e05f146919b3b4032",
+      "studentName": "Khánh Linh"
+    },
+    "14": {
+      "scholarshipId": 14,
+      "studentAddress": "0xee917bc552f81fe4db72025e05f146919b3b4032",
+      "studentName": "Khánh Linh"
+    },
+    "15": {
+      "scholarshipId": 15,
+      "studentAddress": "0xee917bc552f81fe4db72025e05f146919b3b4032",
+      "studentName": "Khánh Linh"
+    },
+    "19": {
+      "scholarshipId": 19,
+      "studentAddress": "0xee917bc552f81fe4db72025e05f146919b3b4032",
+      "studentName": "Khánh Linh"
+    },
+    "20": {
+      "scholarshipId": 20,
+      "studentAddress": "0xafb64eef8093cf3dc4e2c51bb1d18e16afddb6f5",
+      "studentName": "Trần Thị Như Huỳnh"
+    },
+    "21": {
+      "scholarshipId": 21,
+      "studentAddress": "0xd1695ed2a73e1d13ec63a90653d357baac7467f8",
+      "studentName": "Nguyễn Minh Khánh Linh"
+    },
+    "22": {
+      "scholarshipId": 22,
+      "studentAddress": "0xee917bc552f81fe4db72025e05f146919b3b4032",
+      "studentName": "Khánh Linh"
+    }
+  },
+  "students": {
+    "0xee917bc552f81fe4db72025e05f146919b3b4032": "Khánh Linh",
+    "0xd1695ed2a73e1d13ec63a90653d357baac7467f8": "Nguyễn Minh Khánh Linh",
+    "0xafb64eef8093cf3dc4e2c51bb1d18e16afddb6f5": "Trần Thị Như Huỳnh"
+  }
+}

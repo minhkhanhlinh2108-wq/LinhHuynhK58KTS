@@ -985,10 +985,7 @@
               oninput="onSubmitIdInput()" />
             <!-- Info box: tên + địa chỉ vi sinh viên thụ hưởng của suất -->
             <div id="submitScholarshipInfoBox" class="student-name-box" style="display:none; flex-direction:column; align-items:flex-start; gap:4px;">
-              <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                <span>🎓 <strong>Tên sinh viên thụ hưởng:</strong> <span id="submitStudentNameVal" style="color:var(--accent-primary); font-weight:700;"></span></span>
-                <button type="button" id="btnSaveStudentNameInline" style="display:none; padding:2px 8px; font-size:0.75rem; border-radius:4px; border:1px solid var(--border-color); background:var(--bg-card); cursor:pointer; color:var(--accent-primary); font-weight:600;" onclick="promptSaveStudentNameInline()">✏️ Lưu tên trên máy này</button>
-              </div>
+              <div>🎓 <strong>Tên sinh viên thụ hưởng:</strong> <span id="submitStudentNameVal" style="color:var(--accent-primary); font-weight:700;"></span></div>
               <div>📍 <strong>Địa chỉ ví thụ hưởng:</strong> <span id="submitStudentAddrVal" class="code-pill" style="font-size:0.78rem;"></span></div>
               <div>🔖 <strong>Mã suất:</strong> <span id="submitScholarshipIdVal" style="font-weight:700;"></span></div>
               <div id="submitStudentNameNotice" style="display:none; font-size:0.75rem; color:var(--text-dim); margin-top:2px;"></div>
@@ -1337,12 +1334,18 @@
     let coreContract = null;
     let isCorrectNetwork = false;
 
-    // ─── Student Name Registry (localStorage) ───────────────────────────────
-    // Nguồn dữ liệu đáng tin cậy duy nhất: người dùng tự nhập và lưu theo địa chỉ ví.
-    // Key chính: "trustscholar_student_names" → JSON object { "0xabcd...": "Tên Sinh Viên" }
+    // ─── Shared Student Registry (Multi-Tier Architecture) ───────────────────
+    // Nguồn dữ liệu dùng chung lưu trữ mối liên hệ giữa:
+    // 1. Scholarship ID
+    // 2. Địa chỉ ví sinh viên thụ hưởng (chuẩn hóa lowercase)
+    // 3. Tên sinh viên thụ hưởng (ví dụ: "Khánh Linh")
+    //
+    // Nguồn dữ liệu gồm:
+    // Tầng 1: Tệp dùng chung web/students.json (được phục vụ bởi bất kỳ web server nào)
+    // Tầng 2: REST API Server (/api/students) cho phép lưu tức thì khi tạo suất mới
+    // Tầng 3: Runtime In-Memory & localStorage Cache để phản hồi tức thì và hoạt động ngoại tuyến
+    const REGISTRY_STORAGE_KEY = "trustscholar_shared_registry_v2";
     const REGISTRY_KEY = "trustscholar_student_names";
-
-    // Danh sách khóa dự phòng / tương thích lịch sử nếu từng lưu dưới các tên khóa khác
     const FALLBACK_REGISTRY_KEYS = [
       "trustscholar_student_names",
       "trustscholar_students",
@@ -1351,69 +1354,162 @@
       "trustscholar_student_name"
     ];
 
+    let _sharedRegistry = {
+      scholarships: {},
+      students: {}
+    };
+
     /**
-     * Tải registry tên sinh viên từ localStorage.
-     * Tự động hợp nhất từ khóa chính và các khóa dự phòng, chuẩn hóa toàn bộ địa chỉ về chữ thường.
+     * Tải cache từ localStorage khi khởi động
      */
-    function loadNameRegistry() {
-      const merged = {};
-      for (const key of FALLBACK_REGISTRY_KEYS) {
+    function loadCachedRegistry() {
+      try {
+        const v2Raw = localStorage.getItem(REGISTRY_STORAGE_KEY);
+        if (v2Raw) {
+          const parsed = JSON.parse(v2Raw);
+          if (parsed && typeof parsed === "object") {
+            if (parsed.scholarships) Object.assign(_sharedRegistry.scholarships, parsed.scholarships);
+            if (parsed.students) Object.assign(_sharedRegistry.students, parsed.students);
+          }
+        }
+      } catch (_) { }
+
+      for (const k of FALLBACK_REGISTRY_KEYS) {
         try {
-          const raw = localStorage.getItem(key);
+          const raw = localStorage.getItem(k);
           if (raw) {
             const parsed = JSON.parse(raw);
             if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
               for (const [addr, name] of Object.entries(parsed)) {
                 if (typeof addr === "string" && typeof name === "string" && name.trim()) {
-                  merged[addr.trim().toLowerCase()] = name.trim();
+                  _sharedRegistry.students[addr.trim().toLowerCase()] = name.trim();
                 }
               }
             }
           }
         } catch (_) { }
       }
-      return merged;
     }
 
     /**
-     * Lưu registry tên sinh viên vào localStorage với khóa chính REGISTRY_KEY.
-     * Mọi địa chỉ đều được chuẩn hóa chữ thường (lowercase) trước khi lưu.
+     * Lưu cache vào localStorage
      */
-    function saveNameRegistry(registry) {
+    function saveCachedRegistry() {
       try {
-        const normalized = {};
-        for (const [addr, name] of Object.entries(registry)) {
-          if (typeof addr === "string" && typeof name === "string" && name.trim()) {
-            normalized[addr.trim().toLowerCase()] = name.trim();
-          }
-        }
-        localStorage.setItem(REGISTRY_KEY, JSON.stringify(normalized));
-        // Phát sự kiện nội bộ để mọi component trên cùng trang cập nhật tức thì
-        window.dispatchEvent(new CustomEvent("trustscholar_names_updated", { detail: normalized }));
+        localStorage.setItem(REGISTRY_STORAGE_KEY, JSON.stringify(_sharedRegistry));
+        localStorage.setItem(REGISTRY_KEY, JSON.stringify(_sharedRegistry.students));
+        window.dispatchEvent(new CustomEvent("trustscholar_names_updated", { detail: _sharedRegistry }));
       } catch (err) {
-        console.warn("Lưu registry thất bại:", err);
+        console.warn("Lưu registry cache thất bại:", err);
       }
     }
 
     /**
-     * Tra cứu tên sinh viên từ registry theo địa chỉ ví.
-     * Luôn chuẩn hóa địa chỉ ví bằng chữ thường (lowercase) khi tra cứu.
-     * Trả về tên (string) nếu có, hoặc null nếu không có.
-     * Tuyệt đối không tự suy đoán tên từ địa chỉ ví.
+     * Đồng bộ dữ liệu dùng chung từ server (API / students.json)
+     * Đảm bảo mọi máy tính hoặc trình duyệt khác đều đọc được dữ liệu ngay lần đầu!
+     */
+    async function syncSharedRegistryFromServer() {
+      loadCachedRegistry();
+
+      const endpoints = [
+        "/api/students",
+        "./students.json",
+        "http://127.0.0.1:3001/api/students",
+        "http://localhost:3001/api/students"
+      ];
+
+      for (const url of endpoints) {
+        try {
+          const resp = await fetch(url, { method: "GET", cache: "no-store" });
+          if (resp.ok) {
+            const data = await resp.json();
+            if (data && typeof data === "object") {
+              let updated = false;
+              if (data.scholarships && typeof data.scholarships === "object") {
+                for (const [id, item] of Object.entries(data.scholarships)) {
+                  if (item && item.studentName) {
+                    const cleanAddr = (item.studentAddress || "").trim().toLowerCase();
+                    const cleanName = item.studentName.trim();
+                    _sharedRegistry.scholarships[String(id)] = {
+                      scholarshipId: parseInt(id, 10) || id,
+                      studentAddress: cleanAddr,
+                      studentName: cleanName,
+                      updatedAt: item.updatedAt || ""
+                    };
+                    if (cleanAddr) {
+                      _sharedRegistry.students[cleanAddr] = cleanName;
+                    }
+                    updated = true;
+                  }
+                }
+              }
+              if (data.students && typeof data.students === "object") {
+                for (const [addr, name] of Object.entries(data.students)) {
+                  if (addr && name) {
+                    _sharedRegistry.students[addr.trim().toLowerCase()] = name.trim();
+                    updated = true;
+                  }
+                }
+              }
+              if (updated) {
+                saveCachedRegistry();
+                console.log("[TrustScholar] Đồng bộ thành công nguồn dữ liệu dùng chung từ: " + url);
+              }
+              return true;
+            }
+          }
+        } catch (_) { }
+      }
+      return false;
+    }
+
+    /**
+     * Tra cứu tên sinh viên theo Scholarship ID và đối soát với địa chỉ ví on-chain.
+     * Trả về string tên sinh viên nếu tìm thấy, hoặc null nếu không có.
+     * Tuyệt đối không tự suy đoán tên và không thay thế bằng tên của suất khác.
+     */
+    function lookupStudentNameForScholarship(scholarshipId, studentAddrOnChain) {
+      if (!scholarshipId && !studentAddrOnChain) return null;
+      const cleanAddr = studentAddrOnChain ? studentAddrOnChain.trim().toLowerCase() : "";
+
+      // 1. Ưu tiên tra cứu theo Scholarship ID đã được gắn lúc tạo suất
+      if (scholarshipId !== undefined && scholarshipId !== null && scholarshipId !== "") {
+        const entry = _sharedRegistry.scholarships[String(scholarshipId)];
+        if (entry && entry.studentName) {
+          if (!cleanAddr || !entry.studentAddress || entry.studentAddress === cleanAddr) {
+            return entry.studentName;
+          }
+        }
+      }
+
+      // 2. Tra cứu phụ trợ theo địa chỉ ví on-chain của suất này
+      if (cleanAddr && _sharedRegistry.students[cleanAddr]) {
+        return _sharedRegistry.students[cleanAddr];
+      }
+
+      return null;
+    }
+
+    /**
+     * Tra cứu tên theo địa chỉ ví (cho các tab Sponsor, Verifier, Explorer)
      */
     function lookupStudentName(walletAddress) {
       if (!walletAddress || typeof walletAddress !== "string") return null;
       const clean = walletAddress.trim().toLowerCase();
       if (!/^0x[0-9a-f]{40}$/.test(clean)) return null;
 
-      const registry = loadNameRegistry();
-      if (registry[clean]) return registry[clean];
+      if (_sharedRegistry.students[clean]) return _sharedRegistry.students[clean];
 
-      // Thử đọc dự phòng trực tiếp theo key địa chỉ nếu từng được lưu riêng lẻ
+      for (const entry of Object.values(_sharedRegistry.scholarships)) {
+        if (entry && entry.studentAddress === clean && entry.studentName) {
+          return entry.studentName;
+        }
+      }
+
       try {
         const direct = localStorage.getItem(clean) ||
-                       localStorage.getItem(`student_${clean}`) ||
-                       localStorage.getItem(walletAddress.trim());
+          localStorage.getItem("student_" + clean) ||
+          localStorage.getItem(walletAddress.trim());
         if (direct && typeof direct === "string" && !direct.startsWith("{") && !direct.startsWith("[")) {
           return direct.trim();
         }
@@ -1423,41 +1519,103 @@
     }
 
     /**
-     * Lưu cặp dữ liệu địa chỉ ví – tên sinh viên vào registry.
-     * Chuẩn hóa địa chỉ ví về chữ thường để đảm bảo đồng nhất trên toàn DApp.
-     * shouldDeleteIfEmpty: chỉ xóa khỏi registry khi người dùng chỉ định rõ.
+     * Lưu mối liên hệ giữa Scholarship ID, địa chỉ ví và tên sinh viên.
+     * Tự động gửi lên Server API để lưu vào nguồn dùng chung, đồng thời lưu cache.
      */
+    async function registerScholarshipStudentSync(scholarshipId, studentAddress, studentName) {
+      if (!studentAddress || !studentName) return false;
+      const cleanAddr = studentAddress.trim().toLowerCase();
+      const cleanName = studentName.trim();
+      if (!cleanAddr || !cleanName) return false;
+
+      // 1. Cập nhật In-memory
+      if (scholarshipId !== undefined && scholarshipId !== null && scholarshipId !== "") {
+        _sharedRegistry.scholarships[String(scholarshipId)] = {
+          scholarshipId: parseInt(scholarshipId, 10) || scholarshipId,
+          studentAddress: cleanAddr,
+          studentName: cleanName,
+          updatedAt: new Date().toISOString()
+        };
+      }
+      _sharedRegistry.students[cleanAddr] = cleanName;
+
+      // 2. Lưu cache localStorage
+      saveCachedRegistry();
+
+      // 3. Gửi lên Server API để ghi trực tiếp vào nguồn dùng chung (students.json)
+      const payload = {
+        scholarshipId: scholarshipId || null,
+        studentAddress: cleanAddr,
+        studentName: cleanName
+      };
+
+      const serverUrls = [
+        "/api/students",
+        "http://127.0.0.1:3001/api/students",
+        "http://localhost:3001/api/students"
+      ];
+
+      for (const url of serverUrls) {
+        try {
+          const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+          if (res.ok) {
+            console.log("[TrustScholar] Đã lưu vào server dùng chung (" + url + ") thành công!");
+            break;
+          }
+        } catch (_) { }
+      }
+
+      return true;
+    }
+
     function registerStudentName(walletAddress, name, shouldDeleteIfEmpty = false) {
       if (!walletAddress || typeof walletAddress !== "string") return;
       const clean = walletAddress.trim().toLowerCase();
       if (!/^0x[0-9a-f]{40}$/.test(clean)) return;
 
-      const registry = loadNameRegistry();
       const trimmedName = (name || "").trim();
       if (trimmedName) {
-        registry[clean] = trimmedName;
+        _sharedRegistry.students[clean] = trimmedName;
       } else if (shouldDeleteIfEmpty) {
-        delete registry[clean];
+        delete _sharedRegistry.students[clean];
       } else {
-        return; // Giữ nguyên tên cũ nếu không yêu cầu xóa rõ ràng
+        return;
       }
-      saveNameRegistry(registry);
+      saveCachedRegistry();
+    }
+
+    function loadNameRegistry() {
+      return _sharedRegistry.students;
+    }
+
+    function saveNameRegistry(registry) {
+      if (registry && typeof registry === "object") {
+        for (const [addr, name] of Object.entries(registry)) {
+          if (typeof addr === "string" && typeof name === "string" && name.trim()) {
+            _sharedRegistry.students[addr.trim().toLowerCase()] = name.trim();
+          }
+        }
+        saveCachedRegistry();
+      }
     }
 
     /**
-     * Xuất danh bạ tên sinh viên sang JSON để chia sẻ giữa các máy / trình duyệt.
+     * Xuất danh bạ sang JSON
      */
     function exportNameRegistry() {
-      const reg = loadNameRegistry();
-      const count = Object.keys(reg).length;
+      const count = Object.keys(_sharedRegistry.scholarships).length + Object.keys(_sharedRegistry.students).length;
       if (count === 0) {
-        alert("Danh bạ tên sinh viên trong trình duyệt hiện đang trống.");
+        alert("Danh bạ sinh viên hiện đang trống.");
         return;
       }
-      const jsonStr = JSON.stringify(reg, null, 2);
+      const jsonStr = JSON.stringify(_sharedRegistry, null, 2);
       if (navigator.clipboard) {
         navigator.clipboard.writeText(jsonStr).then(() => {
-          showStatus("Đã sao chép danh bạ JSON vào clipboard! 📋", `${count} hồ sơ sinh viên sẵn sàng chia sẻ.`, "success");
+          showStatus("Đã sao chép danh bạ JSON vào clipboard! 📋", count + " bản ghi sẵn sàng chia sẻ.", "success");
         }).catch(() => {
           prompt("Sao chép chuỗi JSON danh bạ tên sinh viên:", jsonStr);
         });
@@ -1467,33 +1625,40 @@
     }
 
     /**
-     * Nhập danh bạ tên sinh viên từ chuỗi JSON vào localStorage.
+     * Nhập danh bạ từ JSON
      */
     function importNameRegistryPrompt() {
-      const input = prompt("Dán chuỗi JSON danh bạ tên sinh viên (VD: {\"0xd1695ed2a73e1d13ec63a90653d357baac7467f8\": \"Nguyễn Minh Khánh Linh\"}):");
+      const input = prompt("Dán chuỗi JSON danh bạ sinh viên dùng chung:");
       if (!input || !input.trim()) return;
       try {
         const parsed = JSON.parse(input.trim());
         if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
-          throw new Error("JSON phải là object dạng key-value");
+          throw new Error("JSON không hợp lệ");
         }
         let added = 0;
-        const current = loadNameRegistry();
-        for (const [addr, name] of Object.entries(parsed)) {
-          if (typeof addr === "string" && typeof name === "string" && name.trim()) {
-            const clean = addr.trim().toLowerCase();
-            if (/^0x[0-9a-f]{40}$/.test(clean)) {
-              current[clean] = name.trim();
+        if (parsed.scholarships && typeof parsed.scholarships === "object") {
+          for (const [id, item] of Object.entries(parsed.scholarships)) {
+            if (item && item.studentName) {
+              _sharedRegistry.scholarships[String(id)] = item;
+              if (item.studentAddress) _sharedRegistry.students[item.studentAddress.toLowerCase()] = item.studentName;
               added++;
             }
           }
         }
-        saveNameRegistry(current);
-        showStatus(`Đã nhập ${added} hồ sơ tên sinh viên thành công! 🎉`, "Dữ liệu đã được lưu vào bộ nhớ trình duyệt.", "success");
+        if (parsed.students && typeof parsed.students === "object") {
+          for (const [addr, name] of Object.entries(parsed.students)) {
+            if (addr && name) {
+              _sharedRegistry.students[addr.toLowerCase()] = name;
+              added++;
+            }
+          }
+        }
+        saveCachedRegistry();
+        showStatus("Đã nhập " + added + " hồ sơ sinh viên thành công! 🎉", "Dữ liệu đã được nạp vào bộ nhớ.", "success");
         if (typeof updateSubmitCardInfo === "function") updateSubmitCardInfo();
         if (typeof autoLoadStudentCheckInfo === "function") autoLoadStudentCheckInfo();
       } catch (err) {
-        alert("Lỗi nhập dữ liệu: Vui lòng kiểm tra định dạng JSON hợp lệ!");
+        alert("Lỗi nhập dữ liệu: Vui lòng kiểm tra định dạng JSON!");
       }
     }
 
@@ -1670,7 +1835,7 @@
 
         // Lấy đúng địa chỉ ví thụ hưởng từ blockchain
         const studentAddrOnChain = s.student;
-        const foundName = lookupStudentName(studentAddrOnChain);
+        const foundName = lookupStudentNameForScholarship(id, studentAddrOnChain);
 
         // Lấy ví MetaMask đang kết nối để so sánh (nếu có)
         let activeWallet = userAddress;
@@ -1696,7 +1861,8 @@
         if (noticeEl) {
           if (!foundName) {
             noticeEl.style.display = "block";
-            noticeEl.textContent = "ℹ️ Dữ liệu tên sinh viên lưu trong bộ nhớ trình duyệt cục bộ. Nếu thao tác từ máy tính hoặc trình duyệt khác, tên chưa có sẵn trong bộ nhớ máy này.";
+            noticeEl.style.color = "var(--accent-danger)";
+            noticeEl.innerHTML = `⚠️ Không tìm thấy tên sinh viên gắn với Suất #${id} (Ví: <span class="code-pill">${studentAddrOnChain}</span>) trong cơ sở dữ liệu dùng chung.`;
           } else {
             noticeEl.style.display = "none";
           }
@@ -1737,7 +1903,6 @@
       const addrVal = document.getElementById("submitStudentAddrVal");
       const idVal = document.getElementById("submitScholarshipIdVal");
       const noticeEl = document.getElementById("submitStudentNameNotice");
-      const btnInline = document.getElementById("btnSaveStudentNameInline");
       const matchNotice = document.getElementById("submitStudentMatchNotice");
 
       if (!idInput) return;
@@ -1763,8 +1928,8 @@
         }
 
         const studentAddrOnChain = s.student;
-        // Tra cứu tên sinh viên theo đúng địa chỉ ví thụ hưởng on-chain của suất này
-        const foundName = lookupStudentName(studentAddrOnChain);
+        // Tra cứu tên sinh viên gắn với Scholarship ID từ nguồn dùng chung
+        const foundName = lookupStudentNameForScholarship(id, studentAddrOnChain);
 
         // 1. Cập nhật Info Box (Tên sinh viên, Địa chỉ ví thụ hưởng, Mã suất)
         if (infoBox) {
@@ -1773,25 +1938,17 @@
         }
         if (nameVal) {
           nameVal.textContent = foundName || "Chưa có thông tin tên sinh viên";
-          nameVal.style.color = foundName ? "var(--accent-primary)" : "var(--text-dim)";
-          nameVal.style.fontWeight = foundName ? "700" : "400";
+          nameVal.style.color = foundName ? "var(--accent-primary)" : "var(--accent-danger)";
+          nameVal.style.fontWeight = foundName ? "700" : "600";
         }
         if (addrVal) addrVal.textContent = studentAddrOnChain;
         if (idVal) idVal.textContent = `#${id}`;
 
-        if (btnInline) {
-          btnInline.style.display = "inline-flex";
-          btnInline.setAttribute("data-student-addr", studentAddrOnChain);
-          btnInline.title = foundName
-            ? `Cập nhật lại tên cho ví ${studentAddrOnChain.slice(0, 8)}...`
-            : `Lưu tên sinh viên cho ví ${studentAddrOnChain.slice(0, 8)}... trên thiết bị này`;
-          btnInline.textContent = foundName ? "✏️ Đổi tên" : "✏️ Lưu tên trên máy này";
-        }
-
         if (noticeEl) {
           if (!foundName) {
             noticeEl.style.display = "block";
-            noticeEl.innerHTML = `ℹ️ Dữ liệu tên sinh viên lưu trong bộ nhớ trình duyệt cục bộ. Nếu thao tác từ máy tính hoặc trình duyệt khác, bạn có thể bấm <strong>[✏️ Lưu tên trên máy này]</strong> ở trên để lưu ngay.`;
+            noticeEl.style.color = "var(--accent-danger)";
+            noticeEl.innerHTML = `⚠️ Không tìm thấy tên sinh viên được đăng ký cho Suất #${id} (Ví: <span class="code-pill">${studentAddrOnChain}</span>) trong cơ sở dữ liệu dùng chung.`;
           } else {
             noticeEl.style.display = "none";
           }
@@ -1849,22 +2006,7 @@
       }
     }
 
-    /**
-     * Hộp thoại lưu / đổi tên sinh viên nhanh ngay trên Card 2A cho thiết bị này
-     */
-    function promptSaveStudentNameInline() {
-      const btn = document.getElementById("btnSaveStudentNameInline");
-      const addr = btn?.getAttribute("data-student-addr") || "";
-      if (!addr) return;
-      const current = lookupStudentName(addr) || "";
-      const entered = prompt(`Nhập họ và tên sinh viên cho ví [${addr}]:`, current);
-      if (entered !== null) {
-        const trimmed = entered.trim();
-        registerStudentName(addr, trimmed, true);
-        updateSubmitCardInfo();
-        if (typeof autoLoadStudentCheckInfo === "function") autoLoadStudentCheckInfo();
-      }
-    }
+
 
     // Tương thích ngược: mọi hàm gọi autoLoadSubmitInfo hay checkStudentMatchForSubmit đều chạy hàm hợp nhất
     const autoLoadSubmitInfo = updateSubmitCardInfo;
@@ -2494,6 +2636,11 @@
         }
 
         if (nextId) {
+          // Lưu mối liên hệ giữa Scholarship ID, địa chỉ ví sinh viên và tên sinh viên vào nguồn dùng chung
+          const enteredStudentName = document.getElementById("inpStudentName")?.value?.trim() || "";
+          if (enteredStudentName) {
+            await registerScholarshipStudentSync(nextId, studentAddr, enteredStudentName);
+          }
           showStatus(`Tạo suất học bổng #${nextId} thành công! 🎉`, `Block: ${receipt.blockNumber}`, "success", tx.hash);
           recordSessionTx("Tạo Suất Học Bổng", "Thành công", tx.hash, `Đã tạo suất #${nextId} cho ${studentAddr.slice(0, 8)}...`, nextId);
 
@@ -3099,6 +3246,13 @@
       inpApproveIdxEl.addEventListener("input", checkVerifierInspection);
       inpApproveIdxEl.addEventListener("change", checkVerifierInspection);
     }
+
+    // Đồng bộ danh bạ dùng chung ngay khi tải trang
+    syncSharedRegistryFromServer().then(() => {
+      updateSubmitCardInfo();
+      autoLoadStudentCheckInfo();
+      onStudentAddressInput();
+    });
 
     if (window.ethereum) {
       window.ethereum.on("accountsChanged", async (accounts) => {
