@@ -981,7 +981,14 @@
 
           <div class="form-group">
             <label class="form-label" for="inpSubmitId">Mã Suất Học Bổng (Scholarship ID)</label>
-            <input id="inpSubmitId" class="form-input" type="number" min="1" placeholder="1" />
+            <input id="inpSubmitId" class="form-input" type="number" min="1" placeholder="1"
+              oninput="onSubmitIdInput()" />
+            <!-- Info box: tên + địa chỉ vi sinh viên thụ hưởng của suất -->
+            <div id="submitScholarshipInfoBox" class="student-name-box" style="display:none; flex-direction:column; align-items:flex-start; gap:4px;">
+              <div>🎓 <strong>Tên sinh viên thụ hưởng:</strong> <span id="submitStudentNameVal" style="color:var(--accent-primary); font-weight:700;"></span></div>
+              <div>📍 <strong>Địa chỉ ví thụ hưởng:</strong> <span id="submitStudentAddrVal" class="code-pill" style="font-size:0.78rem;"></span></div>
+              <div>🔖 <strong>Mã suất:</strong> <span id="submitScholarshipIdVal" style="font-weight:700;"></span></div>
+            </div>
             <div id="submitStudentMatchNotice"
               style="display: none; padding: 10px 12px; border-radius: var(--radius-sm); font-size: 0.8rem; margin-top: 6px; line-height: 1.5;">
             </div>
@@ -1604,6 +1611,55 @@
       }
     }
 
+    // ─── Student Card 2A: Auto-load thông tin suất khi nhập Scholarship ID (Submit form) ───
+    let _submitIdTimer = null;
+    function onSubmitIdInput() {
+      clearTimeout(_submitIdTimer);
+      _submitIdTimer = setTimeout(autoLoadSubmitInfo, 600);
+    }
+
+    async function autoLoadSubmitInfo() {
+      const idRaw = document.getElementById("inpSubmitId")?.value || "";
+      const infoBox = document.getElementById("submitScholarshipInfoBox");
+      const nameVal = document.getElementById("submitStudentNameVal");
+      const addrVal = document.getElementById("submitStudentAddrVal");
+      const idVal   = document.getElementById("submitScholarshipIdVal");
+
+      if (!infoBox) return;
+      const id = parseInt(idRaw, 10);
+      if (!id || id <= 0) {
+        infoBox.style.display = "none";
+        checkStudentMatchForSubmit(); // cập nhật notice bên dưới
+        return;
+      }
+
+      try {
+        const validAddr = normalizeAddress(currentContractAddress) || DEFAULT_CONTRACT_ADDRESS;
+        const readProvider = provider || new ethers.JsonRpcProvider("https://ethereum-sepolia-rpc.publicnode.com");
+        const readContract = new ethers.Contract(validAddr, PROJECT_CORE_ABI, readProvider);
+        const s = await readContract.getScholarship(id);
+
+        // Lấy địa chỉ từ contract — KHÔNG dùng ví MetaMask
+        const studentAddr = s.student;
+        const foundName = lookupStudentName(studentAddr);
+
+        infoBox.style.display = "flex";
+        infoBox.classList.add("found");
+        if (nameVal) {
+          nameVal.textContent = foundName || "Chưa có thông tin tên sinh viên";
+          nameVal.style.color = foundName ? "var(--accent-primary)" : "var(--text-dim)";
+          nameVal.style.fontWeight = foundName ? "700" : "400";
+        }
+        if (addrVal) addrVal.textContent = studentAddr;
+        if (idVal)   idVal.textContent = `#${id}`;
+
+        checkStudentMatchForSubmit(); // cập nhật notice so sánh ví bên dưới
+      } catch (_) {
+        infoBox.style.display = "none";
+        checkStudentMatchForSubmit();
+      }
+    }
+
     // Helper: Đối soát số tiền cam kết và số tiền còn thiếu cho Suất học bổng
     async function checkFundStatus() {
       const notice = document.getElementById("fundStatusNotice");
@@ -1825,8 +1881,20 @@
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; margin-bottom: 8px;">
             <div><strong>Suất / Mốc:</strong> Suất #${id} — Mốc ${index}</div>
             <div><strong>Trạng thái:</strong> ${statusPills[st]}</div>
-            <div><strong>Sinh viên:</strong> <span class="code-pill">${s.student.slice(0, 6)}...${s.student.slice(-4)}</span></div>
+            <div style="grid-column: 1 / -1; display:flex; gap: 24px; flex-wrap:wrap; padding: 8px 0; border-top: 1px dashed var(--border-color); border-bottom: 1px dashed var(--border-color); margin: 4px 0;">
+              <div>
+                🎓 <strong>Sinh viên thụ hưởng:</strong>
+                ${ (() => { const n = lookupStudentName(s.student); return n ? `<span style="color:var(--accent-primary);font-weight:700;">${n}</span>` : `<span style="color:var(--text-dim);">Chưa có thông tin tên</span>`; })() }
+                <span class="code-pill" style="font-size:0.78rem; margin-left:6px;">${s.student}</span>
+              </div>
+              <div>
+                🏦 <strong>Nhà tài trợ:</strong>
+                ${ (() => { const n = lookupStudentName(s.sponsor); return n ? `<span style="color:var(--accent-info);font-weight:700;">${n}</span>` : `<span style="color:var(--text-dim);">Chưa có thông tin tên</span>`; })() }
+                <span class="code-pill" style="font-size:0.78rem; margin-left:6px;">${s.sponsor}</span>
+              </div>
+            </div>
             <div><strong>Định mức mốc:</strong> <strong>${amtEth} ETH</strong></div>
+            <div><strong>Đã giải ngân (suất):</strong> ${ethers.formatEther(s.releasedAmount)} ETH</div>
           </div>
           <div style="margin-top: 6px; word-break: break-all;">
             <strong>Mã băm minh chứng (IPFS CID on-chain):</strong><br>
@@ -2540,10 +2608,23 @@
         const readContract = new ethers.Contract(validAddr, PROJECT_CORE_ABI, readProvider);
         const s = await readContract.getScholarship(id);
 
+        // Tra cứu tên từ registry
+        const sponsorName = lookupStudentName(s.sponsor);
+        const studentName = lookupStudentName(s.student);
+
         let html = `
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 12px;">
             <div><strong>Học bổng:</strong> #${s.id}</div>
-            <div><strong>Sinh viên:</strong> <span class="code-pill">${s.student.slice(0, 6)}...${s.student.slice(-4)}</span></div>
+            <div style="grid-column: 1 / -1; display:flex; gap:20px; flex-wrap:wrap; padding: 8px 12px; border-radius: var(--radius-sm); background: var(--bg-box); border: 1px dashed var(--border-color);">
+              <div>🎓 <strong>Sinh viên thụ hưởng:</strong>
+                ${ studentName ? `<span style="color:var(--accent-primary); font-weight:700; margin-left:4px;">${studentName}</span>` : `<span style="color:var(--text-dim); margin-left:4px;">Chưa có thông tin tên</span>` }
+                <span class="code-pill" style="font-size:0.78rem; margin-left:6px;">${s.student.slice(0,6)}...${s.student.slice(-4)}</span>
+              </div>
+              <div>🏦 <strong>Nhà tài trợ (Sponsor):</strong>
+                ${ sponsorName ? `<span style="color:var(--accent-info); font-weight:700; margin-left:4px;">${sponsorName}</span>` : `<span style="color:var(--text-dim); margin-left:4px;">Chưa có thông tin tên</span>` }
+                <span class="code-pill" style="font-size:0.78rem; margin-left:6px;">${s.sponsor.slice(0,6)}...${s.sponsor.slice(-4)}</span>
+              </div>
+            </div>
             <div><strong>Tổng cam kết:</strong> ${ethers.formatEther(s.totalAmount)} ETH</div>
             <div><strong>Đã nạp (Funded):</strong> ${ethers.formatEther(s.fundedAmount)} ETH</div>
             <div><strong>Đã giải ngân:</strong> ${ethers.formatEther(s.releasedAmount)} ETH</div>
@@ -2648,9 +2729,18 @@
         showStatus(`Đang tải dữ liệu suất học bổng #${id}...`, "", "loading");
         const s = await readContract.getScholarship(id);
 
+        // Tra cứu tên từ registry cho cả hai bên
+        const studentNameLookup = lookupStudentName(s.student);
+        const sponsorNameLookup = lookupStudentName(s.sponsor);
+
         document.getElementById("resId").textContent = s.id.toString();
-        document.getElementById("resSponsor").textContent = s.sponsor;
-        document.getElementById("resStudent").textContent = s.student;
+        // Hiển thị địa chỉ đầy đủ kèm tên (nếu có)
+        document.getElementById("resSponsor").innerHTML = sponsorNameLookup
+          ? `<span style="color:var(--accent-info);font-weight:700;">${sponsorNameLookup}</span> <span class="code-pill" style="font-size:0.8rem;">${s.sponsor}</span>`
+          : `<span class="code-pill">${s.sponsor}</span>`;
+        document.getElementById("resStudent").innerHTML = studentNameLookup
+          ? `<span style="color:var(--accent-primary);font-weight:700;">${studentNameLookup}</span> <span class="code-pill" style="font-size:0.8rem;">${s.student}</span>`
+          : `<span class="code-pill">${s.student}</span>`;
         document.getElementById("resTotal").textContent = `${ethers.formatEther(s.totalAmount)} ETH`;
         document.getElementById("resFunded").textContent = `${ethers.formatEther(s.fundedAmount)} ETH`;
         document.getElementById("resReleased").textContent = `${ethers.formatEther(s.releasedAmount)} ETH`;
