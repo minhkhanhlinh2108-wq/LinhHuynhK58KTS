@@ -128,12 +128,13 @@ async function runTests() {
 
   // Sinh viên mở Card 2A trên Device A và nhập Scholarship ID = 23
   function devA_lookupForCard2A(id, studentAddrOnChain) {
-    const cleanAddr = studentAddrOnChain.toLowerCase();
+    const cleanAddr = (studentAddrOnChain || "").trim().toLowerCase();
     const entry = devA_registry.scholarships[String(id)];
     if (entry && entry.studentName) {
-      if (!cleanAddr || entry.studentAddress === cleanAddr) return entry.studentName;
+      if (!cleanAddr || !entry.studentAddress || entry.studentAddress.toLowerCase() === cleanAddr) {
+        return entry.studentName.trim();
+      }
     }
-    if (cleanAddr && devA_registry.students[cleanAddr]) return devA_registry.students[cleanAddr];
     return null;
   }
 
@@ -180,18 +181,14 @@ async function runTests() {
 
   function devB_lookup(id, studentAddrOnChain) {
     const cleanAddr = (studentAddrOnChain || "").trim().toLowerCase();
-    // 1. Tra cứu theo Scholarship ID
+    // 1. Tra cứu chính xác theo Scholarship ID
     if (id !== undefined && id !== null && id !== "") {
       const entry = devB_registry.scholarships[String(id)];
       if (entry && entry.studentName) {
-        if (!cleanAddr || !entry.studentAddress || entry.studentAddress === cleanAddr) {
-          return entry.studentName;
+        if (!cleanAddr || !entry.studentAddress || entry.studentAddress.toLowerCase() === cleanAddr) {
+          return entry.studentName.trim();
         }
       }
-    }
-    // 2. Tra cứu phụ trợ theo ví on-chain
-    if (cleanAddr && devB_registry.students[cleanAddr]) {
-      return devB_registry.students[cleanAddr];
     }
     return null;
   }
@@ -238,6 +235,20 @@ async function runTests() {
     throw new Error("FAIL: Vẫn còn nút btnSaveStudentNameInline hoặc promptSaveStudentNameInline trong index.html!");
   }
   console.log("  -> PASS: Đã gỡ bỏ 100% các nút lưu tên thủ công và thông báo lưu trên máy này khỏi giao diện.");
+
+  // Test 3D: Sinh viên hoàn toàn mới chưa từng có trong hệ thống
+  console.log("\n[TÌNH HUỐNG 3D] TẠO SUẤT CHO SINH VIÊN HOÀN TOÀN MỚI CHƯA TỪNG XUẤT HIỆN:");
+  const BRAND_NEW_ID = 24;
+  const BRAND_NEW_WALLET = "0x999999cf1046e68e36E1aA2E0E07105eDDD1f08E";
+  const BRAND_NEW_NAME = "Phạm Hoàng Nam";
+  console.log(`  Nhà tài trợ tạo Suất #${BRAND_NEW_ID} cho sinh viên mới: "${BRAND_NEW_NAME}" (Ví: ${BRAND_NEW_WALLET})`);
+  devA_registerScholarship(BRAND_NEW_ID, BRAND_NEW_WALLET, BRAND_NEW_NAME);
+  const brandNewLookup = devA_lookupForCard2A(BRAND_NEW_ID, BRAND_NEW_WALLET);
+  console.log(`  Sinh viên mới mở Bước 3, nhập Suất #${BRAND_NEW_ID} -> Tên hiển thị: "${brandNewLookup}"`);
+  if (brandNewLookup !== BRAND_NEW_NAME) {
+    throw new Error(`FAIL 3D: Tên sinh viên mới không khớp! Kỳ vọng: ${BRAND_NEW_NAME}, nhận được: ${brandNewLookup}`);
+  }
+  console.log("  -> PASS: Sinh viên hoàn toàn mới được lưu và hiển thị chính xác ngay lần đầu tiên!");
 
   console.log("\n================================================================================");
   console.log(">>> TẤT CẢ CÁC BÀI KIỂM THỬ XÁC THỰC ĐỀU ĐẠT CHUẨN 100% (ALL TESTS PASSED) <<<");

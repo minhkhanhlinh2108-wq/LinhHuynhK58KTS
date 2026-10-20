@@ -900,11 +900,11 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="inpStudentName">Tên sinh viên thụ hưởng <span style="font-weight:400; color: var(--text-dim);">(Tùy chọn — lưu cục bộ)</span></label>
+            <label class="form-label" for="inpStudentName">Tên sinh viên thụ hưởng</label>
             <input id="inpStudentName" class="form-input" type="text"
-              placeholder="VD: Trần Thị Như Huỳnh"
+              placeholder="VD: Nguyễn Văn A (hoặc tên bất kỳ)"
               oninput="onStudentNameInput()" />
-            <span class="form-hint">Tên được lưu trong trình duyệt theo địa chỉ ví. Không gửi lên blockchain.</span>
+            <span class="form-hint">Tên sinh viên được lưu gắn với Suất học bổng và địa chỉ ví, tự động hiển thị ngay tại Bước 3.</span>
           </div>
 
           <div class="form-group">
@@ -1407,20 +1407,23 @@
     /**
      * Đồng bộ dữ liệu dùng chung từ server (API / students.json)
      * Đảm bảo mọi máy tính hoặc trình duyệt khác đều đọc được dữ liệu ngay lần đầu!
-     */
     async function syncSharedRegistryFromServer() {
       loadCachedRegistry();
 
       const endpoints = [
         "/api/students",
-        "./students.json",
+        "./students.json?t=" + Date.now(),
+        "http://127.0.0.1:3000/api/students",
         "http://127.0.0.1:3001/api/students",
         "http://localhost:3001/api/students"
       ];
 
       for (const url of endpoints) {
         try {
-          const resp = await fetch(url, { method: "GET", cache: "no-store" });
+          const ctrl = new AbortController();
+          const tid = setTimeout(() => ctrl.abort(), 2000);
+          const resp = await fetch(url, { method: "GET", cache: "no-store", signal: ctrl.signal });
+          clearTimeout(tid);
           if (resp.ok) {
             const data = await resp.json();
             if (data && typeof data === "object") {
@@ -1472,21 +1475,18 @@
       if (!scholarshipId && !studentAddrOnChain) return null;
       const cleanAddr = studentAddrOnChain ? studentAddrOnChain.trim().toLowerCase() : "";
 
-      // 1. Ưu tiên tra cứu theo Scholarship ID đã được gắn lúc tạo suất
+      // 1. Tra cứu chính xác theo Scholarship ID đã được gắn lúc tạo suất
       if (scholarshipId !== undefined && scholarshipId !== null && scholarshipId !== "") {
         const entry = _sharedRegistry.scholarships[String(scholarshipId)];
         if (entry && entry.studentName) {
-          if (!cleanAddr || !entry.studentAddress || entry.studentAddress === cleanAddr) {
-            return entry.studentName;
+          // Bắt buộc ví trong registry phải trùng khớp với ví thụ hưởng on-chain của suất này
+          if (!cleanAddr || !entry.studentAddress || entry.studentAddress.toLowerCase() === cleanAddr) {
+            return entry.studentName.trim();
           }
         }
       }
 
-      // 2. Tra cứu phụ trợ theo địa chỉ ví on-chain của suất này
-      if (cleanAddr && _sharedRegistry.students[cleanAddr]) {
-        return _sharedRegistry.students[cleanAddr];
-      }
-
+      // Tuyệt đối không mượn tên từ các suất khác khi suất này chưa đăng ký tên
       return null;
     }
 
@@ -1520,15 +1520,16 @@
 
     /**
      * Lưu mối liên hệ giữa Scholarship ID, địa chỉ ví và tên sinh viên.
-     * Tự động gửi lên Server API để lưu vào nguồn dùng chung, đồng thời lưu cache.
+     * Cập nhật tức thì vào bộ nhớ (RAM), lưu cache localStorage,
+     * và tự động phát lệnh POST không chặn (non-blocking) lên Server.
      */
-    async function registerScholarshipStudentSync(scholarshipId, studentAddress, studentName) {
+    function registerScholarshipStudentSync(scholarshipId, studentAddress, studentName) {
       if (!studentAddress || !studentName) return false;
       const cleanAddr = studentAddress.trim().toLowerCase();
       const cleanName = studentName.trim();
       if (!cleanAddr || !cleanName) return false;
 
-      // 1. Cập nhật In-memory
+      // 1. Cập nhật In-memory tức thì
       if (scholarshipId !== undefined && scholarshipId !== null && scholarshipId !== "") {
         _sharedRegistry.scholarships[String(scholarshipId)] = {
           scholarshipId: parseInt(scholarshipId, 10) || scholarshipId,
@@ -1539,10 +1540,10 @@
       }
       _sharedRegistry.students[cleanAddr] = cleanName;
 
-      // 2. Lưu cache localStorage
+      // 2. Lưu cache localStorage tức thì
       saveCachedRegistry();
 
-      // 3. Gửi lên Server API để ghi trực tiếp vào nguồn dùng chung (students.json)
+      // 3. Gửi lên Server API trong luồng nền (non-blocking) để cập nhật students.json trên đĩa
       const payload = {
         scholarshipId: scholarshipId || null,
         studentAddress: cleanAddr,
@@ -1551,23 +1552,31 @@
 
       const serverUrls = [
         "/api/students",
+        "http://127.0.0.1:3000/api/students",
+        "http://localhost:3000/api/students",
         "http://127.0.0.1:3001/api/students",
         "http://localhost:3001/api/students"
       ];
 
-      for (const url of serverUrls) {
-        try {
-          const res = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-          });
-          if (res.ok) {
-            console.log("[TrustScholar] Đã lưu vào server dùng chung (" + url + ") thành công!");
-            break;
-          }
-        } catch (_) { }
-      }
+      (async () => {
+        for (const url of serverUrls) {
+          try {
+            const ctrl = new AbortController();
+            const tid = setTimeout(() => ctrl.abort(), 2000);
+            const res = await fetch(url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+              signal: ctrl.signal
+            });
+            clearTimeout(tid);
+            if (res.ok) {
+              console.log("[TrustScholar] Đã lưu vào server dùng chung (" + url + ") thành công!");
+              break;
+            }
+          } catch (_) { }
+        }
+      })();
 
       return true;
     }
@@ -1749,23 +1758,26 @@
       }
 
       const lowerAddr = norm.toLowerCase();
+      const currentTypedName = nameInput?.value?.trim() || "";
       const foundName = lookupStudentName(lowerAddr);
 
       if (foundName) {
-        if (nameInput) nameInput.value = foundName;
+        // Chỉ tự động điền nếu ô tên đang để trống (tránh ghi đè tên mới mà nhà tài trợ vừa nhập)
+        if (nameInput && !currentTypedName) {
+          nameInput.value = foundName;
+        }
+        const displayName = currentTypedName || foundName;
         if (nameBox && nameVal) {
-          nameVal.textContent = foundName;
+          nameVal.textContent = displayName;
           nameBox.classList.add("found");
           nameBox.style.display = "flex";
         }
       } else {
         // Chưa có tên trong registry cho địa chỉ này
-        // Nếu người dùng đã gõ sẵn tên trước đó ở ô inpStudentName, tự động lưu luôn cặp này
-        const existingName = nameInput?.value?.trim() || "";
-        if (existingName) {
-          registerStudentName(lowerAddr, existingName);
+        if (currentTypedName) {
+          registerStudentName(lowerAddr, currentTypedName);
           if (nameBox && nameVal) {
-            nameVal.textContent = existingName;
+            nameVal.textContent = currentTypedName;
             nameBox.classList.add("found");
             nameBox.style.display = "flex";
           }
@@ -1831,11 +1843,22 @@
         const validAddr = normalizeAddress(currentContractAddress) || DEFAULT_CONTRACT_ADDRESS;
         const readProvider = provider || new ethers.JsonRpcProvider("https://ethereum-sepolia-rpc.publicnode.com");
         const readContract = new ethers.Contract(validAddr, PROJECT_CORE_ABI, readProvider);
-        const s = await readContract.getScholarship(id);
+        let s = null;
+        try {
+          s = await readContract.getScholarship(id);
+        } catch (_) {
+          const fallbackProvider = new ethers.JsonRpcProvider("https://ethereum-sepolia-rpc.publicnode.com");
+          const fallbackContract = new ethers.Contract(validAddr, PROJECT_CORE_ABI, fallbackProvider);
+          s = await fallbackContract.getScholarship(id);
+        }
 
         // Lấy đúng địa chỉ ví thụ hưởng từ blockchain
         const studentAddrOnChain = s.student;
-        const foundName = lookupStudentNameForScholarship(id, studentAddrOnChain);
+        let foundName = lookupStudentNameForScholarship(id, studentAddrOnChain);
+        if (!foundName) {
+          await syncSharedRegistryFromServer();
+          foundName = lookupStudentNameForScholarship(id, studentAddrOnChain);
+        }
 
         // Lấy ví MetaMask đang kết nối để so sánh (nếu có)
         let activeWallet = userAddress;
@@ -1852,19 +1875,18 @@
             nameVal.textContent = foundName;
             nameVal.style.color = "var(--accent-primary)";
             nameVal.style.fontWeight = "700";
+            if (noticeEl) noticeEl.style.display = "none";
+            infoBox.classList.add("found");
           } else {
-            nameVal.textContent = "Chưa có thông tin tên sinh viên";
+            nameVal.textContent = "Chưa đăng ký tên cho suất này";
             nameVal.style.color = "var(--text-dim)";
-            nameVal.style.fontWeight = "400";
-          }
-        }
-        if (noticeEl) {
-          if (!foundName) {
-            noticeEl.style.display = "block";
-            noticeEl.style.color = "var(--accent-danger)";
-            noticeEl.innerHTML = `⚠️ Không tìm thấy tên sinh viên gắn với Suất #${id} (Ví: <span class="code-pill">${studentAddrOnChain}</span>) trong cơ sở dữ liệu dùng chung.`;
-          } else {
-            noticeEl.style.display = "none";
+            nameVal.style.fontWeight = "500";
+            if (noticeEl) {
+              noticeEl.style.display = "block";
+              noticeEl.style.color = "var(--accent-warning)";
+              noticeEl.innerHTML = `ℹ️ Suất học bổng #${id} đã tạo trên blockchain (Ví: <span class="code-pill">${studentAddrOnChain}</span>), nhưng chưa được lưu tên trong nguồn dữ liệu dùng chung.`;
+            }
+            infoBox.classList.remove("found");
           }
         }
         if (addrVal) {
@@ -1880,7 +1902,6 @@
             matchBadge.innerHTML = `<span style="color:var(--accent-warning); font-weight:600;">⚠️ Ví hiện tại không trùng</span>`;
           }
         }
-        infoBox.classList.add("found");
       } catch (_) {
         if (infoBox) infoBox.style.display = "none";
       }
@@ -1920,7 +1941,14 @@
         const validAddr = normalizeAddress(currentContractAddress) || DEFAULT_CONTRACT_ADDRESS;
         const readProvider = provider || new ethers.JsonRpcProvider("https://ethereum-sepolia-rpc.publicnode.com");
         const readContract = new ethers.Contract(validAddr, PROJECT_CORE_ABI, readProvider);
-        const s = await readContract.getScholarship(id);
+        let s = null;
+        try {
+          s = await readContract.getScholarship(id);
+        } catch (_) {
+          const fallbackProvider = new ethers.JsonRpcProvider("https://ethereum-sepolia-rpc.publicnode.com");
+          const fallbackContract = new ethers.Contract(validAddr, PROJECT_CORE_ABI, fallbackProvider);
+          s = await fallbackContract.getScholarship(id);
+        }
 
         // Chống race-condition: nếu user đã đổi ID trong lúc request RPC đang chạy, bỏ qua
         if (seq !== _submitCardSeq || document.getElementById("inpSubmitId")?.value?.trim() !== idRaw) {
@@ -1929,30 +1957,38 @@
 
         const studentAddrOnChain = s.student;
         // Tra cứu tên sinh viên gắn với Scholarship ID từ nguồn dùng chung
-        const foundName = lookupStudentNameForScholarship(id, studentAddrOnChain);
+        let foundName = lookupStudentNameForScholarship(id, studentAddrOnChain);
+        if (!foundName) {
+          // Thử đồng bộ tức thời từ server trong trường hợp máy khác hoặc tab khác vừa tạo
+          await syncSharedRegistryFromServer();
+          foundName = lookupStudentNameForScholarship(id, studentAddrOnChain);
+        }
 
         // 1. Cập nhật Info Box (Tên sinh viên, Địa chỉ ví thụ hưởng, Mã suất)
         if (infoBox) {
           infoBox.style.display = "flex";
-          infoBox.classList.add("found");
         }
         if (nameVal) {
-          nameVal.textContent = foundName || "Chưa có thông tin tên sinh viên";
-          nameVal.style.color = foundName ? "var(--accent-primary)" : "var(--accent-danger)";
-          nameVal.style.fontWeight = foundName ? "700" : "600";
+          if (foundName) {
+            nameVal.textContent = foundName;
+            nameVal.style.color = "var(--accent-primary)";
+            nameVal.style.fontWeight = "700";
+            if (noticeEl) noticeEl.style.display = "none";
+            if (infoBox) infoBox.classList.add("found");
+          } else {
+            nameVal.textContent = "Chưa đăng ký tên cho suất này";
+            nameVal.style.color = "var(--text-dim)";
+            nameVal.style.fontWeight = "500";
+            if (noticeEl) {
+              noticeEl.style.display = "block";
+              noticeEl.style.color = "var(--accent-warning)";
+              noticeEl.innerHTML = `ℹ️ Suất học bổng #${id} đã tạo trên blockchain (Ví: <span class="code-pill">${studentAddrOnChain}</span>) nhưng chưa có tên trong nguồn dữ liệu dùng chung.`;
+            }
+            if (infoBox) infoBox.classList.remove("found");
+          }
         }
         if (addrVal) addrVal.textContent = studentAddrOnChain;
         if (idVal) idVal.textContent = `#${id}`;
-
-        if (noticeEl) {
-          if (!foundName) {
-            noticeEl.style.display = "block";
-            noticeEl.style.color = "var(--accent-danger)";
-            noticeEl.innerHTML = `⚠️ Không tìm thấy tên sinh viên được đăng ký cho Suất #${id} (Ví: <span class="code-pill">${studentAddrOnChain}</span>) trong cơ sở dữ liệu dùng chung.`;
-          } else {
-            noticeEl.style.display = "none";
-          }
-        }
 
         // 2. Cập nhật Badge Đối Soát MetaMask (submitStudentMatchNotice)
         if (matchNotice) {
@@ -2003,7 +2039,6 @@
           matchNotice.style.color = "var(--text-dim)";
           matchNotice.innerHTML = `ℹ️ Suất học bổng #${id} chưa tồn tại trên blockchain (Hoặc lỗi mạng Sepolia).`;
         }
-      }
     }
 
 
@@ -2592,10 +2627,19 @@
         return;
       }
 
-      // Đảm bảo lưu cặp địa chỉ ví – tên sinh viên vào registry
-      const enteredStudentName = document.getElementById("inpStudentName")?.value?.trim() || "";
-      if (enteredStudentName) {
-        registerStudentName(studentAddr.toLowerCase(), enteredStudentName);
+      // CHỤP CỐ ĐỊNH TÊN SINH VIÊN VÀ ĐỊA CHỈ VÍ NGAY TRƯỚC KHI GỬI GIAO DỊCH
+      // Đảm bảo không bị mất kể cả khi người dùng chuyển tab hoặc xoá ô trong lúc đợi đào trên blockchain
+      let studentNameToSave = document.getElementById("inpStudentName")?.value?.trim() || "";
+      const studentAddrToSave = studentAddr;
+
+      if (!studentNameToSave) {
+        // Nếu người dùng không gõ tên, kiểm tra xem địa chỉ ví này đã từng có tên được lưu trước đó chưa
+        studentNameToSave = lookupStudentName(studentAddrToSave.toLowerCase()) || "";
+      }
+
+      // Lưu cặp ví - tên vào registry
+      if (studentNameToSave) {
+        registerStudentName(studentAddrToSave.toLowerCase(), studentNameToSave);
       }
 
       const amountsStr = milestonesRaw.split(",").map(s => s.trim()).filter(Boolean);
@@ -2609,7 +2653,7 @@
         showStatus("Đang gửi giao dịch tạo suất học bổng...", "Vui lòng xác nhận giao dịch trên MetaMask.", "loading");
 
         // Gọi hàm với signature tường minh createScholarship(address,uint256[])
-        const tx = await coreContract["createScholarship(address,uint256[])"](studentAddr, amountsWei);
+        const tx = await coreContract["createScholarship(address,uint256[])"](studentAddrToSave, amountsWei);
         showStatus("Giao dịch đang chờ xác nhận trên blockchain...", `TxHash: ${tx.hash}`, "loading", tx.hash);
 
         const receipt = await tx.wait();
@@ -2637,12 +2681,12 @@
 
         if (nextId) {
           // Lưu mối liên hệ giữa Scholarship ID, địa chỉ ví sinh viên và tên sinh viên vào nguồn dùng chung
-          const enteredStudentName = document.getElementById("inpStudentName")?.value?.trim() || "";
-          if (enteredStudentName) {
-            await registerScholarshipStudentSync(nextId, studentAddr, enteredStudentName);
+          // Sử dụng chính xác biến studentNameToSave đã chụp cố định từ đầu
+          if (studentNameToSave) {
+            registerScholarshipStudentSync(nextId, studentAddrToSave, studentNameToSave);
           }
           showStatus(`Tạo suất học bổng #${nextId} thành công! 🎉`, `Block: ${receipt.blockNumber}`, "success", tx.hash);
-          recordSessionTx("Tạo Suất Học Bổng", "Thành công", tx.hash, `Đã tạo suất #${nextId} cho ${studentAddr.slice(0, 8)}...`, nextId);
+          recordSessionTx("Tạo Suất Học Bổng", "Thành công", tx.hash, `Đã tạo suất #${nextId} cho ${studentAddrToSave.slice(0, 8)}...`, nextId);
 
           // Cập nhật số suất học bổng trên thanh hiển thị
           const countEl = document.getElementById("contractScholarshipCountBadge");
@@ -3249,6 +3293,23 @@
 
     // Đồng bộ danh bạ dùng chung ngay khi tải trang
     syncSharedRegistryFromServer().then(() => {
+      updateSubmitCardInfo();
+      autoLoadStudentCheckInfo();
+      onStudentAddressInput();
+    });
+
+    // Lắng nghe sự kiện storage để đồng bộ tức thời giữa các tab/cửa sổ khác nhau trên cùng máy
+    window.addEventListener("storage", (event) => {
+      if (event.key === REGISTRY_STORAGE_KEY || event.key === REGISTRY_KEY) {
+        loadCachedRegistry();
+        updateSubmitCardInfo();
+        autoLoadStudentCheckInfo();
+        onStudentAddressInput();
+      }
+    });
+
+    // Lắng nghe sự kiện cập nhật tên nội bộ
+    window.addEventListener("trustscholar_names_updated", () => {
       updateSubmitCardInfo();
       autoLoadStudentCheckInfo();
       onStudentAddressInput();
