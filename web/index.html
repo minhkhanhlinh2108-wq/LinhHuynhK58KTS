@@ -507,6 +507,31 @@
       color: var(--text-dim);
     }
 
+    /* Student Name Display Box */
+    .student-name-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 0.82rem;
+      line-height: 1.5;
+      margin-top: 6px;
+      background: var(--bg-box);
+      border: 1px dashed var(--border-color);
+      color: var(--text-muted);
+      transition: all var(--transition-fast);
+    }
+    .student-name-box.found {
+      background: rgba(79, 70, 229, 0.06);
+      border-color: rgba(79, 70, 229, 0.25);
+      color: var(--text-main);
+    }
+    .student-name-box .name-value {
+      font-weight: 700;
+      color: var(--accent-primary);
+    }
+
     .form-input {
       font-family: inherit;
       font-size: 0.9rem;
@@ -864,8 +889,22 @@
 
           <div class="form-group">
             <label class="form-label" for="inpStudentAddress">Địa chỉ ví Sinh viên (Student Wallet)</label>
-            <input id="inpStudentAddress" class="form-input" type="text" placeholder="0x..." />
+            <input id="inpStudentAddress" class="form-input" type="text" placeholder="0x..."
+              oninput="onStudentAddressInput()" />
             <span class="form-hint">Ví dụ: 0x70997970C51812dc3A010C7d01b50e0d17dc79C8</span>
+            <!-- Hiển thị tên sinh viên tra cứu từ registry -->
+            <div id="sponsorStudentNameBox" class="student-name-box" style="display:none;">
+              <span>🎓</span>
+              <span><strong>Tên sinh viên thụ hưởng:</strong> <span id="sponsorStudentNameVal">—</span></span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inpStudentName">Tên sinh viên thụ hưởng <span style="font-weight:400; color: var(--text-dim);">(Tùy chọn — lưu cục bộ)</span></label>
+            <input id="inpStudentName" class="form-input" type="text"
+              placeholder="VD: Trần Thị Như Huỳnh"
+              oninput="onStudentNameInput()" />
+            <span class="form-hint">Tên được lưu trong trình duyệt theo địa chỉ ví. Không gửi lên blockchain.</span>
           </div>
 
           <div class="form-group">
@@ -1011,7 +1050,15 @@
           <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
             <div class="form-group" style="flex: 1; min-width: 200px;">
               <label class="form-label" for="inpStudentCheckId">Mã Suất Học Bổng (Scholarship ID)</label>
-              <input id="inpStudentCheckId" class="form-input" type="number" min="1" placeholder="1" value="1" />
+              <input id="inpStudentCheckId" class="form-input" type="number" min="1" placeholder="1" value="1"
+                oninput="onStudentCheckIdInput()" />
+              <!-- Hiển thị tên + địa chỉ ví thụ hưởng sau khi tra cứu -->
+              <div id="studentCheckInfoBox" class="student-name-box" style="display:none; flex-direction: column; align-items: flex-start; gap: 4px;">
+                <div>🎓 <strong>Tên sinh viên thụ hưởng:</strong> <span id="studentCheckNameVal">—</span></div>
+                <div>📍 <strong>Địa chỉ ví thụ hưởng:</strong> <span id="studentCheckAddrVal" class="code-pill" style="font-size:0.78rem;">—</span>
+                  <span id="studentCheckWalletMatchBadge" style="margin-left:6px; font-size:0.78rem;"></span>
+                </div>
+              </div>
             </div>
             <button class="btn btn-secondary" onclick="handleStudentCheckStatus()">
               👀 Xem Tiến Độ & Số Dư
@@ -1256,6 +1303,54 @@
     let coreContract = null;
     let isCorrectNetwork = false;
 
+    // ─── Student Name Registry (localStorage) ───────────────────────────────
+    // Nguồn dữ liệu đáng tin cậy duy nhất: người dùng tự nhập và lưu theo địa chỉ ví.
+    // Key: "trustscholar_student_names" → JSON object { "0xABCD...": "Tên Sinh Viên" }
+    const REGISTRY_KEY = "trustscholar_student_names";
+
+    function loadNameRegistry() {
+      try {
+        const raw = localStorage.getItem(REGISTRY_KEY);
+        return raw ? JSON.parse(raw) : {};
+      } catch (_) { return {}; }
+    }
+
+    function saveNameRegistry(registry) {
+      try { localStorage.setItem(REGISTRY_KEY, JSON.stringify(registry)); } catch (_) { }
+    }
+
+    /**
+     * Tra cứu tên sinh viên từ registry theo địa chỉ ví (EIP-55 checksum).
+     * Trả về tên (string) nếu có, hoặc null nếu không có.
+     * Không bao giờ suy đoán tên từ địa chỉ ví.
+     */
+    function lookupStudentName(walletAddress) {
+      const norm = normalizeAddress(walletAddress);
+      if (!norm) return null;
+      const registry = loadNameRegistry();
+      // So sánh case-insensitive để đảm bảo khớp dù checksum khác
+      const key = Object.keys(registry).find(k => k.toLowerCase() === norm.toLowerCase());
+      return key ? (registry[key] || null) : null;
+    }
+
+    /**
+     * Lưu tên sinh viên vào registry theo địa chỉ ví.
+     * Nếu tên rỗng thì xóa entry đó.
+     */
+    function registerStudentName(walletAddress, name) {
+      const norm = normalizeAddress(walletAddress);
+      if (!norm) return;
+      const registry = loadNameRegistry();
+      const trimmedName = (name || "").trim();
+      if (trimmedName) {
+        registry[norm] = trimmedName;
+      } else {
+        // Xóa entry nếu tên bị xóa trắng
+        delete registry[norm];
+      }
+      saveNameRegistry(registry);
+    }
+
     // Elements
     const btnConnectWallet = document.getElementById("btnConnectWallet");
     const walletBtnText = document.getElementById("walletBtnText");
@@ -1324,6 +1419,131 @@
         checkFundStatus();
       } else if (tabName === "verifier") {
         checkVerifierInspection();
+      }
+    }
+
+    // ─── Sponsor: Tự tra cứu tên khi người dùng nhập/thay đổi địa chỉ ví ────
+    function onStudentAddressInput() {
+      const addrRaw = document.getElementById("inpStudentAddress")?.value || "";
+      const nameInput = document.getElementById("inpStudentName");
+      const nameBox = document.getElementById("sponsorStudentNameBox");
+      const nameVal = document.getElementById("sponsorStudentNameVal");
+
+      // Xóa kết quả tra cứu cũ ngay khi địa chỉ thay đổi
+      if (nameBox) nameBox.style.display = "none";
+      if (nameInput) nameInput.value = "";
+
+      const norm = normalizeAddress(addrRaw);
+      if (!norm) return; // Địa chỉ không hợp lệ hoặc rỗng — không hiển thị gì
+
+      const foundName = lookupStudentName(norm);
+      if (nameBox && nameVal) {
+        nameBox.style.display = "flex";
+        if (foundName) {
+          nameVal.textContent = foundName;
+          nameBox.classList.add("found");
+          if (nameInput) nameInput.value = foundName;
+        } else {
+          nameVal.textContent = "Chưa có thông tin tên sinh viên";
+          nameBox.classList.remove("found");
+        }
+      }
+    }
+
+    // ─── Sponsor: Lưu tên vào registry khi người dùng nhập tên ─────────────
+    function onStudentNameInput() {
+      const addrRaw = document.getElementById("inpStudentAddress")?.value || "";
+      const nameRaw = document.getElementById("inpStudentName")?.value || "";
+      const norm = normalizeAddress(addrRaw);
+      if (!norm) return; // Không lưu nếu địa chỉ không hợp lệ
+      registerStudentName(norm, nameRaw);
+
+      // Cập nhật lại box hiển thị
+      const nameBox = document.getElementById("sponsorStudentNameBox");
+      const nameVal = document.getElementById("sponsorStudentNameVal");
+      const trimmed = nameRaw.trim();
+      if (nameBox && nameVal) {
+        nameBox.style.display = "flex";
+        if (trimmed) {
+          nameVal.textContent = trimmed;
+          nameBox.classList.add("found");
+        } else {
+          nameVal.textContent = "Chưa có thông tin tên sinh viên";
+          nameBox.classList.remove("found");
+        }
+      }
+    }
+
+    // ─── Student: Auto-load tên và địa chỉ ví khi nhập Scholarship ID ───────
+    let _studentCheckIdTimer = null;
+    function onStudentCheckIdInput() {
+      // Debounce 600ms để tránh gọi RPC mỗi keystroke
+      clearTimeout(_studentCheckIdTimer);
+      _studentCheckIdTimer = setTimeout(autoLoadStudentCheckInfo, 600);
+    }
+
+    async function autoLoadStudentCheckInfo() {
+      const idRaw = document.getElementById("inpStudentCheckId")?.value || "";
+      const infoBox = document.getElementById("studentCheckInfoBox");
+      const nameVal = document.getElementById("studentCheckNameVal");
+      const addrVal = document.getElementById("studentCheckAddrVal");
+      const matchBadge = document.getElementById("studentCheckWalletMatchBadge");
+
+      if (!infoBox) return;
+      const id = parseInt(idRaw, 10);
+      if (!id || id <= 0) {
+        infoBox.style.display = "none";
+        return;
+      }
+
+      try {
+        const validAddr = normalizeAddress(currentContractAddress) || DEFAULT_CONTRACT_ADDRESS;
+        const readProvider = provider || new ethers.JsonRpcProvider("https://ethereum-sepolia-rpc.publicnode.com");
+        const readContract = new ethers.Contract(validAddr, PROJECT_CORE_ABI, readProvider);
+        const s = await readContract.getScholarship(id);
+
+        // Lấy địa chỉ ví từ dữ liệu contract — KHÔNG dùng ví MetaMask đang kết nối
+        const studentAddrOnChain = s.student;
+        const foundName = lookupStudentName(studentAddrOnChain);
+
+        // Lấy ví MetaMask đang kết nối để so sánh (nếu có)
+        let activeWallet = userAddress;
+        if (window.ethereum) {
+          try {
+            const accs = await window.ethereum.request({ method: "eth_accounts" });
+            if (accs && accs.length > 0) activeWallet = ethers.getAddress(accs[0]);
+          } catch (_) { }
+        }
+
+        infoBox.style.display = "flex";
+        if (nameVal) {
+          if (foundName) {
+            nameVal.textContent = foundName;
+            nameVal.style.color = "var(--accent-primary)";
+            nameVal.style.fontWeight = "700";
+          } else {
+            nameVal.textContent = "Chưa có thông tin tên sinh viên";
+            nameVal.style.color = "var(--text-dim)";
+            nameVal.style.fontWeight = "400";
+          }
+        }
+        if (addrVal) {
+          addrVal.textContent = studentAddrOnChain;
+        }
+        // So sánh ví đang kết nối với ví thụ hưởng
+        if (matchBadge) {
+          if (!activeWallet) {
+            matchBadge.innerHTML = `<span style="color:var(--text-dim);">⚠️ Chưa kết nối ví</span>`;
+          } else if (activeWallet.toLowerCase() === studentAddrOnChain.toLowerCase()) {
+            matchBadge.innerHTML = `<span style="color:var(--accent-success); font-weight:600;">✅ Đúng ví sinh viên</span>`;
+          } else {
+            matchBadge.innerHTML = `<span style="color:var(--accent-warning); font-weight:600;">⚠️ Ví hiện tại không trùng</span>`;
+          }
+        }
+        infoBox.classList.add("found");
+      } catch (_) {
+        // ID không tồn tại hoặc lỗi mạng — ẩn box
+        if (infoBox) infoBox.style.display = "none";
       }
     }
 
@@ -2372,10 +2592,20 @@
           studentBal = ethers.formatEther(bal);
         } catch (_) { }
 
+        // Tra cứu tên sinh viên từ registry cục bộ
+        const studentNameOnRecord = lookupStudentName(s.student);
+
         let html = `
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 12px;">
             <div><strong>Học bổng:</strong> #${s.id}</div>
-            <div><strong>Ví nhận tiền:</strong> <span class="code-pill">${s.student.slice(0, 6)}...${s.student.slice(-4)}</span></div>
+            <div style="grid-column: 1 / -1; background: ${ studentNameOnRecord ? 'rgba(79,70,229,0.06)' : 'var(--bg-box)' }; border: 1px dashed ${ studentNameOnRecord ? 'rgba(79,70,229,0.25)' : 'var(--border-color)' }; border-radius: var(--radius-sm); padding: 8px 12px;">
+              🎓 <strong>Tên sinh viên thụ hưởng:</strong>
+              ${ studentNameOnRecord
+                  ? `<span style="color:var(--accent-primary); font-weight:700; margin-left:4px;">${studentNameOnRecord}</span>`
+                  : `<span style="color:var(--text-dim); margin-left:4px;">Chưa có thông tin tên sinh viên</span>` }
+              &nbsp;|&nbsp; 📍 <strong>Địa chỉ ví thụ hưởng:</strong>
+              <span class="code-pill" style="font-size:0.8rem; margin-left:4px;">${s.student}</span>
+            </div>
             <div><strong>Số dư ví hiện tại:</strong> <span style="color: var(--accent-success); font-weight: 700;">${studentBal} ETH</span></div>
             <div><strong>Đã giải ngân:</strong> <span style="color: var(--accent-success); font-weight: 700;">${ethers.formatEther(s.releasedAmount)} ETH</span></div>
             <div><strong>Quỹ đã nạp:</strong> ${ethers.formatEther(s.fundedAmount)} / ${ethers.formatEther(s.totalAmount)} ETH</div>
