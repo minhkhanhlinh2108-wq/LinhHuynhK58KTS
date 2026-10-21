@@ -890,6 +890,7 @@
           <div class="form-group">
             <label class="form-label" for="inpStudentAddress">Địa chỉ ví Sinh viên (Student Wallet)</label>
             <input id="inpStudentAddress" class="form-input" type="text" placeholder="0x..."
+              autocomplete="off" spellcheck="false"
               oninput="onStudentAddressInput()" />
             <span class="form-hint">Ví dụ: 0x70997970C51812dc3A010C7d01b50e0d17dc79C8</span>
             <!-- Hiển thị tên sinh viên tra cứu từ registry -->
@@ -1918,6 +1919,28 @@
       }
 
       const lowerAddr = norm.toLowerCase();
+      const contractAddrNorm = (normalizeAddress(currentContractAddress) || DEFAULT_CONTRACT_ADDRESS).toLowerCase();
+
+      // Cảnh báo thời gian thực nếu địa chỉ nhập vào là Smart Contract
+      if (lowerAddr === contractAddrNorm) {
+        if (nameBox && nameVal) {
+          nameVal.innerHTML = `<span style="color:var(--accent-danger); font-weight:700;">⚠️ Đây là địa chỉ Smart Contract! Vui lòng nhập địa chỉ ví cá nhân (EOA) của sinh viên.</span>`;
+          nameBox.classList.remove("found");
+          nameBox.style.display = "flex";
+        }
+        return;
+      }
+
+      // Cảnh báo thời gian thực nếu địa chỉ nhập vào trùng với ví Nhà tài trợ đang kết nối
+      if (userAddress && lowerAddr === userAddress.toLowerCase()) {
+        if (nameBox && nameVal) {
+          nameVal.innerHTML = `<span style="color:var(--accent-warning); font-weight:700;">⚠️ Đây là địa chỉ ví Nhà tài trợ đang kết nối! Sinh viên phải là ví khác.</span>`;
+          nameBox.classList.remove("found");
+          nameBox.style.display = "flex";
+        }
+        return;
+      }
+
       const currentTypedName = nameInput?.value?.trim() || "";
       const foundName = lookupStudentName(lowerAddr);
 
@@ -2847,6 +2870,28 @@
       const studentAddr = normalizeAddress(studentAddrRaw);
       if (!studentAddr) {
         alert("Vui lòng nhập địa chỉ ví sinh viên hợp lệ!");
+        return;
+      }
+
+      // 1. Kiểm tra không được là ví rỗng ZeroAddress
+      if (studentAddr === ethers.ZeroAddress || studentAddr.toLowerCase() === "0x0000000000000000000000000000000000000000") {
+        showStatus("Lỗi địa chỉ ví sinh viên!", "Địa chỉ ví sinh viên không được là địa chỉ 0x0 (ZeroAddress)!", "error");
+        alert("Lỗi: Địa chỉ ví sinh viên không được là địa chỉ 0x0 (ZeroAddress)! Vui lòng nhập địa chỉ ví cá nhân (EOA) của sinh viên thụ hưởng.");
+        return;
+      }
+
+      // 2. Kiểm tra không được là địa chỉ Smart Contract (Tránh InvalidAddress revert on-chain)
+      const contractAddrNorm = normalizeAddress(currentContractAddress) || DEFAULT_CONTRACT_ADDRESS;
+      if (studentAddr.toLowerCase() === contractAddrNorm.toLowerCase()) {
+        showStatus("Lỗi địa chỉ ví sinh viên!", "Địa chỉ ví sinh viên không được là địa chỉ Smart Contract!", "error");
+        alert(`Lỗi: Địa chỉ ví sinh viên (${studentAddr}) trùng với địa chỉ Smart Contract (${contractAddrNorm})!\n\nHợp đồng ProjectCore yêu cầu ví sinh viên phải là ví cá nhân (EOA) để nhận giải ngân.`);
+        return;
+      }
+
+      // 3. Kiểm tra không được là địa chỉ ví Nhà tài trợ đang kết nối
+      if (userAddress && studentAddr.toLowerCase() === userAddress.toLowerCase()) {
+        showStatus("Lỗi địa chỉ ví sinh viên!", "Địa chỉ ví sinh viên không được trùng với ví Nhà tài trợ đang kết nối!", "error");
+        alert(`Lỗi: Địa chỉ ví sinh viên không được trùng với địa chỉ ví Nhà tài trợ đang kết nối (${userAddress})!\n\nTrong TrustScholar, Nhà tài trợ và Sinh viên thụ hưởng phải là hai ví riêng biệt.`);
         return;
       }
 
