@@ -1532,13 +1532,14 @@
                     const cleanAddr = (item.studentAddress || "").trim().toLowerCase();
                     const cleanName = item.studentName.trim();
                     const idKey = String(id).trim();
-                    // Chỉ bổ sung nếu chưa có trong registry hoặc chưa có tên để bảo toàn dữ liệu nhập mới
-                    if (!_sharedRegistry.scholarships[idKey] || !_sharedRegistry.scholarships[idKey].studentName) {
+                    const existing = _sharedRegistry.scholarships[idKey];
+                    // Cập nhật nếu chưa có, hoặc nếu bản ghi từ server có updatedAt mới hơn/hợp lệ
+                    if (!existing || !existing.studentName || (item.updatedAt && (!existing.updatedAt || item.updatedAt >= existing.updatedAt))) {
                       _sharedRegistry.scholarships[idKey] = {
                         scholarshipId: parseInt(idKey, 10) || idKey,
                         studentAddress: cleanAddr,
                         studentName: cleanName,
-                        updatedAt: item.updatedAt || ""
+                        updatedAt: item.updatedAt || new Date().toISOString()
                       };
                       updated = true;
                     }
@@ -1574,11 +1575,12 @@
 
     /**
      * Tra cứu tên sinh viên theo Scholarship ID và đối soát với địa chỉ ví on-chain.
-     * Cơ chế tìm kiếm nhất quán, chuẩn hóa:
-     * - Tra cứu theo ví thụ hưởng on-chain (cleanAddr) qua lookupStudentName(cleanAddr) -> Ưu tiên tên vừa nhập ở Bước 1
-     * - Tra cứu theo Scholarship ID đã lưu trong _sharedRegistry.scholarships
-     * - Khi tìm thấy tên hợp lệ, tự động đồng bộ liên kết (scholarshipId, cleanAddr, studentName)
-     * Trả về string tên sinh viên nếu tìm thấy, hoặc null nếu chưa có dữ liệu tên.
+     * Quy tắc bảo mật và toàn vẹn dữ liệu:
+     * 1. ƯU TIÊN CAO NHẤT: Tra cứu theo đúng Scholarship ID trong _sharedRegistry.scholarships
+     *    -> Đảm bảo mỗi suất học bổng có danh tính riêng biệt, không bị mượn nhầm hoặc ghi đè bởi suất khác.
+     * 2. DỰ PHÒNG CỤC BỘ: Tra cứu trong localStorage cache của đúng Scholarship ID đó.
+     * 3. FALLBACK THEO VÍ: Chỉ dùng khi ví này KHÔNG thuộc về bất kỳ suất học bổng nào khác có ID khác.
+     *    -> Tuyệt đối không lấy tên của suất khác chỉ vì hai suất có cùng địa chỉ ví (Requirement 5).
      */
     function lookupStudentNameForScholarship(scholarshipId, studentAddrOnChain) {
       if (!scholarshipId && !studentAddrOnChain) return null;
@@ -1587,38 +1589,59 @@
         ? String(scholarshipId).trim()
         : "";
 
-      let foundName = null;
-
-      // 1. Tra cứu theo địa chỉ ví thụ hưởng on-chain trước (đảm bảo tên vừa nhập ở Bước 1 cho ví này được ưu tiên)
-      if (cleanAddr) {
-        foundName = lookupStudentName(cleanAddr);
-      }
-
-      // 2. Nếu chưa tìm thấy theo ví, tra cứu theo Scholarship ID trong _sharedRegistry.scholarships
-      if (!foundName && idKey) {
+      // 1. Ưu tiên số 1: Tra cứu trực tiếp theo Scholarship ID trong bộ nhớ
+      if (idKey) {
         const entry = _sharedRegistry.scholarships[idKey];
-        if (entry && entry.studentName && entry.studentName.trim()) {
+        if (entry && entry.studentName && typeof entry.studentName === "string" && entry.studentName.trim()) {
+          // Xác minh địa chỉ ví on-chain nếu có truyền vào
           if (!cleanAddr || !entry.studentAddress || entry.studentAddress.toLowerCase() === cleanAddr) {
-            foundName = entry.studentName.trim();
+            return entry.studentName.trim();
           }
         }
       }
 
-      // 3. Nếu tìm thấy tên hợp lệ và có đủ idKey + cleanAddr, tự động đồng bộ vào _sharedRegistry.scholarships
-      if (foundName && idKey && cleanAddr) {
-        const existing = _sharedRegistry.scholarships[idKey];
-        if (!existing || existing.studentName !== foundName || existing.studentAddress !== cleanAddr) {
-          _sharedRegistry.scholarships[idKey] = {
-            scholarshipId: parseInt(idKey, 10) || idKey,
-            studentAddress: cleanAddr,
-            studentName: foundName,
-            updatedAt: new Date().toISOString()
-          };
-          saveCachedRegistry(true);
+      // 2. Ưu tiên số 2: Tra cứu trong cache localStorage cho đúng Scholarship ID
+      if (idKey) {
+        try {
+          const raw = localStorage.getItem(REGISTRY_STORAGE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed && parsed.scholarships && parsed.scholarships[idKey]) {
+              const item = parsed.scholarships[idKey];
+              if (item && item.studentName && item.studentName.trim()) {
+                if (!cleanAddr || !item.studentAddress || item.studentAddress.toLowerCase() === cleanAddr) {
+                  const verifiedName = item.studentName.trim();
+                  _sharedRegistry.scholarships[idKey] = item;
+                  return verifiedName;
+                }
+              }
+            }
+          }
+        } catch (_) { }
+      }
+
+      // 3. Dự phòng theo địa chỉ ví: CHỈ dùng khi không có xung đột giữa các suất khác nhau
+      // Không lấy tên của suất khác (ID khác) gán cho suất này chỉ vì có chung địa chỉ ví
+      if (cleanAddr) {
+        if (idKey) {
+          let belongsToAnotherScholarship = false;
+          for (const [otherId, otherEntry] of Object.entries(_sharedRegistry.scholarships)) {
+            if (otherId !== idKey && otherEntry && otherEntry.studentAddress && otherEntry.studentAddress.toLowerCase() === cleanAddr) {
+              belongsToAnotherScholarship = true;
+              break;
+            }
+          }
+          if (belongsToAnotherScholarship) {
+            return null;
+          }
+        }
+
+        if (_sharedRegistry.students[cleanAddr] && _sharedRegistry.students[cleanAddr].trim()) {
+          return _sharedRegistry.students[cleanAddr].trim();
         }
       }
 
-      return foundName || null;
+      return null;
     }
 
     /**
@@ -1673,14 +1696,8 @@
         };
       }
       _sharedRegistry.students[cleanAddr] = cleanName;
-
-      // Cập nhật tất cả các suất khác cùng thuộc ví sinh viên này
-      for (const [id, entry] of Object.entries(_sharedRegistry.scholarships)) {
-        if (entry && entry.studentAddress && entry.studentAddress.toLowerCase() === cleanAddr) {
-          entry.studentName = cleanName;
-          entry.updatedAt = new Date().toISOString();
-        }
-      }
+      // QUY TẮC BẢO MẬT: KHÔNG ghi đè các suất học bổng khác cùng ví.
+      // Mỗi suất học bổng có danh tính và tên độc lập riêng biệt (Requirement 5).
 
       // 2. Lưu cache localStorage tức thì
       saveCachedRegistry();
@@ -1731,20 +1748,9 @@
       const trimmedName = (name || "").trim();
       if (trimmedName) {
         _sharedRegistry.students[clean] = trimmedName;
-        // Cập nhật tất cả các suất học bổng thuộc về ví sinh viên này trong registry
-        for (const [id, entry] of Object.entries(_sharedRegistry.scholarships)) {
-          if (entry && entry.studentAddress && entry.studentAddress.toLowerCase() === clean) {
-            entry.studentName = trimmedName;
-            entry.updatedAt = new Date().toISOString();
-          }
-        }
+        // Chỉ lưu tên mặc định cho địa chỉ ví, không ghi đè tên đã lưu riêng cho từng suất học bổng
       } else if (shouldDeleteIfEmpty) {
         delete _sharedRegistry.students[clean];
-        for (const [id, entry] of Object.entries(_sharedRegistry.scholarships)) {
-          if (entry && entry.studentAddress && entry.studentAddress.toLowerCase() === clean) {
-            delete _sharedRegistry.scholarships[id];
-          }
-        }
       } else {
         return;
       }
@@ -2495,7 +2501,7 @@
             <div style="grid-column: 1 / -1; display:flex; gap: 24px; flex-wrap:wrap; padding: 8px 0; border-top: 1px dashed var(--border-color); border-bottom: 1px dashed var(--border-color); margin: 4px 0;">
               <div>
                 🎓 <strong>Sinh viên thụ hưởng:</strong>
-                ${ (() => { const n = lookupStudentName(s.student); return n ? `<span style="color:var(--accent-primary);font-weight:700;">${n}</span>` : `<span style="color:var(--text-dim);">Chưa có thông tin tên</span>`; })() }
+                ${ (() => { const n = lookupStudentNameForScholarship(id, s.student) || lookupStudentName(s.student); return n ? `<span style="color:var(--accent-primary);font-weight:700;">${n}</span>` : `<span style="color:var(--text-dim);">Chưa có thông tin tên</span>`; })() }
                 <span class="code-pill" style="font-size:0.78rem; margin-left:6px;">${s.student}</span>
               </div>
               <div>
@@ -3233,9 +3239,9 @@
         const readContract = new ethers.Contract(validAddr, PROJECT_CORE_ABI, readProvider);
         const s = await readContract.getScholarship(id);
 
-        // Tra cứu tên từ registry
+        // Tra cứu tên từ registry (ưu tiên tên riêng gắn với chính ID của suất học bổng)
         const sponsorName = lookupStudentName(s.sponsor);
-        const studentName = lookupStudentName(s.student);
+        const studentName = lookupStudentNameForScholarship(id, s.student) || lookupStudentName(s.student);
 
         let html = `
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 12px;">
@@ -3298,8 +3304,8 @@
           studentBal = ethers.formatEther(bal);
         } catch (_) { }
 
-        // Tra cứu tên sinh viên từ registry cục bộ
-        const studentNameOnRecord = lookupStudentName(s.student);
+        // Tra cứu tên sinh viên từ registry (ưu tiên tên riêng gắn với chính ID của suất học bổng)
+        const studentNameOnRecord = lookupStudentNameForScholarship(id, s.student) || lookupStudentName(s.student);
 
         let html = `
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 12px;">
@@ -3350,8 +3356,8 @@
         showStatus(`Đang tải dữ liệu suất học bổng #${id}...`, "", "loading");
         const s = await getSepoliaScholarship(id);
 
-        // Tra cứu tên từ registry cho cả hai bên
-        const studentNameLookup = lookupStudentName(s.student);
+        // Tra cứu tên từ registry cho cả hai bên (ưu tiên tên riêng gắn với chính ID của suất học bổng)
+        const studentNameLookup = lookupStudentNameForScholarship(id, s.student) || lookupStudentName(s.student);
         const sponsorNameLookup = lookupStudentName(s.sponsor);
 
         document.getElementById("resId").textContent = s.id.toString();
