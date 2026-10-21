@@ -1135,7 +1135,7 @@
 
         <div style="display: flex; gap: 12px; flex-wrap: wrap;">
           <input id="inpLookupId" class="form-input" style="max-width: 280px;" type="number" min="1"
-            placeholder="Nhập Scholarship ID" value="1" />
+            placeholder="Nhập Scholarship ID" value="1" onkeydown="if(event.key==='Enter') handleLookupScholarship()" />
           <button id="btnLookup" class="btn btn-primary" onclick="handleLookupScholarship()">
             Tra Cứu Dữ Liệu
           </button>
@@ -1343,26 +1343,109 @@
     ];
 
     /**
-     * Tra cứu thông tin suất học bổng với cơ chế Fallback RPC đa tầng
+     * Kiểm tra xem lỗi có phải do Suất học bổng không tồn tại trên Smart Contract (ScholarshipNotFound)
+     */
+    function isScholarshipNotFoundError(err) {
+      if (!err) return false;
+      if (err.data === "0xe5da5858" || (typeof err.data === "string" && err.data.includes("e5da5858"))) return true;
+      if (err.errorName === "ScholarshipNotFound") return true;
+      const str = (err.message || "") + " " + (err.shortMessage || "") + " " + (err.reason || "");
+      if (str.includes("ScholarshipNotFound") || str.includes("0xe5da5858")) return true;
+      return false;
+    }
+
+    /**
+     * Lấy contract đọc (read-only) Sepolia với cơ chế Fallback RPC đa tầng
+     */
+    async function getSepoliaReadContract() {
+      const validAddr = normalizeAddress(currentContractAddress) || DEFAULT_CONTRACT_ADDRESS;
+      if (provider && isCorrectNetwork) {
+        return new ethers.Contract(validAddr, PROJECT_CORE_ABI, provider);
+      }
+      for (const rpcUrl of SEPOLIA_RPC_LIST) {
+        try {
+          const p = new ethers.JsonRpcProvider(rpcUrl);
+          return new ethers.Contract(validAddr, PROJECT_CORE_ABI, p);
+        } catch (_) { }
+      }
+      const p = new ethers.JsonRpcProvider(SEPOLIA_RPC_LIST[0]);
+      return new ethers.Contract(validAddr, PROJECT_CORE_ABI, p);
+    }
+
+    /**
+     * Tra cứu thông tin suất học bổng với cơ chế Fallback RPC đa tầng và phân định lỗi Revert
      */
     async function getSepoliaScholarship(id) {
       const validAddr = normalizeAddress(currentContractAddress) || DEFAULT_CONTRACT_ADDRESS;
+      let lastError = null;
+
       // 1. Nếu ví MetaMask đang kết nối mạng Sepolia, đọc trực tiếp qua provider ví
       if (provider && isCorrectNetwork) {
         try {
           const c = new ethers.Contract(validAddr, PROJECT_CORE_ABI, provider);
           return await c.getScholarship(id);
-        } catch (_) { }
+        } catch (err) {
+          if (isScholarshipNotFoundError(err)) {
+            const notFoundErr = new Error(`ScholarshipNotFound: Suất #${id} không tồn tại trên hợp đồng.`);
+            notFoundErr.code = "SCHOLARSHIP_NOT_FOUND";
+            throw notFoundErr;
+          }
+          lastError = err;
+        }
       }
+
       // 2. Dự phòng: Thử lần lượt các RPC nodes công cộng có hỗ trợ CORS
       for (const rpcUrl of SEPOLIA_RPC_LIST) {
         try {
           const p = new ethers.JsonRpcProvider(rpcUrl);
           const c = new ethers.Contract(validAddr, PROJECT_CORE_ABI, p);
           return await c.getScholarship(id);
-        } catch (_) { }
+        } catch (err) {
+          if (isScholarshipNotFoundError(err)) {
+            const notFoundErr = new Error(`ScholarshipNotFound: Suất #${id} không tồn tại trên hợp đồng.`);
+            notFoundErr.code = "SCHOLARSHIP_NOT_FOUND";
+            throw notFoundErr;
+          }
+          lastError = err;
+        }
       }
-      throw new Error("Không thể kết nối đến mạng Sepolia qua các RPC nodes");
+
+      const rpcErr = new Error("Không thể kết nối đến mạng Sepolia qua các RPC nodes. Vui lòng kiểm tra kết nối internet.");
+      rpcErr.cause = lastError;
+      throw rpcErr;
+    }
+
+    /**
+     * Tra cứu thông tin mốc học bổng với cơ chế Fallback RPC đa tầng
+     */
+    async function getSepoliaMilestone(id, index) {
+      const validAddr = normalizeAddress(currentContractAddress) || DEFAULT_CONTRACT_ADDRESS;
+      let lastError = null;
+
+      // 1. Đọc qua provider ví nếu đang kết nối Sepolia
+      if (provider && isCorrectNetwork) {
+        try {
+          const c = new ethers.Contract(validAddr, PROJECT_CORE_ABI, provider);
+          return await c.getMilestone(id, index);
+        } catch (err) {
+          if (isScholarshipNotFoundError(err)) throw err;
+          lastError = err;
+        }
+      }
+
+      // 2. Dự phòng qua public RPC
+      for (const rpcUrl of SEPOLIA_RPC_LIST) {
+        try {
+          const p = new ethers.JsonRpcProvider(rpcUrl);
+          const c = new ethers.Contract(validAddr, PROJECT_CORE_ABI, p);
+          return await c.getMilestone(id, index);
+        } catch (err) {
+          if (isScholarshipNotFoundError(err)) throw err;
+          lastError = err;
+        }
+      }
+
+      throw lastError || new Error(`Không thể kết nối RPC để đọc Mốc ${index}`);
     }
 
     /**
@@ -3425,8 +3508,15 @@
         const statusNames = ["Pending", "Submitted", "Approved", "Disbursed"];
         const statusClasses = ["pending", "submitted", "approved", "disbursed"];
 
+        const readContract = await getSepoliaReadContract();
+
         for (let i = 0; i < count; i++) {
-          const m = await readContract.getMilestone(id, i);
+          let m;
+          try {
+            m = await getSepoliaMilestone(id, i);
+          } catch (_) {
+            m = await readContract.getMilestone(id, i);
+          }
           const st = Number(m.status);
 
           const row = document.createElement("tr");
@@ -3445,7 +3535,21 @@
         showStatus(`Đã tải thành công dữ liệu suất #${id}!`, "", "info");
       } catch (err) {
         console.error("Lỗi tra cứu:", err);
-        showStatus("Không tìm thấy dữ liệu suất học bổng!", `ID #${id} chưa tồn tại hoặc lỗi kết nối RPC.`, "error");
+        const resEl = document.getElementById("lookupResult");
+        if (resEl) resEl.style.display = "none";
+        if (err.code === "SCHOLARSHIP_NOT_FOUND" || isScholarshipNotFoundError(err)) {
+          showStatus(
+            "Suất học bổng không tồn tại!",
+            `Mã ID #${id} chưa từng được khởi tạo trên Smart Contract (Revert: ScholarshipNotFound). Vui lòng kiểm tra lại ID.`,
+            "warning"
+          );
+        } else {
+          showStatus(
+            "Lỗi kết nối RPC Sepolia!",
+            `Không thể tải dữ liệu suất #${id}. Chi tiết: ${err.shortMessage || err.message || "Lỗi mạng hoặc RPC timeout"}.`,
+            "error"
+          );
+        }
       }
     }
 

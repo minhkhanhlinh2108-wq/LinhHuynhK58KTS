@@ -527,6 +527,27 @@ Mỗi phiên làm việc có sử dụng AI cần được ghi chép theo cấu 
   - Toàn bộ hồ sơ tài liệu từ Lab 08 đến Lab 15 đồng bộ nhất quán 100%.
 
 ---
+
+### Khắc Phục Lỗi Chức Năng Tra Cứu Suất Học Bổng (Explorer Lookup Fix)
+
+- **Ngày thực hiện:** 21/10/2026
+- **Nhiệm vụ:** Điều tra và khắc phục triệt để lỗi không tra cứu được bất kỳ mã suất học bổng nào trên Tab Tra cứu (Explorer) của giao diện Web DApp; đảm bảo phân biệt rõ ràng giữa lỗi mạng RPC và lỗi hợp đồng revert `ScholarshipNotFound`.
+- **Prompt sử dụng:**
+  > *"SỬA LỖI CHUNG CỦA CHỨC NĂNG TRA CỨU TRONG TRUSTSCHOLAR. Tình trạng: Tôi không tra cứu được bất kỳ mã suất học bổng nào. Không chỉ riêng ID #28. Trang Tra cứu luôn báo không tìm thấy dữ liệu hoặc lỗi RPC. Mục tiêu: Khôi phục khả năng tra cứu mọi suất học bổng hợp lệ trên hợp đồng hiện tại, đồng thời giữ nguyên các chức năng khác..."*
+- **Phát hiện & Nguyên nhân gốc rễ (Root Cause):**
+  1. *Lỗi tham chiếu biến chưa khai báo (`ReferenceError`):* Trong hàm `handleLookupScholarship()` tại `web/index.html`, vòng lặp đọc chi tiết các mốc gọi hàm `await readContract.getMilestone(id, i)`. Tuy nhiên biến `readContract` chưa từng được khởi tạo trong hàm, khiến mọi lệnh tra cứu suất hợp lệ đều crash với lỗi `ReferenceError: readContract is not defined` ngay mốc đầu tiên và bị khối `catch` chặn hiển thị kết quả.
+  2. *Bị che giấu lỗi Revert on-chain:* Hàm `getSepoliaScholarship(id)` dùng `catch (_) {}` nuốt lỗi revert `ScholarshipNotFound` (selector `0xe5da5858`) khi tra cứu ID không tồn tại, khiến DApp duyệt hết danh sách RPC rồi thông báo sai lệch là *"Lỗi kết nối RPC"*.
+- **Quyết định sửa chữa của nhóm:**
+  - Bổ sung hàm `isScholarshipNotFoundError(err)` nhận diện chính xác 4-byte selector `0xe5da5858` và lỗi revert của `ProjectCore.sol`.
+  - Bổ sung `getSepoliaReadContract()` và `getSepoliaMilestone(id, index)` với cơ chế Fallback RPC đa tầng (MetaMask provider -> publicnode -> 1rpc -> rpc.sepolia.org).
+  - Khắc phục `handleLookupScholarship()`: Khởi tạo đầy đủ `readContract`, tích hợp `getSepoliaMilestone` và thêm sự kiện Enter cho ô nhập liệu.
+  - Phân loại rõ thông báo trên UI: Cảnh báo `warning` khi ID chưa khởi tạo on-chain vs lỗi `error` khi đứt kết nối mạng thật sự.
+- **Kết quả đạt được:**
+  - Đã khôi phục thành công 100% khả năng tra cứu mọi suất học bổng trên mạng Sepolia (kiểm thử thực tế thành công với Suất #1, #24, #27, #28).
+  - Tạo script kiểm thử tự động `scripts/test_lookup_explorer.mjs` xác nhận 100% test pass.
+  - Bộ kiểm thử Smart Contract của dự án giữ vững **97/97 tests pass**.
+
+---
 > 🔗 **Liên kết nhanh:** [Trang chủ README](../README.md) • [Kế hoạch đồ án](PROJECT_PLAN.md) • [Đặc tả nghiệp vụ](SPEC.md) • [Quy tắc kinh tế](ECONOMIC_RULES.md) • [Nhật ký AI](AI_JOURNAL.md) • [GitHub Repo](https://github.com/minhkhanhlinh2108-wq/LinhHuynhK58KTS)
 
 
