@@ -1438,8 +1438,25 @@
         if (v2Raw) {
           const parsed = JSON.parse(v2Raw);
           if (parsed && typeof parsed === "object") {
-            if (parsed.scholarships) Object.assign(_sharedRegistry.scholarships, parsed.scholarships);
-            if (parsed.students) Object.assign(_sharedRegistry.students, parsed.students);
+            if (parsed.scholarships && typeof parsed.scholarships === "object") {
+              for (const [id, item] of Object.entries(parsed.scholarships)) {
+                if (item && item.studentName) {
+                  _sharedRegistry.scholarships[String(id).trim()] = {
+                    scholarshipId: parseInt(id, 10) || id,
+                    studentAddress: (item.studentAddress || "").trim().toLowerCase(),
+                    studentName: String(item.studentName).trim(),
+                    updatedAt: item.updatedAt || ""
+                  };
+                }
+              }
+            }
+            if (parsed.students && typeof parsed.students === "object") {
+              for (const [addr, name] of Object.entries(parsed.students)) {
+                if (addr && name) {
+                  _sharedRegistry.students[addr.trim().toLowerCase()] = String(name).trim();
+                }
+              }
+            }
           }
         }
       } catch (_) { }
@@ -1452,7 +1469,10 @@
             if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
               for (const [addr, name] of Object.entries(parsed)) {
                 if (typeof addr === "string" && typeof name === "string" && name.trim()) {
-                  _sharedRegistry.students[addr.trim().toLowerCase()] = name.trim();
+                  const clean = addr.trim().toLowerCase();
+                  if (!_sharedRegistry.students[clean]) {
+                    _sharedRegistry.students[clean] = name.trim();
+                  }
                 }
               }
             }
@@ -1469,6 +1489,9 @@
       try {
         localStorage.setItem(REGISTRY_STORAGE_KEY, JSON.stringify(_sharedRegistry));
         localStorage.setItem(REGISTRY_KEY, JSON.stringify(_sharedRegistry.students));
+        for (const k of FALLBACK_REGISTRY_KEYS) {
+          try { localStorage.setItem(k, JSON.stringify(_sharedRegistry.students)); } catch (_) { }
+        }
         if (!silent) {
           window.dispatchEvent(new CustomEvent("trustscholar_names_updated", { detail: _sharedRegistry }));
         }
@@ -1480,6 +1503,7 @@
     /**
      * Đồng bộ dữ liệu dùng chung từ server (API / students.json)
      * Đảm bảo mọi máy tính hoặc trình duyệt khác đều đọc được dữ liệu ngay lần đầu!
+     * Không ghi đè tên sinh viên mà người dùng đã lưu mới hơn trong localStorage!
      */
     async function syncSharedRegistryFromServer() {
       loadCachedRegistry();
@@ -1507,24 +1531,32 @@
                   if (item && item.studentName) {
                     const cleanAddr = (item.studentAddress || "").trim().toLowerCase();
                     const cleanName = item.studentName.trim();
-                    _sharedRegistry.scholarships[String(id)] = {
-                      scholarshipId: parseInt(id, 10) || id,
-                      studentAddress: cleanAddr,
-                      studentName: cleanName,
-                      updatedAt: item.updatedAt || ""
-                    };
-                    if (cleanAddr) {
-                      _sharedRegistry.students[cleanAddr] = cleanName;
+                    const idKey = String(id).trim();
+                    // Chỉ bổ sung nếu chưa có trong registry hoặc chưa có tên để bảo toàn dữ liệu nhập mới
+                    if (!_sharedRegistry.scholarships[idKey] || !_sharedRegistry.scholarships[idKey].studentName) {
+                      _sharedRegistry.scholarships[idKey] = {
+                        scholarshipId: parseInt(idKey, 10) || idKey,
+                        studentAddress: cleanAddr,
+                        studentName: cleanName,
+                        updatedAt: item.updatedAt || ""
+                      };
+                      updated = true;
                     }
-                    updated = true;
+                    if (cleanAddr && !_sharedRegistry.students[cleanAddr]) {
+                      _sharedRegistry.students[cleanAddr] = cleanName;
+                      updated = true;
+                    }
                   }
                 }
               }
               if (data.students && typeof data.students === "object") {
                 for (const [addr, name] of Object.entries(data.students)) {
                   if (addr && name) {
-                    _sharedRegistry.students[addr.trim().toLowerCase()] = name.trim();
-                    updated = true;
+                    const cleanAddr = addr.trim().toLowerCase();
+                    if (!_sharedRegistry.students[cleanAddr]) {
+                      _sharedRegistry.students[cleanAddr] = name.trim();
+                      updated = true;
+                    }
                   }
                 }
               }
@@ -1542,26 +1574,51 @@
 
     /**
      * Tra cứu tên sinh viên theo Scholarship ID và đối soát với địa chỉ ví on-chain.
-     * Trả về string tên sinh viên nếu tìm thấy, hoặc null nếu không có.
-     * Tuyệt đối không tự suy đoán tên và không thay thế bằng tên của suất khác.
+     * Cơ chế tìm kiếm nhất quán, chuẩn hóa:
+     * - Tra cứu theo ví thụ hưởng on-chain (cleanAddr) qua lookupStudentName(cleanAddr) -> Ưu tiên tên vừa nhập ở Bước 1
+     * - Tra cứu theo Scholarship ID đã lưu trong _sharedRegistry.scholarships
+     * - Khi tìm thấy tên hợp lệ, tự động đồng bộ liên kết (scholarshipId, cleanAddr, studentName)
+     * Trả về string tên sinh viên nếu tìm thấy, hoặc null nếu chưa có dữ liệu tên.
      */
     function lookupStudentNameForScholarship(scholarshipId, studentAddrOnChain) {
       if (!scholarshipId && !studentAddrOnChain) return null;
       const cleanAddr = studentAddrOnChain ? studentAddrOnChain.trim().toLowerCase() : "";
+      const idKey = (scholarshipId !== undefined && scholarshipId !== null && String(scholarshipId).trim() !== "")
+        ? String(scholarshipId).trim()
+        : "";
 
-      // 1. Tra cứu chính xác theo Scholarship ID đã được gắn lúc tạo suất
-      if (scholarshipId !== undefined && scholarshipId !== null && scholarshipId !== "") {
-        const entry = _sharedRegistry.scholarships[String(scholarshipId)];
-        if (entry && entry.studentName) {
-          // Bắt buộc ví trong registry phải trùng khớp với ví thụ hưởng on-chain của suất này
+      let foundName = null;
+
+      // 1. Tra cứu theo địa chỉ ví thụ hưởng on-chain trước (đảm bảo tên vừa nhập ở Bước 1 cho ví này được ưu tiên)
+      if (cleanAddr) {
+        foundName = lookupStudentName(cleanAddr);
+      }
+
+      // 2. Nếu chưa tìm thấy theo ví, tra cứu theo Scholarship ID trong _sharedRegistry.scholarships
+      if (!foundName && idKey) {
+        const entry = _sharedRegistry.scholarships[idKey];
+        if (entry && entry.studentName && entry.studentName.trim()) {
           if (!cleanAddr || !entry.studentAddress || entry.studentAddress.toLowerCase() === cleanAddr) {
-            return entry.studentName.trim();
+            foundName = entry.studentName.trim();
           }
         }
       }
 
-      // Tuyệt đối không mượn tên từ các suất khác khi suất này chưa đăng ký tên
-      return null;
+      // 3. Nếu tìm thấy tên hợp lệ và có đủ idKey + cleanAddr, tự động đồng bộ vào _sharedRegistry.scholarships
+      if (foundName && idKey && cleanAddr) {
+        const existing = _sharedRegistry.scholarships[idKey];
+        if (!existing || existing.studentName !== foundName || existing.studentAddress !== cleanAddr) {
+          _sharedRegistry.scholarships[idKey] = {
+            scholarshipId: parseInt(idKey, 10) || idKey,
+            studentAddress: cleanAddr,
+            studentName: foundName,
+            updatedAt: new Date().toISOString()
+          };
+          saveCachedRegistry(true);
+        }
+      }
+
+      return foundName || null;
     }
 
     /**
@@ -1572,11 +1629,13 @@
       const clean = walletAddress.trim().toLowerCase();
       if (!/^0x[0-9a-f]{40}$/.test(clean)) return null;
 
-      if (_sharedRegistry.students[clean]) return _sharedRegistry.students[clean];
+      if (_sharedRegistry.students[clean] && _sharedRegistry.students[clean].trim()) {
+        return _sharedRegistry.students[clean].trim();
+      }
 
       for (const entry of Object.values(_sharedRegistry.scholarships)) {
-        if (entry && entry.studentAddress === clean && entry.studentName) {
-          return entry.studentName;
+        if (entry && entry.studentAddress && entry.studentAddress.toLowerCase() === clean && entry.studentName && entry.studentName.trim()) {
+          return entry.studentName.trim();
         }
       }
 
@@ -1605,8 +1664,9 @@
 
       // 1. Cập nhật In-memory tức thì
       if (scholarshipId !== undefined && scholarshipId !== null && scholarshipId !== "") {
-        _sharedRegistry.scholarships[String(scholarshipId)] = {
-          scholarshipId: parseInt(scholarshipId, 10) || scholarshipId,
+        const idKey = String(scholarshipId).trim();
+        _sharedRegistry.scholarships[idKey] = {
+          scholarshipId: parseInt(idKey, 10) || idKey,
           studentAddress: cleanAddr,
           studentName: cleanName,
           updatedAt: new Date().toISOString()
@@ -1614,12 +1674,20 @@
       }
       _sharedRegistry.students[cleanAddr] = cleanName;
 
+      // Cập nhật tất cả các suất khác cùng thuộc ví sinh viên này
+      for (const [id, entry] of Object.entries(_sharedRegistry.scholarships)) {
+        if (entry && entry.studentAddress && entry.studentAddress.toLowerCase() === cleanAddr) {
+          entry.studentName = cleanName;
+          entry.updatedAt = new Date().toISOString();
+        }
+      }
+
       // 2. Lưu cache localStorage tức thì
       saveCachedRegistry();
 
-      // 3. Gửi lên Server API trong luồng nền (non-blocking) để cập nhật students.json trên đĩa
+      // 3. Gửi lên Server API trong luồng nền (non-blocking) để cập nhật students.json trên đĩa (nếu có server hỗ trợ)
       const payload = {
-        scholarshipId: scholarshipId || null,
+        scholarshipId: scholarshipId ? (parseInt(scholarshipId, 10) || scholarshipId) : null,
         studentAddress: cleanAddr,
         studentName: cleanName
       };
@@ -1663,8 +1731,20 @@
       const trimmedName = (name || "").trim();
       if (trimmedName) {
         _sharedRegistry.students[clean] = trimmedName;
+        // Cập nhật tất cả các suất học bổng thuộc về ví sinh viên này trong registry
+        for (const [id, entry] of Object.entries(_sharedRegistry.scholarships)) {
+          if (entry && entry.studentAddress && entry.studentAddress.toLowerCase() === clean) {
+            entry.studentName = trimmedName;
+            entry.updatedAt = new Date().toISOString();
+          }
+        }
       } else if (shouldDeleteIfEmpty) {
         delete _sharedRegistry.students[clean];
+        for (const [id, entry] of Object.entries(_sharedRegistry.scholarships)) {
+          if (entry && entry.studentAddress && entry.studentAddress.toLowerCase() === clean) {
+            delete _sharedRegistry.scholarships[id];
+          }
+        }
       } else {
         return;
       }
@@ -1841,6 +1921,9 @@
           nameInput.value = foundName;
         }
         const displayName = currentTypedName || foundName;
+        if (currentTypedName && currentTypedName !== foundName) {
+          registerStudentName(lowerAddr, currentTypedName);
+        }
         if (nameBox && nameVal) {
           nameVal.textContent = displayName;
           nameBox.classList.add("found");
@@ -2009,12 +2092,50 @@
 
       const seq = ++_submitCardSeq;
 
+      // Xóa ngay tên và dữ liệu của suất trước đó, không được giữ tên của suất trước
+      if (nameVal) {
+        nameVal.textContent = "Đang tra cứu...";
+        nameVal.style.color = "var(--text-dim)";
+        nameVal.style.fontWeight = "500";
+      }
+      if (addrVal) addrVal.textContent = "—";
+      if (idVal) idVal.textContent = `#${id}`;
+      if (noticeEl) noticeEl.style.display = "none";
+      if (matchNotice) matchNotice.style.display = "none";
+      if (infoBox) {
+        infoBox.style.display = "flex";
+        infoBox.classList.remove("found");
+      }
+
+      // Tra cứu tức thì trong cache nếu đã có dữ liệu suất này (Zero-delay UI)
+      const cachedEntry = _sharedRegistry.scholarships[String(id)];
+      if (cachedEntry && cachedEntry.studentName) {
+        if (nameVal) {
+          nameVal.textContent = cachedEntry.studentName;
+          nameVal.style.color = "var(--accent-primary)";
+          nameVal.style.fontWeight = "700";
+        }
+        if (addrVal && cachedEntry.studentAddress) {
+          addrVal.textContent = cachedEntry.studentAddress;
+        }
+        if (infoBox) infoBox.classList.add("found");
+      }
+
       try {
         let s = null;
         try {
           s = await getSepoliaScholarship(id);
         } catch (fetchErr) {
           if (seq !== _submitCardSeq) return;
+          // Nếu có trong cache, tiếp tục hiển thị
+          if (cachedEntry && cachedEntry.studentName) {
+            if (noticeEl) {
+              noticeEl.style.display = "block";
+              noticeEl.style.color = "var(--accent-warning)";
+              noticeEl.innerHTML = `ℹ️ Đang hiển thị dữ liệu lưu cục bộ cho Suất #${id}. (RPC Sepolia đang gián đoạn)`;
+            }
+            return;
+          }
           if (infoBox) infoBox.style.display = "none";
           if (matchNotice) {
             matchNotice.style.display = "block";
@@ -3335,23 +3456,6 @@
       inpStudentNameEl.addEventListener("change", onStudentNameInput);
     }
 
-    // Lắng nghe sự kiện storage để đồng bộ tức thì giữa các tab/cửa sổ cùng trình duyệt
-    window.addEventListener("storage", (e) => {
-      if (!e.key || e.key === REGISTRY_KEY || FALLBACK_REGISTRY_KEYS.includes(e.key)) {
-        onStudentAddressInput();
-        updateSubmitCardInfo();
-        autoLoadStudentCheckInfo();
-        checkFundStatus();
-      }
-    });
-
-    // Lắng nghe sự kiện nội bộ cập nhật tên trên cùng cửa sổ/tab
-    window.addEventListener("trustscholar_names_updated", () => {
-      onStudentAddressInput();
-      updateSubmitCardInfo();
-      autoLoadStudentCheckInfo();
-    });
-
     const inpFundIdEl = document.getElementById("inpFundScholarshipId");
     if (inpFundIdEl) {
       inpFundIdEl.addEventListener("input", checkFundStatus);
@@ -3389,11 +3493,12 @@
 
     // Lắng nghe sự kiện storage để đồng bộ tức thời giữa các tab/cửa sổ khác nhau trên cùng máy
     window.addEventListener("storage", (event) => {
-      if (event.key === REGISTRY_STORAGE_KEY || event.key === REGISTRY_KEY) {
+      if (!event.key || event.key === REGISTRY_STORAGE_KEY || event.key === REGISTRY_KEY || FALLBACK_REGISTRY_KEYS.includes(event.key)) {
         loadCachedRegistry();
         updateSubmitCardInfo();
         autoLoadStudentCheckInfo();
         onStudentAddressInput();
+        checkFundStatus();
       }
     });
 
@@ -3402,7 +3507,17 @@
       updateSubmitCardInfo();
       autoLoadStudentCheckInfo();
       onStudentAddressInput();
+      checkFundStatus();
     });
+
+    // Xuất các hàm registry lên window để hỗ trợ kiểm thử và tương thích tự động
+    window.registerScholarshipStudentSync = registerScholarshipStudentSync;
+    window.registerStudentName = registerStudentName;
+    window.lookupStudentName = lookupStudentName;
+    window.lookupStudentNameForScholarship = lookupStudentNameForScholarship;
+    window.syncSharedRegistryFromServer = syncSharedRegistryFromServer;
+    window.loadCachedRegistry = loadCachedRegistry;
+    window.saveCachedRegistry = saveCachedRegistry;
 
     if (window.ethereum) {
       window.ethereum.on("accountsChanged", async (accounts) => {
