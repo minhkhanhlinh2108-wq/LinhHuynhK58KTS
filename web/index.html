@@ -20,81 +20,81 @@
 
   <style>
     :root {
-      /* Theme: LIGHT MODE (Mặc định) */
-      --bg-primary: #f8fafc;
-      --bg-secondary: #f1f5f9;
-      --bg-header: rgba(255, 255, 255, 0.9);
-      --bg-card: #ffffff;
-      --bg-card-hover: #fcfcfd;
+      /* Theme: LIGHT MODE (Mặc định) — Minh bạch học bổng – Chắp cánh tri thức */
+      --bg-primary: #f5f8ff;
+      --bg-secondary: #edf2fc;
+      --bg-header: rgba(255, 255, 255, 0.92);
+      --bg-card: rgba(255, 255, 255, 0.94);
+      --bg-card-hover: #ffffff;
       --bg-input: #ffffff;
-      --bg-box: #f8fafc;
-      --bg-footer: #ffffff;
+      --bg-box: #f8faff;
+      --bg-footer: rgba(255, 255, 255, 0.94);
 
-      --border-color: #e2e8f0;
+      --border-color: #dbe4f6;
       --border-input: #cbd5e1;
-      --border-focus: #4f46e5;
+      --border-focus: #4338ca;
 
       --text-main: #0f172a;
-      --text-muted: #475569;
+      --text-muted: #334155;
       --text-dim: #64748b;
 
-      --accent-primary: #4f46e5;
-      --accent-primary-hover: #4338ca;
-      --accent-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%);
+      --accent-primary: #4338ca;
+      --accent-primary-hover: #3730a3;
+      --accent-gradient: linear-gradient(135deg, #3730a3 0%, #4f46e5 45%, #0284c7 100%);
       --accent-success: #059669;
       --accent-warning: #d97706;
       --accent-danger: #dc2626;
       --accent-info: #0284c7;
 
-      --brand-title-color: linear-gradient(180deg, #0f172a 0%, #334155 100%);
-      --pill-bg: rgba(79, 70, 229, 0.08);
-      --pill-color: #4338ca;
-      --pill-border: rgba(79, 70, 229, 0.2);
+      --brand-title-color: linear-gradient(135deg, #1e1b4b 0%, #3730a3 50%, #0284c7 100%);
+      --pill-bg: rgba(67, 56, 202, 0.08);
+      --pill-color: #3730a3;
+      --pill-border: rgba(67, 56, 202, 0.22);
 
       --radius-sm: 8px;
       --radius-md: 14px;
       --radius-lg: 20px;
       --radius-full: 9999px;
 
-      --shadow-card: 0 4px 20px -2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04);
-      --shadow-glow: 0 4px 18px rgba(79, 70, 229, 0.25);
+      --shadow-card: 0 10px 25px -5px rgba(67, 56, 202, 0.07), 0 2px 6px rgba(15, 23, 42, 0.04);
+      --shadow-glow: 0 4px 18px rgba(67, 56, 202, 0.25);
       --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     [data-theme="dark"] {
-      /* Giao diện Tối (Dark Mode) */
-      --bg-primary: #0b0f19;
-      --bg-secondary: #111827;
-      --bg-header: rgba(11, 15, 25, 0.85);
-      --bg-card: rgba(17, 24, 39, 0.75);
-      --bg-card-hover: rgba(31, 41, 55, 0.85);
-      --bg-input: rgba(0, 0, 0, 0.35);
-      --bg-box: rgba(0, 0, 0, 0.35);
-      --bg-footer: rgba(11, 15, 25, 0.9);
+      /* Giao diện Tối (Dark Mode) — Huyền bí học thuật & Ánh sáng Blockchain */
+      --bg-primary: #0a0e1c;
+      --bg-secondary: #0f162b;
+      --bg-header: rgba(10, 14, 28, 0.9);
+      --bg-card: rgba(15, 22, 43, 0.85);
+      --bg-card-hover: rgba(22, 32, 60, 0.9);
+      --bg-input: rgba(6, 10, 22, 0.6);
+      --bg-box: rgba(8, 12, 26, 0.6);
+      --bg-footer: rgba(10, 14, 28, 0.95);
 
-      --border-color: rgba(255, 255, 255, 0.08);
-      --border-input: rgba(255, 255, 255, 0.12);
-      --border-focus: #6366f1;
+      --border-color: rgba(99, 102, 241, 0.2);
+      --border-input: rgba(255, 255, 255, 0.15);
+      --border-focus: #818cf8;
 
-      --text-main: #f3f4f6;
-      --text-muted: #9ca3af;
-      --text-dim: #6b7280;
+      --text-main: #f8fafc;
+      --text-muted: #cbd5e1;
+      --text-dim: #94a3b8;
 
-      --accent-primary: #6366f1;
-      --accent-primary-hover: #4f46e5;
-      --accent-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+      --accent-primary: #818cf8;
+      --accent-primary-hover: #6366f1;
+      --accent-gradient: linear-gradient(135deg, #4f46e5 0%, #6366f1 45%, #38bdf8 100%);
       --accent-success: #10b981;
       --accent-warning: #f59e0b;
       --accent-danger: #ef4444;
       --accent-info: #06b6d4;
 
-      --brand-title-color: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
-      --pill-bg: rgba(59, 130, 246, 0.12);
-      --pill-color: #93c5fd;
-      --pill-border: rgba(59, 130, 246, 0.25);
+      --brand-title-color: linear-gradient(135deg, #ffffff 0%, #c7d2fe 55%, #38bdf8 100%);
+      --pill-bg: rgba(99, 102, 241, 0.15);
+      --pill-color: #c7d2fe;
+      --pill-border: rgba(99, 102, 241, 0.35);
 
-      --shadow-card: 0 10px 30px -10px rgba(0, 0, 0, 0.5), 0 0 1px 1px rgba(255, 255, 255, 0.05);
-      --shadow-glow: 0 0 25px rgba(99, 102, 241, 0.25);
+      --shadow-card: 0 10px 30px -10px rgba(0, 0, 0, 0.6), 0 0 1px 1px rgba(99, 102, 241, 0.15);
+      --shadow-glow: 0 0 25px rgba(99, 102, 241, 0.3);
     }
 
     * {
@@ -106,6 +106,14 @@
     body {
       font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
       background-color: var(--bg-primary);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.1) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(56, 189, 248, 0.12) 0px, transparent 50%),
+        radial-gradient(at 50% 100%, rgba(129, 140, 248, 0.08) 0px, transparent 50%),
+        url("assets/scholarship-bg-pattern.svg");
+      background-repeat: repeat;
+      background-size: auto, auto, auto, 600px 600px;
+      background-attachment: fixed;
       color: var(--text-main);
       line-height: 1.6;
       min-height: 100vh;
@@ -116,15 +124,15 @@
       transition: background-color 0.25s ease, color 0.25s ease;
     }
 
-    /* Ambient background gradient orbs */
+    /* Ambient background gradient orbs (Glows for academic atmosphere) */
     body::before {
       content: "";
       position: fixed;
-      top: -20%;
-      left: 15%;
-      width: 600px;
-      height: 600px;
-      background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, rgba(248, 250, 252, 0) 70%);
+      top: -15%;
+      left: 10%;
+      width: 650px;
+      height: 650px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, rgba(248, 250, 252, 0) 70%);
       pointer-events: none;
       z-index: 0;
     }
@@ -133,20 +141,29 @@
       content: "";
       position: fixed;
       bottom: -15%;
-      right: 10%;
-      width: 500px;
-      height: 500px;
-      background: radial-gradient(circle, rgba(236, 72, 153, 0.06) 0%, rgba(248, 250, 252, 0) 70%);
+      right: 5%;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.1) 0%, rgba(248, 250, 252, 0) 70%);
       pointer-events: none;
       z-index: 0;
     }
 
+    [data-theme="dark"] body {
+      background-color: var(--bg-primary);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.16) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(14, 165, 233, 0.14) 0px, transparent 50%),
+        radial-gradient(at 50% 100%, rgba(79, 70, 229, 0.12) 0px, transparent 50%),
+        url("assets/scholarship-bg-pattern.svg");
+    }
+
     [data-theme="dark"] body::before {
-      background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(11, 15, 25, 0) 70%);
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.2) 0%, rgba(11, 15, 25, 0) 70%);
     }
 
     [data-theme="dark"] body::after {
-      background: radial-gradient(circle, rgba(236, 72, 153, 0.12) 0%, rgba(11, 15, 25, 0) 70%);
+      background: radial-gradient(circle, rgba(14, 165, 233, 0.16) 0%, rgba(11, 15, 25, 0) 70%);
     }
 
     .container {
@@ -168,7 +185,7 @@
       top: 0;
       z-index: 50;
       padding: 16px 0;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      box-shadow: 0 2px 10px rgba(67, 56, 202, 0.04);
       transition: background-color 0.25s ease, border-color 0.25s ease;
     }
 
@@ -194,7 +211,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 22px;
+      font-size: 24px;
       box-shadow: var(--shadow-glow);
     }
 
@@ -236,15 +253,15 @@
     }
 
     .badge-sepolia {
-      background: rgba(79, 70, 229, 0.08);
-      border-color: rgba(79, 70, 229, 0.25);
+      background: rgba(67, 56, 202, 0.08);
+      border-color: rgba(67, 56, 202, 0.25);
       color: var(--accent-primary);
     }
 
     [data-theme="dark"] .badge-sepolia {
-      background: rgba(99, 102, 241, 0.15);
+      background: rgba(99, 102, 241, 0.18);
       border-color: rgba(99, 102, 241, 0.35);
-      color: #a5b4fc;
+      color: #c7d2fe;
     }
 
     .badge-dot {
@@ -281,12 +298,12 @@
     .btn-primary {
       background: var(--accent-gradient);
       color: #ffffff;
-      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
+      box-shadow: 0 4px 14px rgba(67, 56, 202, 0.3);
     }
 
     .btn-primary:hover:not(:disabled) {
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(79, 70, 229, 0.45);
+      box-shadow: 0 6px 20px rgba(67, 56, 202, 0.45);
     }
 
     .btn-secondary {
@@ -347,6 +364,8 @@
       gap: 12px;
       flex-wrap: wrap;
       font-size: 0.85rem;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
     }
 
     .config-address {
@@ -381,11 +400,179 @@
       flex-wrap: wrap;
     }
 
+    /* Banner Minh Họa: Minh Bạch Học Bổng – Chắp Cánh Tri Thức */
+    .scholarship-hero-banner {
+      margin-top: 18px;
+      margin-bottom: 4px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.94) 0%, rgba(238, 244, 255, 0.92) 50%, rgba(226, 238, 255, 0.88) 100%);
+      border: 1px solid rgba(199, 210, 254, 0.8);
+      border-radius: var(--radius-lg);
+      padding: 22px 26px;
+      box-shadow: 0 10px 25px -5px rgba(67, 56, 202, 0.08), 0 4px 12px rgba(2, 132, 199, 0.05);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      position: relative;
+      overflow: hidden;
+      transition: all var(--transition-fast);
+    }
+
+    .scholarship-hero-banner::before {
+      content: "";
+      position: absolute;
+      top: -60px;
+      right: 15%;
+      width: 280px;
+      height: 280px;
+      background: radial-gradient(circle, rgba(129, 140, 248, 0.16) 0%, rgba(255, 255, 255, 0) 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    [data-theme="dark"] .scholarship-hero-banner {
+      background: linear-gradient(135deg, rgba(17, 24, 48, 0.92) 0%, rgba(13, 19, 39, 0.9) 50%, rgba(10, 15, 30, 0.95) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.28);
+      box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.6), 0 0 20px rgba(99, 102, 241, 0.15);
+    }
+
+    [data-theme="dark"] .scholarship-hero-banner::before {
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.22) 0%, rgba(11, 15, 25, 0) 70%);
+    }
+
+    .hero-banner-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-content {
+      flex: 1;
+      max-width: 680px;
+    }
+
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: var(--radius-full);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      background: rgba(67, 56, 202, 0.08);
+      color: var(--accent-primary);
+      border: 1px solid rgba(67, 56, 202, 0.2);
+      margin-bottom: 8px;
+    }
+
+    [data-theme="dark"] .hero-tag {
+      background: rgba(99, 102, 241, 0.16);
+      color: #c7d2fe;
+      border-color: rgba(99, 102, 241, 0.35);
+    }
+
+    .hero-title {
+      font-size: 1.55rem;
+      font-weight: 800;
+      line-height: 1.25;
+      letter-spacing: -0.02em;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+
+    .hero-title-accent {
+      background: linear-gradient(135deg, #4338ca 0%, #6366f1 40%, #0284c7 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    [data-theme="dark"] .hero-title-accent {
+      background: linear-gradient(135deg, #818cf8 0%, #a5b4fc 40%, #38bdf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+      margin-bottom: 14px;
+    }
+
+    .hero-highlights {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .hero-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+      font-size: 0.78rem;
+      transition: all var(--transition-fast);
+    }
+
+    .hero-chip:hover {
+      transform: translateY(-1px);
+      border-color: var(--border-focus);
+      box-shadow: 0 4px 10px rgba(67, 56, 202, 0.1);
+    }
+
+    .hero-chip-icon {
+      font-size: 1.15rem;
+      line-height: 1;
+    }
+
+    .hero-chip-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.25;
+    }
+
+    .hero-chip-text strong {
+      color: var(--text-main);
+      font-size: 0.78rem;
+    }
+
+    .hero-chip-text small {
+      color: var(--text-dim);
+      font-size: 0.7rem;
+    }
+
+    .hero-art-wrapper {
+      flex: 0 0 320px;
+      max-width: 340px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .hero-art-img {
+      width: 100%;
+      height: auto;
+      max-height: 200px;
+      filter: drop-shadow(0 8px 16px rgba(67, 56, 202, 0.12));
+      transition: transform 0.3s ease;
+    }
+
+    .hero-art-img:hover {
+      transform: scale(1.02);
+    }
+
     /* Tabs */
     .tab-navigation {
       display: flex;
       gap: 8px;
-      margin: 24px 0 20px 0;
+      margin: 20px 0 20px 0;
       border-bottom: 1px solid var(--border-color);
       padding-bottom: 8px;
       overflow-x: auto;
@@ -414,16 +601,18 @@
     }
 
     .tab-btn.active {
-      color: var(--accent-primary);
-      background: rgba(79, 70, 229, 0.1);
-      border: 1px solid rgba(79, 70, 229, 0.3);
+      color: #ffffff;
+      background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%);
+      border: 1px solid #3730a3;
+      box-shadow: 0 4px 12px rgba(67, 56, 202, 0.25);
       font-weight: 700;
     }
 
     [data-theme="dark"] .tab-btn.active {
       color: #ffffff;
-      background: rgba(99, 102, 241, 0.18);
-      border: 1px solid rgba(99, 102, 241, 0.35);
+      background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+      border: 1px solid #818cf8;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);
     }
 
     /* Card Panels */
@@ -456,8 +645,8 @@
 
     .card {
       background: var(--bg-card);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       border: 1px solid var(--border-color);
       border-radius: var(--radius-lg);
       padding: 24px;
@@ -465,7 +654,11 @@
       display: flex;
       flex-direction: column;
       gap: 16px;
-      transition: background-color 0.25s ease, border-color 0.25s ease;
+      transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .card:hover {
+      border-color: rgba(99, 102, 241, 0.35);
     }
 
     .card-header {
@@ -522,11 +715,13 @@
       color: var(--text-muted);
       transition: all var(--transition-fast);
     }
+
     .student-name-box.found {
-      background: rgba(79, 70, 229, 0.06);
-      border-color: rgba(79, 70, 229, 0.25);
+      background: rgba(67, 56, 202, 0.06);
+      border-color: rgba(67, 56, 202, 0.25);
       color: var(--text-main);
     }
+
     .student-name-box .name-value {
       font-weight: 700;
       color: var(--accent-primary);
@@ -547,17 +742,19 @@
     .form-input:focus {
       outline: none;
       border-color: var(--border-focus);
-      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+      box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.15);
     }
 
     /* Status & Feedback box */
     #statusNotification {
-      margin: 20px 0;
+      margin: 16px 0;
       padding: 16px 20px;
       border-radius: var(--radius-md);
       background: var(--bg-card);
       border: 1px solid var(--border-color);
       box-shadow: var(--shadow-card);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       display: none;
     }
 
@@ -571,7 +768,7 @@
     .status-spinner {
       width: 22px;
       height: 22px;
-      border: 3px solid rgba(79, 70, 229, 0.2);
+      border: 3px solid rgba(67, 56, 202, 0.2);
       border-top-color: var(--accent-primary);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
@@ -714,25 +911,25 @@
     [data-theme="dark"] .status-pill.pending {
       background: rgba(156, 163, 175, 0.15);
       color: #9ca3af;
-      border: none;
+      border: 1px solid rgba(156, 163, 175, 0.3);
     }
 
     [data-theme="dark"] .status-pill.submitted {
       background: rgba(245, 158, 11, 0.15);
       color: #fbbf24;
-      border: none;
+      border: 1px solid rgba(245, 158, 11, 0.35);
     }
 
     [data-theme="dark"] .status-pill.approved {
       background: rgba(6, 182, 212, 0.15);
       color: #67e8f9;
-      border: none;
+      border: 1px solid rgba(6, 182, 212, 0.35);
     }
 
     [data-theme="dark"] .status-pill.disbursed {
       background: rgba(16, 185, 129, 0.15);
       color: #34d399;
-      border: none;
+      border: 1px solid rgba(16, 185, 129, 0.35);
     }
 
     /* Footer */
@@ -743,6 +940,8 @@
       font-size: 0.82rem;
       color: var(--text-dim);
       background: var(--bg-footer);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       transition: background-color 0.25s ease;
     }
 
@@ -755,6 +954,19 @@
     }
 
     /* Responsive */
+    @media (max-width: 960px) {
+      .hero-banner-inner {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .hero-art-wrapper {
+        width: 100%;
+        max-width: 280px;
+        margin: 0 auto;
+      }
+    }
+
     @media (max-width: 860px) {
       .grid-2 {
         grid-template-columns: 1fr;
@@ -833,15 +1045,18 @@
       <div class="config-address">
         <span>📍 Smart Contract:</span>
         <span id="contractAddressDisplay" class="code-pill">0x04B0e154Becb4E98b00E06DF86605A70f3F914c2</span>
-        <button id="btnEditContract" class="btn btn-secondary" style="padding: 3px 8px; font-size: 0.75rem;">Đổi Address</button>
+        <button id="btnEditContract" class="btn btn-secondary" style="padding: 3px 8px; font-size: 0.75rem;">Đổi
+          Address</button>
       </div>
       <div class="config-address" style="margin-left: auto;">
         <span>🌐 Backend Server:</span>
-        <span id="backendServerStatusBadge" class="badge" style="font-size: 0.75rem; padding: 3px 8px; border: 1px solid var(--accent-success); color: var(--accent-success); background: rgba(16,185,129,0.1);">
+        <span id="backendServerStatusBadge" class="badge"
+          style="font-size: 0.75rem; padding: 3px 8px; border: 1px solid var(--accent-success); color: var(--accent-success); background: rgba(16,185,129,0.1);">
           <span id="backendServerDot" class="badge-dot" style="background: var(--accent-success);"></span>
           <span id="backendServerUrlText">Đang kết nối...</span>
         </span>
-        <button id="btnConfigApiUrl" class="btn btn-secondary" style="padding: 3px 8px; font-size: 0.75rem;" title="Cấu hình URL API khi truy cập từ máy khác">Đổi URL API</button>
+        <button id="btnConfigApiUrl" class="btn btn-secondary" style="padding: 3px 8px; font-size: 0.75rem;"
+          title="Cấu hình URL API khi truy cập từ máy khác">Đổi URL API</button>
       </div>
       <div
         style="display: flex; gap: 8px; align-items: center; font-size: 0.8rem; color: var(--text-dim); flex-wrap: wrap;">
@@ -864,6 +1079,50 @@
         <div id="statusAction"></div>
       </div>
     </div>
+
+    <!-- Banner Minh Họa: Minh Bạch Học Bổng – Chắp Cánh Tri Thức -->
+    <section class="scholarship-hero-banner" aria-label="Chủ đề học bổng">
+      <div class="hero-banner-inner">
+        <div class="hero-content">
+          <div class="hero-tag">
+            <span class="hero-tag-icon">🎓</span>
+            <span>NỀN TẢNG HỌC BỔNG MINH BẠCH BLOCKCHAIN • SEPOLIA TESTNET</span>
+          </div>
+          <h2 class="hero-title">
+            Minh Bạch Học Bổng <span class="hero-title-accent">— Chắp Cánh Tri Thức</span>
+          </h2>
+          <p class="hero-subtitle">
+            Hệ thống giải ngân học bổng phi tập trung ứng dụng Smart Contract Escrow tự động hóa. Mỗi mốc học tập được thẩm định minh bạch on-chain trước khi giải ngân trực tiếp đến sinh viên thụ hưởng.
+          </p>
+          <div class="hero-highlights">
+            <div class="hero-chip">
+              <span class="hero-chip-icon">🛡️</span>
+              <div class="hero-chip-text">
+                <strong>Escrow Phi Lưu Ký</strong>
+                <small>Bảo toàn quỹ học bổng</small>
+              </div>
+            </div>
+            <div class="hero-chip">
+              <span class="hero-chip-icon">📜</span>
+              <div class="hero-chip-text">
+                <strong>Minh Chứng On-Chain</strong>
+                <small>Bằng chứng học tập bất biến</small>
+              </div>
+            </div>
+            <div class="hero-chip">
+              <span class="hero-chip-icon">⚡</span>
+              <div class="hero-chip-text">
+                <strong>Giải Ngân Theo Mốc</strong>
+                <small>Trực tiếp vào ví sinh viên</small>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="hero-art-wrapper">
+          <img src="assets/hero-banner-art.svg" alt="Minh bạch học bổng — Chắp cánh tri thức" class="hero-art-img" width="340" height="200" />
+        </div>
+      </div>
+    </section>
 
     <!-- Role-based Navigation Tabs -->
     <nav class="tab-navigation">
@@ -888,7 +1147,7 @@
         <div class="card">
           <div class="card-header">
             <div>
-              <h2 class="card-title">✨ Bước 1: Tạo Suất Học Bổng</h2>
+              <h2 class="card-title">✨ Tạo Suất Học Bổng</h2>
               <p class="card-desc">Bắt buộc thực hiện trước khi nạp tiền. Khởi tạo Escrow cam kết theo các mốc học tập.
               </p>
             </div>
@@ -896,9 +1155,8 @@
 
           <div class="form-group">
             <label class="form-label" for="inpStudentAddress">Địa chỉ ví Sinh viên (Student Wallet)</label>
-            <input id="inpStudentAddress" class="form-input" type="text" placeholder="0x..."
-              autocomplete="off" spellcheck="false"
-              oninput="onStudentAddressInput()" />
+            <input id="inpStudentAddress" class="form-input" type="text" placeholder="0x..." autocomplete="off"
+              spellcheck="false" oninput="onStudentAddressInput()" />
             <span class="form-hint">Ví dụ: 0x70997970C51812dc3A010C7d01b50e0d17dc79C8</span>
             <!-- Hiển thị tên sinh viên tra cứu từ registry -->
             <div id="sponsorStudentNameBox" class="student-name-box" style="display:none;">
@@ -909,10 +1167,10 @@
 
           <div class="form-group">
             <label class="form-label" for="inpStudentName">Tên sinh viên thụ hưởng</label>
-            <input id="inpStudentName" class="form-input" type="text"
-              placeholder="VD: Nguyễn Văn A (hoặc tên bất kỳ)"
+            <input id="inpStudentName" class="form-input" type="text" placeholder="VD: Nguyễn Văn A (hoặc tên bất kỳ)"
               oninput="onStudentNameInput()" />
-            <span class="form-hint">Tên sinh viên được lưu gắn với Suất học bổng và địa chỉ ví, tự động hiển thị ngay tại Bước 3.</span>
+            <span class="form-hint">Tên sinh viên được lưu gắn với Suất học bổng và địa chỉ ví, tự động hiển thị ngay
+              tại Bước 3.</span>
           </div>
 
           <div class="form-group">
@@ -922,7 +1180,7 @@
           </div>
 
           <button id="btnCreateScholarship" class="btn btn-primary" onclick="handleCreateScholarship()">
-            🚀 Bước 1: Khởi Tạo Suất Học Bổng (createScholarship)
+            🚀 Khởi Tạo Suất Học Bổng (createScholarship)
           </button>
         </div>
 
@@ -930,7 +1188,7 @@
         <div class="card">
           <div class="card-header">
             <div>
-              <h2 class="card-title">💰 Bước 2: Nạp Quỹ Escrow (Fund)</h2>
+              <h2 class="card-title">💰 Nạp Quỹ Escrow (Fund)</h2>
               <p class="card-desc">Thực hiện sau Bước 1. Nạp Native ETH bảo chứng vào suất học bổng đã tạo.</p>
             </div>
           </div>
@@ -939,7 +1197,9 @@
             <label class="form-label" for="inpFundScholarshipId">Mã Suất Học Bổng (Scholarship ID)</label>
             <input id="inpFundScholarshipId" class="form-input" type="number" min="1" placeholder="1" />
             <span class="form-hint">Mã suất học bổng cần nạp (sẽ tự động điền ngay sau Bước 1).</span>
-            <div id="fundStatusNotice" style="display: none; padding: 10px 12px; border-radius: var(--radius-sm); font-size: 0.82rem; margin-top: 6px; line-height: 1.6;"></div>
+            <div id="fundStatusNotice"
+              style="display: none; padding: 10px 12px; border-radius: var(--radius-sm); font-size: 0.82rem; margin-top: 6px; line-height: 1.6;">
+            </div>
           </div>
 
           <div class="form-group">
@@ -949,7 +1209,7 @@
           </div>
 
           <button id="btnFundScholarship" class="btn btn-success" onclick="handleFundScholarship()">
-            📥 Bước 2: Nạp Tiền Vào Escrow (fundScholarship)
+            📥 Nạp Tiền Vào Escrow (fundScholarship)
           </button>
         </div>
 
@@ -992,11 +1252,15 @@
             <input id="inpSubmitId" class="form-input" type="number" min="1" placeholder="1"
               oninput="onSubmitIdInput()" />
             <!-- Info box: tên + địa chỉ vi sinh viên thụ hưởng của suất -->
-            <div id="submitScholarshipInfoBox" class="student-name-box" style="display:none; flex-direction:column; align-items:flex-start; gap:4px;">
-              <div>🎓 <strong>Tên sinh viên thụ hưởng:</strong> <span id="submitStudentNameVal" style="color:var(--accent-primary); font-weight:700;"></span></div>
-              <div>📍 <strong>Địa chỉ ví thụ hưởng:</strong> <span id="submitStudentAddrVal" class="code-pill" style="font-size:0.78rem;"></span></div>
+            <div id="submitScholarshipInfoBox" class="student-name-box"
+              style="display:none; flex-direction:column; align-items:flex-start; gap:4px;">
+              <div>🎓 <strong>Tên sinh viên thụ hưởng:</strong> <span id="submitStudentNameVal"
+                  style="color:var(--accent-primary); font-weight:700;"></span></div>
+              <div>📍 <strong>Địa chỉ ví thụ hưởng:</strong> <span id="submitStudentAddrVal" class="code-pill"
+                  style="font-size:0.78rem;"></span></div>
               <div>🔖 <strong>Mã suất:</strong> <span id="submitScholarshipIdVal" style="font-weight:700;"></span></div>
-              <div id="submitStudentNameNotice" style="display:none; font-size:0.75rem; color:var(--text-dim); margin-top:2px;"></div>
+              <div id="submitStudentNameNotice"
+                style="display:none; font-size:0.75rem; color:var(--text-dim); margin-top:2px;"></div>
             </div>
             <div id="submitStudentMatchNotice"
               style="display: none; padding: 10px 12px; border-radius: var(--radius-sm); font-size: 0.8rem; margin-top: 6px; line-height: 1.5;">
@@ -1040,7 +1304,9 @@
           <div class="form-group">
             <label class="form-label" for="inpReleaseIndex">Chỉ số Mốc (Milestone Index)</label>
             <input id="inpReleaseIndex" class="form-input" type="number" min="0" placeholder="0" value="0" />
-            <div id="releaseMilestoneStatusNotice" style="display: none; padding: 10px 12px; border-radius: var(--radius-sm); font-size: 0.82rem; margin-top: 6px; line-height: 1.6;"></div>
+            <div id="releaseMilestoneStatusNotice"
+              style="display: none; padding: 10px 12px; border-radius: var(--radius-sm); font-size: 0.82rem; margin-top: 6px; line-height: 1.6;">
+            </div>
           </div>
 
           <div
@@ -1069,12 +1335,15 @@
               <input id="inpStudentCheckId" class="form-input" type="number" min="1" placeholder="1" value="1"
                 oninput="onStudentCheckIdInput()" />
               <!-- Hiển thị tên + địa chỉ ví thụ hưởng sau khi tra cứu -->
-              <div id="studentCheckInfoBox" class="student-name-box" style="display:none; flex-direction: column; align-items: flex-start; gap: 4px;">
+              <div id="studentCheckInfoBox" class="student-name-box"
+                style="display:none; flex-direction: column; align-items: flex-start; gap: 4px;">
                 <div>🎓 <strong>Tên sinh viên thụ hưởng:</strong> <span id="studentCheckNameVal">—</span></div>
-                <div>📍 <strong>Địa chỉ ví thụ hưởng:</strong> <span id="studentCheckAddrVal" class="code-pill" style="font-size:0.78rem;">—</span>
+                <div>📍 <strong>Địa chỉ ví thụ hưởng:</strong> <span id="studentCheckAddrVal" class="code-pill"
+                    style="font-size:0.78rem;">—</span>
                   <span id="studentCheckWalletMatchBadge" style="margin-left:6px; font-size:0.78rem;"></span>
                 </div>
-                <div id="studentCheckNameNotice" style="display:none; font-size:0.75rem; color:var(--text-dim); margin-top:2px;"></div>
+                <div id="studentCheckNameNotice"
+                  style="display:none; font-size:0.75rem; color:var(--text-dim); margin-top:2px;"></div>
               </div>
             </div>
             <button class="btn btn-secondary" onclick="handleStudentCheckStatus()">
@@ -1092,14 +1361,18 @@
         <div class="card-header">
           <div>
             <h2 class="card-title">⚖️ Thẩm Định & Phê Duyệt Mốc Học Tập</h2>
-            <p class="card-desc">Thẩm định viên (hoặc Nhà tài trợ) đối soát mã băm minh chứng on-chain và phê duyệt giải ngân.</p>
+            <p class="card-desc">Thẩm định viên (hoặc Nhà tài trợ) đối soát mã băm minh chứng on-chain và phê duyệt giải
+              ngân.</p>
           </div>
         </div>
 
         <!-- Verifier Role & Address Indicator -->
-        <div id="verifierRoleNotice" style="padding: 12px 14px; border-radius: var(--radius-sm); font-size: 0.82rem; margin-bottom: 16px; line-height: 1.6; background: var(--bg-box); border: 1px solid var(--border-color);">
-          <div>🏛️ <strong>Verifier hợp đồng:</strong> <span id="valContractVerifier" class="code-pill">Đang đọc...</span></div>
-          <div style="margin-top: 4px;">👤 <strong>Ví MetaMask hiện tại:</strong> <span id="valCurrentWalletVerifier" class="code-pill">Chưa kết nối</span></div>
+        <div id="verifierRoleNotice"
+          style="padding: 12px 14px; border-radius: var(--radius-sm); font-size: 0.82rem; margin-bottom: 16px; line-height: 1.6; background: var(--bg-box); border: 1px solid var(--border-color);">
+          <div>🏛️ <strong>Verifier hợp đồng:</strong> <span id="valContractVerifier" class="code-pill">Đang
+              đọc...</span></div>
+          <div style="margin-top: 4px;">👤 <strong>Ví MetaMask hiện tại:</strong> <span id="valCurrentWalletVerifier"
+              class="code-pill">Chưa kết nối</span></div>
           <div id="valVerifierRoleBadge" style="margin-top: 6px; font-weight: 600;"></div>
         </div>
 
@@ -1117,14 +1390,20 @@
         </div>
 
         <!-- Milestone Proof & Inspection Panel -->
-        <div id="verifierMilestoneInspection" style="margin-top: 12px; padding: 14px; border-radius: var(--radius-sm); font-size: 0.85rem; line-height: 1.6; display: none;"></div>
-
-        <!-- Academic Honesty Disclaimer -->
-        <div style="margin-top: 12px; margin-bottom: 16px; padding: 10px 12px; border-radius: var(--radius-sm); font-size: 0.78rem; color: var(--text-muted); background: var(--bg-box); border: 1px solid var(--border-color);">
-          ℹ️ <strong>Lưu ý thẩm định minh bạch:</strong> Giao diện chỉ đọc và đối soát mã băm / IPFS CID đã được sinh viên ghi nhận trên blockchain. Giao diện không tự động xác thực nội dung thực tế của tài liệu; Thẩm định viên có trách nhiệm đối chiếu tài liệu gốc ngoài đời thực tương ứng với CID trước khi phê duyệt.
+        <div id="verifierMilestoneInspection"
+          style="margin-top: 12px; padding: 14px; border-radius: var(--radius-sm); font-size: 0.85rem; line-height: 1.6; display: none;">
         </div>
 
-        <button id="btnApproveMilestone" class="btn btn-primary" style="width: 100%;" onclick="handleApproveMilestone()">
+        <!-- Academic Honesty Disclaimer -->
+        <div
+          style="margin-top: 12px; margin-bottom: 16px; padding: 10px 12px; border-radius: var(--radius-sm); font-size: 0.78rem; color: var(--text-muted); background: var(--bg-box); border: 1px solid var(--border-color);">
+          ℹ️ <strong>Lưu ý thẩm định minh bạch:</strong> Giao diện chỉ đọc và đối soát mã băm / IPFS CID đã được sinh
+          viên ghi nhận trên blockchain. Giao diện không tự động xác thực nội dung thực tế của tài liệu; Thẩm định viên
+          có trách nhiệm đối chiếu tài liệu gốc ngoài đời thực tương ứng với CID trước khi phê duyệt.
+        </div>
+
+        <button id="btnApproveMilestone" class="btn btn-primary" style="width: 100%;"
+          onclick="handleApproveMilestone()">
           ✅ Phê Duyệt Mốc Giải Ngân (approveMilestone)
         </button>
       </div>
@@ -1243,14 +1522,17 @@
                 📁 Đồng Bộ Danh Bạ Tên Sinh Viên (Off-chain Registry)
               </h3>
               <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">
-                Xuất hoặc nhập danh bạ tên sinh viên (JSON) để đồng bộ giữa các máy tính, trình duyệt hoặc người đánh giá khác nhau mà không lưu PII lên smart contract.
+                Xuất hoặc nhập danh bạ tên sinh viên (JSON) để đồng bộ giữa các máy tính, trình duyệt hoặc người đánh
+                giá khác nhau mà không lưu PII lên smart contract.
               </p>
             </div>
             <div style="display:flex; gap:8px;">
-              <button type="button" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="exportNameRegistry()">
+              <button type="button" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;"
+                onclick="exportNameRegistry()">
                 📤 Xuất JSON
               </button>
-              <button type="button" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="importNameRegistryPrompt()">
+              <button type="button" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;"
+                onclick="importNameRegistryPrompt()">
                 📥 Nhập JSON
               </button>
             </div>
@@ -2810,12 +3092,12 @@
             <div style="grid-column: 1 / -1; display:flex; gap: 24px; flex-wrap:wrap; padding: 8px 0; border-top: 1px dashed var(--border-color); border-bottom: 1px dashed var(--border-color); margin: 4px 0;">
               <div>
                 🎓 <strong>Sinh viên thụ hưởng:</strong>
-                ${ (() => { const n = lookupStudentNameForScholarship(id, s.student) || lookupStudentName(s.student); return n ? `<span style="color:var(--accent-primary);font-weight:700;">${n}</span>` : `<span style="color:var(--text-dim);">Chưa có thông tin tên</span>`; })() }
+                ${(() => { const n = lookupStudentNameForScholarship(id, s.student) || lookupStudentName(s.student); return n ? `<span style="color:var(--accent-primary);font-weight:700;">${n}</span>` : `<span style="color:var(--text-dim);">Chưa có thông tin tên</span>`; })()}
                 <span class="code-pill" style="font-size:0.78rem; margin-left:6px;">${s.student}</span>
               </div>
               <div>
                 🏦 <strong>Nhà tài trợ:</strong>
-                ${ (() => { const n = lookupStudentName(s.sponsor); return n ? `<span style="color:var(--accent-info);font-weight:700;">${n}</span>` : `<span style="color:var(--text-dim);">Chưa có thông tin tên</span>`; })() }
+                ${(() => { const n = lookupStudentName(s.sponsor); return n ? `<span style="color:var(--accent-info);font-weight:700;">${n}</span>` : `<span style="color:var(--text-dim);">Chưa có thông tin tên</span>`; })()}
                 <span class="code-pill" style="font-size:0.78rem; margin-left:6px;">${s.sponsor}</span>
               </div>
             </div>
@@ -3593,12 +3875,12 @@
             <div><strong>Học bổng:</strong> #${s.id}</div>
             <div style="grid-column: 1 / -1; display:flex; gap:20px; flex-wrap:wrap; padding: 8px 12px; border-radius: var(--radius-sm); background: var(--bg-box); border: 1px dashed var(--border-color);">
               <div>🎓 <strong>Sinh viên thụ hưởng:</strong>
-                ${ studentName ? `<span style="color:var(--accent-primary); font-weight:700; margin-left:4px;">${studentName}</span>` : `<span style="color:var(--text-dim); margin-left:4px;">Chưa có thông tin tên</span>` }
-                <span class="code-pill" style="font-size:0.78rem; margin-left:6px;">${s.student.slice(0,6)}...${s.student.slice(-4)}</span>
+                ${studentName ? `<span style="color:var(--accent-primary); font-weight:700; margin-left:4px;">${studentName}</span>` : `<span style="color:var(--text-dim); margin-left:4px;">Chưa có thông tin tên</span>`}
+                <span class="code-pill" style="font-size:0.78rem; margin-left:6px;">${s.student.slice(0, 6)}...${s.student.slice(-4)}</span>
               </div>
               <div>🏦 <strong>Nhà tài trợ (Sponsor):</strong>
-                ${ sponsorName ? `<span style="color:var(--accent-info); font-weight:700; margin-left:4px;">${sponsorName}</span>` : `<span style="color:var(--text-dim); margin-left:4px;">Chưa có thông tin tên</span>` }
-                <span class="code-pill" style="font-size:0.78rem; margin-left:6px;">${s.sponsor.slice(0,6)}...${s.sponsor.slice(-4)}</span>
+                ${sponsorName ? `<span style="color:var(--accent-info); font-weight:700; margin-left:4px;">${sponsorName}</span>` : `<span style="color:var(--text-dim); margin-left:4px;">Chưa có thông tin tên</span>`}
+                <span class="code-pill" style="font-size:0.78rem; margin-left:6px;">${s.sponsor.slice(0, 6)}...${s.sponsor.slice(-4)}</span>
               </div>
             </div>
             <div><strong>Tổng cam kết:</strong> ${ethers.formatEther(s.totalAmount)} ETH</div>
@@ -3655,11 +3937,11 @@
         let html = `
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 12px;">
             <div><strong>Học bổng:</strong> #${s.id}</div>
-            <div style="grid-column: 1 / -1; background: ${ studentNameOnRecord ? 'rgba(79,70,229,0.06)' : 'var(--bg-box)' }; border: 1px dashed ${ studentNameOnRecord ? 'rgba(79,70,229,0.25)' : 'var(--border-color)' }; border-radius: var(--radius-sm); padding: 8px 12px;">
+            <div style="grid-column: 1 / -1; background: ${studentNameOnRecord ? 'rgba(79,70,229,0.06)' : 'var(--bg-box)'}; border: 1px dashed ${studentNameOnRecord ? 'rgba(79,70,229,0.25)' : 'var(--border-color)'}; border-radius: var(--radius-sm); padding: 8px 12px;">
               🎓 <strong>Tên sinh viên thụ hưởng:</strong>
-              ${ studentNameOnRecord
-                  ? `<span style="color:var(--accent-primary); font-weight:700; margin-left:4px;">${studentNameOnRecord}</span>`
-                  : `<span style="color:var(--text-dim); margin-left:4px;">Chưa có thông tin tên sinh viên</span>` }
+              ${studentNameOnRecord
+            ? `<span style="color:var(--accent-primary); font-weight:700; margin-left:4px;">${studentNameOnRecord}</span>`
+            : `<span style="color:var(--text-dim); margin-left:4px;">Chưa có thông tin tên sinh viên</span>`}
               &nbsp;|&nbsp; 📍 <strong>Địa chỉ ví thụ hưởng:</strong>
               <span class="code-pill" style="font-size:0.8rem; margin-left:4px;">${s.student}</span>
             </div>

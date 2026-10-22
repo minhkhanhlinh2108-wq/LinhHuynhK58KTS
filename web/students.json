@@ -72,10 +72,16 @@
       "studentAddress": "0xd1695ed2a73e1d13ec63a90653d357baac7467f8",
       "studentName": "Minh Khánh Linh",
       "updatedAt": "2026-10-22T00:00:00.000Z"
+    },
+    "30": {
+      "scholarshipId": 30,
+      "studentAddress": "0xee917bc552f81fe4db72025e05f146919b3b4032",
+      "studentName": "Linh xinh đẹp",
+      "updatedAt": "2026-10-22T03:08:49.218Z"
     }
   },
   "students": {
-    "0xee917bc552f81fe4db72025e05f146919b3b4032": "Khánh Linh",
+    "0xee917bc552f81fe4db72025e05f146919b3b4032": "Linh xinh đẹp",
     "0xd1695ed2a73e1d13ec63a90653d357baac7467f8": "Nguyễn Minh Khánh Linh",
     "0xafb64eef8093cf3dc4e2c51bb1d18e16afddb6f5": "Trần Thị Như Huỳnh",
     "0x73fff099ada86f63217b769afcf00da80f2b9dca": "pHg"
