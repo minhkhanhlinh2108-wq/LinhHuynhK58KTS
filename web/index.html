@@ -828,13 +828,20 @@
       <button id="btnSwitchNetwork" class="btn btn-warning">Chuyển sang Sepolia</button>
     </div>
 
-    <!-- Contract Config Bar -->
+    <!-- Contract & Backend Server Config Bar -->
     <div class="config-bar">
       <div class="config-address">
         <span>📍 Smart Contract:</span>
         <span id="contractAddressDisplay" class="code-pill">0x04B0e154Becb4E98b00E06DF86605A70f3F914c2</span>
-        <button id="btnEditContract" class="btn btn-secondary" style="padding: 3px 8px; font-size: 0.75rem;">Đổi
-          Address</button>
+        <button id="btnEditContract" class="btn btn-secondary" style="padding: 3px 8px; font-size: 0.75rem;">Đổi Address</button>
+      </div>
+      <div class="config-address" style="margin-left: auto;">
+        <span>🌐 Backend Server:</span>
+        <span id="backendServerStatusBadge" class="badge" style="font-size: 0.75rem; padding: 3px 8px; border: 1px solid var(--accent-success); color: var(--accent-success); background: rgba(16,185,129,0.1);">
+          <span id="backendServerDot" class="badge-dot" style="background: var(--accent-success);"></span>
+          <span id="backendServerUrlText">Đang kết nối...</span>
+        </span>
+        <button id="btnConfigApiUrl" class="btn btn-secondary" style="padding: 3px 8px; font-size: 0.75rem;" title="Cấu hình URL API khi truy cập từ máy khác">Đổi URL API</button>
       </div>
       <div
         style="display: flex; gap: 8px; align-items: center; font-size: 0.8rem; color: var(--text-dim); flex-wrap: wrap;">
@@ -842,7 +849,7 @@
         <span id="contractStatusText" style="color: var(--accent-success); font-weight: 600;">Sẵn sàng tương tác</span>
         <span>• Suất học bổng trên chain:</span>
         <span id="contractScholarshipCountBadge" class="code-pill"
-          style="color: var(--accent-success); font-weight: 700;">24</span>
+          style="color: var(--accent-success); font-weight: 700;">29</span>
       </div>
     </div>
 
@@ -1585,20 +1592,89 @@
     }
 
     /**
+     * Lấy danh sách các API endpoint của backend server (hỗ trợ cả cùng máy và khác máy qua LAN/Internet)
+     */
+    function getApiEndpoints() {
+      const endpoints = [];
+      const customBase = localStorage.getItem("trustscholar_api_base_url");
+      if (customBase && customBase.trim()) {
+        const clean = customBase.trim().replace(/\/+$/, "");
+        endpoints.push(`${clean}/api/students`);
+      }
+      // Nếu đang mở trang từ Web Server (http/https), ưu tiên dùng chính origin của web server
+      if (typeof window !== "undefined" && window.location && (window.location.protocol === "http:" || window.location.protocol === "https:")) {
+        if (!endpoints.includes(`${window.location.origin}/api/students`)) {
+          endpoints.push(`${window.location.origin}/api/students`);
+        }
+      }
+      // Danh sách các cổng fallback trên localhost và IP nội bộ
+      const fallbacks = [
+        "/api/students",
+        "http://127.0.0.1:3000/api/students",
+        "http://localhost:3000/api/students",
+        "http://127.0.0.1:3001/api/students",
+        "http://localhost:3001/api/students"
+      ];
+      for (const fb of fallbacks) {
+        if (!endpoints.includes(fb)) {
+          endpoints.push(fb);
+        }
+      }
+      return endpoints;
+    }
+
+    /**
+     * Kiểm tra trạng thái kết nối tới Backend Server và cập nhật giao diện
+     */
+    async function checkBackendServerHealth() {
+      const badge = document.getElementById("backendServerStatusBadge");
+      const dot = document.getElementById("backendServerDot");
+      const text = document.getElementById("backendServerUrlText");
+      if (!badge || !text) return;
+
+      const endpoints = getApiEndpoints();
+      let connectedBase = null;
+
+      for (const ep of endpoints) {
+        try {
+          const base = ep.replace(/\/api\/students.*$/, "");
+          const healthUrl = base ? `${base}/api/health` : "/api/health";
+          const ctrl = new AbortController();
+          const tid = setTimeout(() => ctrl.abort(), 1800);
+          const r = await fetch(healthUrl, { signal: ctrl.signal });
+          clearTimeout(tid);
+          if (r.ok) {
+            connectedBase = base || (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
+            break;
+          }
+        } catch (_) { }
+      }
+
+      if (connectedBase) {
+        badge.style.borderColor = "var(--accent-success)";
+        badge.style.color = "var(--accent-success)";
+        badge.style.background = "rgba(16, 185, 129, 0.1)";
+        if (dot) dot.style.background = "var(--accent-success)";
+        const displayHost = connectedBase.replace(/^https?:\/\//, "");
+        text.textContent = `Online (${displayHost})`;
+      } else {
+        badge.style.borderColor = "var(--accent-danger)";
+        badge.style.color = "var(--accent-danger)";
+        badge.style.background = "rgba(239, 68, 68, 0.1)";
+        if (dot) dot.style.background = "var(--accent-danger)";
+        text.textContent = "Mất kết nối Backend";
+      }
+    }
+
+    /**
      * Đồng bộ dữ liệu dùng chung từ server (API / students.json)
      * Đảm bảo mọi máy tính hoặc trình duyệt khác đều đọc được dữ liệu ngay lần đầu!
-     * Không ghi đè tên sinh viên mà người dùng đã lưu mới hơn trong localStorage!
      */
     async function syncSharedRegistryFromServer() {
       loadCachedRegistry();
 
-      const endpoints = [
-        "/api/students",
-        "./students.json?t=" + Date.now(),
-        "http://127.0.0.1:3000/api/students",
-        "http://127.0.0.1:3001/api/students",
-        "http://localhost:3001/api/students"
-      ];
+      const endpoints = getApiEndpoints();
+      endpoints.push("./students.json?t=" + Date.now());
 
       for (const url of endpoints) {
         try {
@@ -1617,7 +1693,6 @@
                     const cleanName = item.studentName.trim();
                     const idKey = String(id).trim();
                     const existing = _sharedRegistry.scholarships[idKey];
-                    // Cập nhật nếu chưa có, hoặc nếu bản ghi từ server có updatedAt mới hơn/hợp lệ
                     if (!existing || !existing.studentName || (item.updatedAt && (!existing.updatedAt || item.updatedAt >= existing.updatedAt))) {
                       _sharedRegistry.scholarships[idKey] = {
                         scholarshipId: parseInt(idKey, 10) || idKey,
@@ -1646,7 +1721,7 @@
                 }
               }
               if (updated) {
-                saveCachedRegistry(true); // silent = true: tránh kích hoạt lại event update
+                saveCachedRegistry(true);
                 console.log("[TrustScholar] Đồng bộ thành công nguồn dữ liệu dùng chung từ: " + url);
               }
               return true;
@@ -1658,13 +1733,105 @@
     }
 
     /**
-     * Tra cứu tên sinh viên theo Scholarship ID và đối soát với địa chỉ ví on-chain.
-     * Quy tắc bảo mật và toàn vẹn dữ liệu:
-     * 1. ƯU TIÊN CAO NHẤT: Tra cứu theo đúng Scholarship ID trong _sharedRegistry.scholarships
-     *    -> Đảm bảo mỗi suất học bổng có danh tính riêng biệt, không bị mượn nhầm hoặc ghi đè bởi suất khác.
-     * 2. DỰ PHÒNG CỤC BỘ: Tra cứu trong localStorage cache của đúng Scholarship ID đó.
-     * 3. FALLBACK THEO VÍ: Chỉ dùng khi ví này KHÔNG thuộc về bất kỳ suất học bổng nào khác có ID khác.
-     *    -> Tuyệt đối không lấy tên của suất khác chỉ vì hai suất có cùng địa chỉ ví (Requirement 5).
+     * Tra cứu tên sinh viên theo Scholarship ID trực tiếp từ backend dùng chung
+     * và đối soát với địa chỉ ví thụ hưởng on-chain.
+     * Quy tắc bảo mật dữ liệu bắt buộc (Requirement 3):
+     * 1. Tra cứu theo Scholarship ID thật.
+     * 2. Xác minh địa chỉ ví trong bản ghi khớp với địa chỉ thụ hưởng của suất trên blockchain.
+     * 3. Hiển thị đúng tên đã lưu, bất kể tên là gì.
+     * 4. Không lấy tên từ một suất khác chỉ vì dùng cùng địa chỉ ví.
+     * 5. Nếu backend tạm thời không truy cập được, hiển thị lỗi đồng bộ rõ ràng; không âm thầm thay tên bằng dữ liệu cũ hoặc tên của suất khác.
+     */
+    async function fetchStudentNameForScholarship(scholarshipId, onChainStudentAddr) {
+      if (!scholarshipId) return { status: "NOT_FOUND", name: null };
+      const idStr = String(scholarshipId).trim();
+      const cleanOnChainAddr = onChainStudentAddr ? onChainStudentAddr.trim().toLowerCase() : "";
+
+      const endpoints = getApiEndpoints();
+      let serverReachable = false;
+      let serverPayload = null;
+
+      // 1. Gửi request tra cứu đến backend API
+      for (const endpoint of endpoints) {
+        try {
+          const ctrl = new AbortController();
+          const tid = setTimeout(() => ctrl.abort(), 2000);
+          const url = endpoint.includes("?")
+            ? `${endpoint}&scholarshipId=${encodeURIComponent(idStr)}`
+            : `${endpoint}?scholarshipId=${encodeURIComponent(idStr)}`;
+          const resp = await fetch(url, { method: "GET", cache: "no-store", signal: ctrl.signal });
+          clearTimeout(tid);
+
+          if (resp.ok) {
+            const data = await resp.json();
+            serverReachable = true;
+            serverPayload = data;
+            if (data.scholarship) {
+              _sharedRegistry.scholarships[idStr] = data.scholarship;
+            } else if (data.scholarships) {
+              Object.assign(_sharedRegistry.scholarships, data.scholarships);
+            }
+            if (data.students) {
+              Object.assign(_sharedRegistry.students, data.students);
+            }
+            saveCachedRegistry(true);
+            break;
+          } else if (resp.status === 404) {
+            // Server trả lời 404 nghĩa là kết nối bình thường nhưng suất này chưa được đăng ký tên
+            serverReachable = true;
+            break;
+          }
+        } catch (_) { }
+      }
+
+      // 2. Nếu server hoàn toàn không phản hồi: Báo lỗi đồng bộ rõ ràng
+      if (!serverReachable) {
+        return {
+          status: "SERVER_OFFLINE",
+          name: null,
+          error: "Không thể kết nối đến máy chủ backend để tra cứu tên sinh viên. Vui lòng kiểm tra server hoặc bấm 'Đổi URL API' để cấu hình lại."
+        };
+      }
+
+      // 3. Lấy thông tin bản ghi gắn với Scholarship ID
+      let entry = null;
+      if (serverPayload?.scholarship) {
+        entry = serverPayload.scholarship;
+      } else if (serverPayload?.scholarships && serverPayload.scholarships[idStr]) {
+        entry = serverPayload.scholarships[idStr];
+      } else if (_sharedRegistry.scholarships[idStr]) {
+        entry = _sharedRegistry.scholarships[idStr];
+      }
+
+      if (!entry || !entry.studentName || !entry.studentName.trim()) {
+        return {
+          status: "NOT_FOUND",
+          name: null
+        };
+      }
+
+      // 4. Đối soát địa chỉ ví trong bản ghi với địa chỉ ví thụ hưởng trên hợp đồng
+      const recordedAddr = (entry.studentAddress || "").trim().toLowerCase();
+      if (cleanOnChainAddr && recordedAddr && recordedAddr !== cleanOnChainAddr) {
+        return {
+          status: "WALLET_MISMATCH",
+          name: null,
+          storedAddress: recordedAddr,
+          onChainAddress: cleanOnChainAddr,
+          error: `Địa chỉ ví trong bản ghi (${recordedAddr.slice(0, 8)}...) không khớp với địa chỉ thụ hưởng on-chain (${cleanOnChainAddr.slice(0, 8)}...)!`
+        };
+      }
+
+      return {
+        status: "FOUND",
+        name: entry.studentName.trim(),
+        storedAddress: recordedAddr
+      };
+    }
+
+    /**
+     * Tra cứu nhanh tức thì trong bộ nhớ đệm (dành cho rendering tức thời)
+     * Tuyệt đối không lấy tên của suất khác chỉ vì hai suất có cùng địa chỉ ví!
      */
     function lookupStudentNameForScholarship(scholarshipId, studentAddrOnChain) {
       if (!scholarshipId && !studentAddrOnChain) return null;
@@ -1673,18 +1840,17 @@
         ? String(scholarshipId).trim()
         : "";
 
-      // 1. Ưu tiên số 1: Tra cứu trực tiếp theo Scholarship ID trong bộ nhớ
+      // 1. Ưu tiên số 1: Tra cứu đúng Scholarship ID trong bộ nhớ
       if (idKey) {
         const entry = _sharedRegistry.scholarships[idKey];
         if (entry && entry.studentName && typeof entry.studentName === "string" && entry.studentName.trim()) {
-          // Xác minh địa chỉ ví on-chain nếu có truyền vào
           if (!cleanAddr || !entry.studentAddress || entry.studentAddress.toLowerCase() === cleanAddr) {
             return entry.studentName.trim();
           }
         }
       }
 
-      // 2. Ưu tiên số 2: Tra cứu trong cache localStorage cho đúng Scholarship ID
+      // 2. Tra cứu trong localStorage cho đúng Scholarship ID
       if (idKey) {
         try {
           const raw = localStorage.getItem(REGISTRY_STORAGE_KEY);
@@ -1704,32 +1870,12 @@
         } catch (_) { }
       }
 
-      // 3. Dự phòng theo địa chỉ ví: CHỈ dùng khi không có xung đột giữa các suất khác nhau
-      // Không lấy tên của suất khác (ID khác) gán cho suất này chỉ vì có chung địa chỉ ví
-      if (cleanAddr) {
-        if (idKey) {
-          let belongsToAnotherScholarship = false;
-          for (const [otherId, otherEntry] of Object.entries(_sharedRegistry.scholarships)) {
-            if (otherId !== idKey && otherEntry && otherEntry.studentAddress && otherEntry.studentAddress.toLowerCase() === cleanAddr) {
-              belongsToAnotherScholarship = true;
-              break;
-            }
-          }
-          if (belongsToAnotherScholarship) {
-            return null;
-          }
-        }
-
-        if (_sharedRegistry.students[cleanAddr] && _sharedRegistry.students[cleanAddr].trim()) {
-          return _sharedRegistry.students[cleanAddr].trim();
-        }
-      }
-
+      // Tuyệt đối không fallback sang suất khác chỉ vì có cùng ví thụ hưởng!
       return null;
     }
 
     /**
-     * Tra cứu tên theo địa chỉ ví (cho các tab Sponsor, Verifier, Explorer)
+     * Tra cứu tên theo địa chỉ ví (chỉ dùng cho gợi ý khi nhập ví mới ở tab Sponsor)
      */
     function lookupStudentName(walletAddress) {
       if (!walletAddress || typeof walletAddress !== "string") return null;
@@ -1738,12 +1884,6 @@
 
       if (_sharedRegistry.students[clean] && _sharedRegistry.students[clean].trim()) {
         return _sharedRegistry.students[clean].trim();
-      }
-
-      for (const entry of Object.values(_sharedRegistry.scholarships)) {
-        if (entry && entry.studentAddress && entry.studentAddress.toLowerCase() === clean && entry.studentName && entry.studentName.trim()) {
-          return entry.studentName.trim();
-        }
       }
 
       try {
@@ -1759,19 +1899,79 @@
     }
 
     /**
-     * Lưu mối liên hệ giữa Scholarship ID, địa chỉ ví và tên sinh viên.
-     * Cập nhật tức thì vào bộ nhớ (RAM), lưu cache localStorage,
-     * và tự động phát lệnh POST không chặn (non-blocking) lên Server.
+     * Lưu thông tin tên sinh viên lên Server backend dùng chung (async/await đầy đủ).
+     * Báo lỗi rõ ràng nếu lưu tên thất bại; không giả vờ rằng dữ liệu đã đồng bộ!
+     */
+    async function saveScholarshipStudentNameToBackend(scholarshipId, studentAddress, studentName) {
+      if (!studentAddress || !studentName) {
+        return { success: false, error: "Thiếu địa chỉ ví hoặc tên sinh viên" };
+      }
+      const cleanAddr = studentAddress.trim().toLowerCase();
+      const cleanName = studentName.trim();
+      const idKey = scholarshipId !== undefined && scholarshipId !== null ? String(scholarshipId).trim() : "";
+
+      const payload = {
+        scholarshipId: idKey ? (parseInt(idKey, 10) || idKey) : null,
+        studentAddress: cleanAddr,
+        studentName: cleanName
+      };
+
+      const endpoints = getApiEndpoints();
+      let savedSuccessfully = false;
+      let lastErrMsg = "Không thể kết nối đến máy chủ API backend";
+
+      for (const endpoint of endpoints) {
+        try {
+          const ctrl = new AbortController();
+          const tid = setTimeout(() => ctrl.abort(), 3000);
+          const res = await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+            signal: ctrl.signal
+          });
+          clearTimeout(tid);
+
+          if (res.ok) {
+            savedSuccessfully = true;
+            console.log(`[TrustScholar] Đã lưu tên sinh viên lên backend (${endpoint}) thành công!`);
+            break;
+          } else {
+            const errBody = await res.text();
+            lastErrMsg = `Máy chủ phản hồi mã ${res.status}: ${errBody}`;
+          }
+        } catch (fetchErr) {
+          lastErrMsg = fetchErr.message || "Lỗi mạng";
+        }
+      }
+
+      if (savedSuccessfully) {
+        if (idKey) {
+          _sharedRegistry.scholarships[idKey] = {
+            scholarshipId: parseInt(idKey, 10) || idKey,
+            studentAddress: cleanAddr,
+            studentName: cleanName,
+            updatedAt: new Date().toISOString()
+          };
+        }
+        _sharedRegistry.students[cleanAddr] = cleanName;
+        saveCachedRegistry();
+        return { success: true };
+      } else {
+        return { success: false, error: lastErrMsg };
+      }
+    }
+
+    /**
+     * Hàm đồng bộ tương thích ngược (wrapper)
      */
     function registerScholarshipStudentSync(scholarshipId, studentAddress, studentName) {
       if (!studentAddress || !studentName) return false;
       const cleanAddr = studentAddress.trim().toLowerCase();
       const cleanName = studentName.trim();
-      if (!cleanAddr || !cleanName) return false;
+      const idKey = scholarshipId !== undefined && scholarshipId !== null ? String(scholarshipId).trim() : "";
 
-      // 1. Cập nhật In-memory tức thì
-      if (scholarshipId !== undefined && scholarshipId !== null && scholarshipId !== "") {
-        const idKey = String(scholarshipId).trim();
+      if (idKey) {
         _sharedRegistry.scholarships[idKey] = {
           scholarshipId: parseInt(idKey, 10) || idKey,
           studentAddress: cleanAddr,
@@ -1780,47 +1980,13 @@
         };
       }
       _sharedRegistry.students[cleanAddr] = cleanName;
-      // QUY TẮC BẢO MẬT: KHÔNG ghi đè các suất học bổng khác cùng ví.
-      // Mỗi suất học bổng có danh tính và tên độc lập riêng biệt (Requirement 5).
+      if (typeof saveCachedRegistry === "function") saveCachedRegistry();
 
-      // 2. Lưu cache localStorage tức thì
-      saveCachedRegistry();
-
-      // 3. Gửi lên Server API trong luồng nền (non-blocking) để cập nhật students.json trên đĩa (nếu có server hỗ trợ)
-      const payload = {
-        scholarshipId: scholarshipId ? (parseInt(scholarshipId, 10) || scholarshipId) : null,
-        studentAddress: cleanAddr,
-        studentName: cleanName
-      };
-
-      const serverUrls = [
-        "/api/students",
-        "http://127.0.0.1:3000/api/students",
-        "http://localhost:3000/api/students",
-        "http://127.0.0.1:3001/api/students",
-        "http://localhost:3001/api/students"
-      ];
-
-      (async () => {
-        for (const url of serverUrls) {
-          try {
-            const ctrl = new AbortController();
-            const tid = setTimeout(() => ctrl.abort(), 2000);
-            const res = await fetch(url, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(payload),
-              signal: ctrl.signal
-            });
-            clearTimeout(tid);
-            if (res.ok) {
-              console.log("[TrustScholar] Đã lưu vào server dùng chung (" + url + ") thành công!");
-              break;
-            }
-          } catch (_) { }
-        }
-      })();
-
+      if (typeof saveScholarshipStudentNameToBackend === "function") {
+        saveScholarshipStudentNameToBackend(scholarshipId, studentAddress, studentName).catch(err => {
+          console.warn("[TrustScholar] Async sync error:", err);
+        });
+      }
       return true;
     }
 
@@ -2121,11 +2287,8 @@
 
         // Lấy đúng địa chỉ ví thụ hưởng từ blockchain
         const studentAddrOnChain = s.student;
-        let foundName = lookupStudentNameForScholarship(id, studentAddrOnChain);
-        if (!foundName) {
-          await syncSharedRegistryFromServer();
-          foundName = lookupStudentNameForScholarship(id, studentAddrOnChain);
-        }
+        // Tra cứu tên từ backend dùng chung và đối soát địa chỉ ví
+        const lookupRes = await fetchStudentNameForScholarship(id, studentAddrOnChain);
 
         // Lấy ví MetaMask đang kết nối để so sánh (nếu có)
         let activeWallet = userAddress;
@@ -2138,12 +2301,32 @@
 
         infoBox.style.display = "flex";
         if (nameVal) {
-          if (foundName) {
-            nameVal.textContent = foundName;
+          if (lookupRes.status === "FOUND") {
+            nameVal.textContent = lookupRes.name;
             nameVal.style.color = "var(--accent-primary)";
             nameVal.style.fontWeight = "700";
             if (noticeEl) noticeEl.style.display = "none";
             infoBox.classList.add("found");
+          } else if (lookupRes.status === "WALLET_MISMATCH") {
+            nameVal.textContent = "Cảnh báo: Sai lệch ví!";
+            nameVal.style.color = "var(--accent-danger)";
+            nameVal.style.fontWeight = "700";
+            if (noticeEl) {
+              noticeEl.style.display = "block";
+              noticeEl.style.color = "var(--accent-danger)";
+              noticeEl.innerHTML = `⚠️ <strong>Cảnh báo đối soát ví:</strong> ${lookupRes.error}`;
+            }
+            infoBox.classList.remove("found");
+          } else if (lookupRes.status === "SERVER_OFFLINE") {
+            nameVal.textContent = "Lỗi đồng bộ (Server ngoại tuyến)";
+            nameVal.style.color = "var(--accent-danger)";
+            nameVal.style.fontWeight = "600";
+            if (noticeEl) {
+              noticeEl.style.display = "block";
+              noticeEl.style.color = "var(--accent-danger)";
+              noticeEl.innerHTML = `⚠️ <strong>Lỗi kết nối Backend:</strong> ${lookupRes.error}`;
+            }
+            infoBox.classList.remove("found");
           } else {
             nameVal.textContent = "Chưa đăng ký tên cho suất này";
             nameVal.style.color = "var(--text-dim)";
@@ -2278,13 +2461,9 @@
         }
 
         const studentAddrOnChain = s.student;
-        // Tra cứu tên sinh viên gắn với Scholarship ID từ nguồn dùng chung
-        let foundName = lookupStudentNameForScholarship(id, studentAddrOnChain);
-        if (!foundName) {
-          // Thử đồng bộ tức thời từ server trong trường hợp máy khác hoặc tab khác vừa tạo
-          await syncSharedRegistryFromServer();
-          foundName = lookupStudentNameForScholarship(id, studentAddrOnChain);
-        }
+        // Tra cứu tên sinh viên gắn với Scholarship ID từ nguồn dùng chung và đối soát địa chỉ ví
+        const lookupRes = await fetchStudentNameForScholarship(id, studentAddrOnChain);
+        let foundName = null;
 
         if (seq !== _submitCardSeq || document.getElementById("inpSubmitId")?.value?.trim() !== idRaw) {
           return;
@@ -2295,13 +2474,37 @@
           infoBox.style.display = "flex";
         }
         if (nameVal) {
-          if (foundName) {
+          if (lookupRes.status === "FOUND") {
+            foundName = lookupRes.name;
             nameVal.textContent = foundName;
             nameVal.style.color = "var(--accent-primary)";
             nameVal.style.fontWeight = "700";
             if (noticeEl) noticeEl.style.display = "none";
             if (infoBox) infoBox.classList.add("found");
+          } else if (lookupRes.status === "WALLET_MISMATCH") {
+            foundName = null;
+            nameVal.textContent = "Cảnh báo: Sai lệch ví!";
+            nameVal.style.color = "var(--accent-danger)";
+            nameVal.style.fontWeight = "700";
+            if (noticeEl) {
+              noticeEl.style.display = "block";
+              noticeEl.style.color = "var(--accent-danger)";
+              noticeEl.innerHTML = `⚠️ <strong>Cảnh báo đối soát:</strong> ${lookupRes.error}`;
+            }
+            if (infoBox) infoBox.classList.remove("found");
+          } else if (lookupRes.status === "SERVER_OFFLINE") {
+            foundName = null;
+            nameVal.textContent = "Lỗi đồng bộ: Server ngoại tuyến";
+            nameVal.style.color = "var(--accent-danger)";
+            nameVal.style.fontWeight = "600";
+            if (noticeEl) {
+              noticeEl.style.display = "block";
+              noticeEl.style.color = "var(--accent-danger)";
+              noticeEl.innerHTML = `⚠️ <strong>Lỗi kết nối Backend:</strong> ${lookupRes.error}`;
+            }
+            if (infoBox) infoBox.classList.remove("found");
           } else {
+            foundName = null;
             nameVal.textContent = "Chưa đăng ký tên cho suất này";
             nameVal.style.color = "var(--text-dim)";
             nameVal.style.fontWeight = "500";
@@ -3033,11 +3236,25 @@
         if (nextId) {
           // Lưu mối liên hệ giữa Scholarship ID, địa chỉ ví sinh viên và tên sinh viên vào nguồn dùng chung
           // Sử dụng chính xác biến studentNameToSave đã chụp cố định từ đầu
+          let syncSuccess = true;
+          let syncError = "";
           if (studentNameToSave) {
-            registerScholarshipStudentSync(nextId, studentAddrToSave, studentNameToSave);
+            showStatus("Đang lưu tên sinh viên vào máy chủ backend dùng chung...", `Suất #${nextId} -> "${studentNameToSave}"`, "loading", tx.hash);
+            const saveRes = await saveScholarshipStudentNameToBackend(nextId, studentAddrToSave, studentNameToSave);
+            if (!saveRes.success) {
+              syncSuccess = false;
+              syncError = saveRes.error || "Không thể kết nối đến máy chủ backend";
+            }
           }
-          showStatus(`Tạo suất học bổng #${nextId} thành công! 🎉`, `Block: ${receipt.blockNumber}`, "success", tx.hash);
-          recordSessionTx("Tạo Suất Học Bổng", "Thành công", tx.hash, `Đã tạo suất #${nextId} cho ${studentAddrToSave.slice(0, 8)}...`, nextId);
+
+          if (syncSuccess) {
+            showStatus(`Tạo suất học bổng #${nextId} thành công! 🎉`, `Đã lưu và đồng bộ tên "${studentNameToSave || '—'}" lên server dùng chung. Block: ${receipt.blockNumber}`, "success", tx.hash);
+            recordSessionTx("Tạo Suất Học Bổng", "Thành công", tx.hash, `Đã tạo suất #${nextId} cho ${studentAddrToSave.slice(0, 8)}... (Tên: ${studentNameToSave || '—'})`, nextId);
+          } else {
+            showStatus(`Tạo suất #${nextId} thành công nhưng LỖI ĐỒNG BỘ TÊN! ⚠️`, `On-chain thành công, nhưng lưu tên lên server thất bại: ${syncError}`, "error", tx.hash);
+            recordSessionTx("Tạo Suất Học Bổng", "Cảnh Báo Đồng Bộ", tx.hash, `Suất #${nextId} on-chain OK, nhưng backend lỗi: ${syncError}`, nextId);
+            alert(`CẢNH BÁO ĐỒNG BỘ:\n\nSuất học bổng #${nextId} đã được tạo thành công trên blockchain Sepolia.\nTUY NHIÊN, việc lưu tên sinh viên "${studentNameToSave}" lên server dùng chung thất bại:\n${syncError}\n\nCác máy tính hoặc trình duyệt khác sẽ chưa thấy tên này cho đến khi kết nối backend được khắc phục.`);
+          }
 
           // Cập nhật số suất học bổng trên thanh hiển thị
           const countEl = document.getElementById("contractScholarshipCountBadge");
@@ -3369,7 +3586,7 @@
 
         // Tra cứu tên từ registry (ưu tiên tên riêng gắn với chính ID của suất học bổng)
         const sponsorName = lookupStudentName(s.sponsor);
-        const studentName = lookupStudentNameForScholarship(id, s.student) || lookupStudentName(s.student);
+        const studentName = lookupStudentNameForScholarship(id, s.student);
 
         let html = `
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 12px;">
@@ -3433,7 +3650,7 @@
         } catch (_) { }
 
         // Tra cứu tên sinh viên từ registry (ưu tiên tên riêng gắn với chính ID của suất học bổng)
-        const studentNameOnRecord = lookupStudentNameForScholarship(id, s.student) || lookupStudentName(s.student);
+        const studentNameOnRecord = lookupStudentNameForScholarship(id, s.student);
 
         let html = `
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 12px;">
@@ -3485,7 +3702,7 @@
         const s = await getSepoliaScholarship(id);
 
         // Tra cứu tên từ registry cho cả hai bên (ưu tiên tên riêng gắn với chính ID của suất học bổng)
-        const studentNameLookup = lookupStudentNameForScholarship(id, s.student) || lookupStudentName(s.student);
+        const studentNameLookup = lookupStudentNameForScholarship(id, s.student);
         const sponsorNameLookup = lookupStudentName(s.sponsor);
 
         document.getElementById("resId").textContent = s.id.toString();
@@ -3639,7 +3856,37 @@
       inpApproveIdxEl.addEventListener("change", checkVerifierInspection);
     }
 
-    // Đồng bộ danh bạ dùng chung ngay khi tải trang
+    // Cấu hình URL Backend Server API cho các máy tính khác
+    const btnConfigApiUrl = document.getElementById("btnConfigApiUrl");
+    if (btnConfigApiUrl) {
+      btnConfigApiUrl.onclick = () => {
+        const currentCustom = localStorage.getItem("trustscholar_api_base_url") || "";
+        const input = prompt(
+          "Nhập địa chỉ URL của máy chủ Backend API dùng chung (Ví dụ: http://10.7.99.134:3000 hoặc http://192.168.1.15:3000):\n(Để trống nếu muốn tự động nhận diện theo máy hiện tại)",
+          currentCustom || ""
+        );
+        if (input !== null) {
+          const trimmed = input.trim().replace(/\/+$/, "");
+          if (trimmed) {
+            localStorage.setItem("trustscholar_api_base_url", trimmed);
+            alert(`Đã cập nhật URL Backend API thành: ${trimmed}\n\nHệ thống sẽ kết nối đến máy chủ này để đọc/ghi tên sinh viên.`);
+          } else {
+            localStorage.removeItem("trustscholar_api_base_url");
+            alert("Đã chuyển về chế độ tự động nhận diện URL Backend API (Origin / Localhost).");
+          }
+          checkBackendServerHealth();
+          syncSharedRegistryFromServer().then(() => {
+            updateSubmitCardInfo();
+            autoLoadStudentCheckInfo();
+          });
+        }
+      };
+    }
+
+    // Kiểm tra kết nối Backend Server và đồng bộ danh bạ dùng chung ngay khi tải trang
+    checkBackendServerHealth();
+    setInterval(checkBackendServerHealth, 10000);
+
     syncSharedRegistryFromServer().then(() => {
       updateSubmitCardInfo();
       autoLoadStudentCheckInfo();
@@ -3667,12 +3914,16 @@
 
     // Xuất các hàm registry lên window để hỗ trợ kiểm thử và tương thích tự động
     window.registerScholarshipStudentSync = registerScholarshipStudentSync;
+    window.saveScholarshipStudentNameToBackend = saveScholarshipStudentNameToBackend;
+    window.fetchStudentNameForScholarship = fetchStudentNameForScholarship;
     window.registerStudentName = registerStudentName;
     window.lookupStudentName = lookupStudentName;
     window.lookupStudentNameForScholarship = lookupStudentNameForScholarship;
     window.syncSharedRegistryFromServer = syncSharedRegistryFromServer;
     window.loadCachedRegistry = loadCachedRegistry;
     window.saveCachedRegistry = saveCachedRegistry;
+    window.getApiEndpoints = getApiEndpoints;
+    window.checkBackendServerHealth = checkBackendServerHealth;
 
     if (window.ethereum) {
       window.ethereum.on("accountsChanged", async (accounts) => {

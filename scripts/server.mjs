@@ -1,6 +1,7 @@
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
+import os from "node:os";
 import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -35,19 +36,40 @@ function readSharedRegistry() {
 
 function writeSharedRegistry(data) {
   try {
-    fs.writeFileSync(STUDENTS_FILE, JSON.stringify(data, null, 2), "utf8");
+    const tempFile = `${STUDENTS_FILE}.tmp.${Date.now()}`;
+    fs.writeFileSync(tempFile, JSON.stringify(data, null, 2), "utf8");
+    fs.renameSync(tempFile, STUDENTS_FILE);
     return true;
   } catch (err) {
-    console.error("[Server] Lỗi ghi students.json:", err);
-    return false;
+    console.error("[Server] Lỗi ghi nguyên tử students.json, thử ghi trực tiếp:", err);
+    try {
+      fs.writeFileSync(STUDENTS_FILE, JSON.stringify(data, null, 2), "utf8");
+      return true;
+    } catch (fallbackErr) {
+      console.error("[Server] Lỗi ghi trực tiếp students.json:", fallbackErr);
+      return false;
+    }
   }
 }
 
+function getLocalIpAddresses() {
+  const ips = [];
+  const ifaces = os.networkInterfaces();
+  for (const name of Object.keys(ifaces)) {
+    for (const iface of ifaces[name] || []) {
+      if (iface.family === "IPv4" && !iface.internal) {
+        ips.push(iface.address);
+      }
+    }
+  }
+  return ips;
+}
+
 const server = http.createServer((req, res) => {
-  // CORS Headers
+  // CORS Headers - Cho phép mọi nguồn (cross-origin / LAN / localhost) truy cập
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
   if (req.method === "OPTIONS") {
     res.writeHead(204);
@@ -58,10 +80,50 @@ const server = http.createServer((req, res) => {
   const parsedUrl = new URL(req.url, `http://${req.headers.host || "localhost"}`);
   const pathname = parsedUrl.pathname;
 
+  // --- API ROUTE: GET /api/health ---
+  if (req.method === "GET" && pathname === "/api/health") {
+    res.writeHead(200, {
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "no-cache, no-store, must-revalidate"
+    });
+    res.end(JSON.stringify({
+      status: "ok",
+      service: "TrustScholar Shared Student Registry",
+      port: PORT,
+      timestamp: new Date().toISOString()
+    }));
+    return;
+  }
+
   // --- API ROUTE: GET /api/students ---
   if (req.method === "GET" && pathname === "/api/students") {
     const data = readSharedRegistry();
-    res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+
+    // Hỗ trợ tra cứu theo ID cụ thể nếu client truyền query param (?id=... hoặc ?scholarshipId=...)
+    const queryId = parsedUrl.searchParams.get("scholarshipId") || parsedUrl.searchParams.get("id");
+    if (queryId) {
+      const idStr = String(queryId).trim();
+      const item = data.scholarships && data.scholarships[idStr];
+      if (item) {
+        res.writeHead(200, {
+          "Content-Type": "application/json; charset=utf-8",
+          "Cache-Control": "no-cache, no-store, must-revalidate"
+        });
+        res.end(JSON.stringify({ found: true, scholarship: item }));
+      } else {
+        res.writeHead(404, {
+          "Content-Type": "application/json; charset=utf-8",
+          "Cache-Control": "no-cache, no-store, must-revalidate"
+        });
+        res.end(JSON.stringify({ found: false, error: `Chưa đăng ký tên cho suất #${idStr}` }));
+      }
+      return;
+    }
+
+    res.writeHead(200, {
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "no-cache, no-store, must-revalidate"
+    });
     res.end(JSON.stringify(data));
     return;
   }
@@ -84,15 +146,27 @@ const server = http.createServer((req, res) => {
           return;
         }
 
+        const cleanAddr = String(studentAddress).trim().toLowerCase();
+        const cleanName = String(studentName).trim();
+
+        if (!/^0x[0-9a-f]{40}$/.test(cleanAddr)) {
+          res.writeHead(400, { "Content-Type": "application/json; charset=utf-8" });
+          res.end(JSON.stringify({ error: "Địa chỉ ví sinh viên không đúng định dạng hex 20 byte" }));
+          return;
+        }
+
+        if (!cleanName) {
+          res.writeHead(400, { "Content-Type": "application/json; charset=utf-8" });
+          res.end(JSON.stringify({ error: "Tên sinh viên không được để trống" }));
+          return;
+        }
+
         const data = readSharedRegistry();
         if (!data.scholarships) data.scholarships = {};
         if (!data.students) data.students = {};
 
-        const cleanAddr = studentAddress.trim().toLowerCase();
-        const cleanName = studentName.trim();
-
-        if (scholarshipId !== undefined && scholarshipId !== null && scholarshipId !== "") {
-          const idStr = String(scholarshipId);
+        if (scholarshipId !== undefined && scholarshipId !== null && String(scholarshipId).trim() !== "") {
+          const idStr = String(scholarshipId).trim();
           data.scholarships[idStr] = {
             scholarshipId: parseInt(idStr, 10) || idStr,
             studentAddress: cleanAddr,
@@ -106,15 +180,26 @@ const server = http.createServer((req, res) => {
         const ok = writeSharedRegistry(data);
         if (ok) {
           console.log(`[Server] Đã lưu tên: Suất #${scholarshipId || "-"} | Ví ${cleanAddr.slice(0, 8)}... -> "${cleanName}"`);
-          res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
-          res.end(JSON.stringify({ success: true, message: "Đã lưu vào nguồn dùng chung", data }));
+          res.writeHead(200, {
+            "Content-Type": "application/json; charset=utf-8",
+            "Cache-Control": "no-cache, no-store, must-revalidate"
+          });
+          res.end(JSON.stringify({
+            success: true,
+            message: "Đã lưu vào nguồn dùng chung thành công",
+            record: {
+              scholarshipId: scholarshipId ? (parseInt(String(scholarshipId), 10) || scholarshipId) : null,
+              studentAddress: cleanAddr,
+              studentName: cleanName
+            }
+          }));
         } else {
           res.writeHead(500, { "Content-Type": "application/json; charset=utf-8" });
           res.end(JSON.stringify({ error: "Lỗi ghi tệp trên máy chủ" }));
         }
       } catch (err) {
         res.writeHead(400, { "Content-Type": "application/json; charset=utf-8" });
-        res.end(JSON.stringify({ error: "Payload JSON không hợp lệ" }));
+        res.end(JSON.stringify({ error: "Payload JSON không hợp lệ: " + err.message }));
       }
     });
     return;
@@ -151,13 +236,24 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, "0.0.0.0", () => {
-  console.log(`===================================================`);
+  const localIps = getLocalIpAddresses();
+  console.log(`================================================================`);
   console.log(`TrustScholar Web + Shared Registry Server running!`);
-  console.log(`Local:   http://localhost:${PORT}`);
-  console.log(`Network: http://0.0.0.0:${PORT}`);
-  console.log(`Serving: ${WEB_DIR}`);
-  console.log(`Shared:  ${STUDENTS_FILE}`);
-  console.log(`===================================================`);
+  console.log(`Local (máy này):          http://localhost:${PORT}`);
+  console.log(`Local IP (127.0.0.1):     http://127.0.0.1:${PORT}`);
+  if (localIps.length > 0) {
+    localIps.forEach(ip => {
+      console.log(`Network (máy khác/LAN):   http://${ip}:${PORT}`);
+    });
+  } else {
+    console.log(`Network (0.0.0.0):        http://0.0.0.0:${PORT}`);
+  }
+  console.log(`Serving Web UI:           ${WEB_DIR}`);
+  console.log(`Shared Registry File:     ${STUDENTS_FILE}`);
+  console.log(`API Endpoints:            GET  /api/health`);
+  console.log(`                          GET  /api/students[?scholarshipId=...]`);
+  console.log(`                          POST /api/students`);
+  console.log(`================================================================`);
 });
 
 server.on("error", (err) => {

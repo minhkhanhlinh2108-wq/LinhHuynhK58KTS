@@ -24,9 +24,18 @@ class TrustScholarHandler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urlparse(self.path)
+        if parsed.path == "/api/health":
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+            self.end_headers()
+            self.wfile.write(b'{"status":"ok","service":"TrustScholar Python Registry"}')
+            return
+
         if parsed.path == "/api/students":
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
             self.end_headers()
             if os.path.exists(STUDENTS_FILE):
                 with open(STUDENTS_FILE, "rb") as f:

@@ -11,7 +11,8 @@
     "test": "hardhat test",
     "deploy": "node scripts/deploy.js",
     "server": "node scripts/server.mjs",
-    "test:student-sync": "node scripts/test_student_name_sync.mjs"
+    "test:student-sync": "node scripts/test_student_name_sync.mjs",
+    "test:sync-comprehensive": "node scripts/test_student_sync_comprehensive.mjs"
   },
   "repository": {
     "type": "git",
