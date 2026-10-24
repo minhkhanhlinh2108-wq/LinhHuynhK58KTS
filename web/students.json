@@ -84,11 +84,23 @@
       "studentAddress": "0xd1695ed2a73e1d13ec63a90653d357baac7467f8",
       "studentName": "Linh xinh đẹp nhất hệ Mặt Trời",
       "updatedAt": "2026-10-22T03:44:49.391Z"
+    },
+    "32": {
+      "scholarshipId": 32,
+      "studentAddress": "0xd1695ed2a73e1d13ec63a90653d357baac7467f8",
+      "studentName": "Linh xinh đẹp",
+      "updatedAt": "2026-10-24T15:17:55.252Z"
+    },
+    "33": {
+      "scholarshipId": 33,
+      "studentAddress": "0xee917bc552f81fe4db72025e05f146919b3b4032",
+      "studentName": "Khánh Linh xinh đẹp",
+      "updatedAt": "2026-10-24T16:24:21.610Z"
     }
   },
   "students": {
-    "0xee917bc552f81fe4db72025e05f146919b3b4032": "Linh xinh đẹp",
-    "0xd1695ed2a73e1d13ec63a90653d357baac7467f8": "Linh xinh đẹp nhất hệ Mặt Trời",
+    "0xee917bc552f81fe4db72025e05f146919b3b4032": "Khánh Linh xinh đẹp",
+    "0xd1695ed2a73e1d13ec63a90653d357baac7467f8": "Linh xinh đẹp",
     "0xafb64eef8093cf3dc4e2c51bb1d18e16afddb6f5": "Trần Thị Như Huỳnh",
     "0x73fff099ada86f63217b769afcf00da80f2b9dca": "pHg"
   }

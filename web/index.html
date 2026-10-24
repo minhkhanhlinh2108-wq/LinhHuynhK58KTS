@@ -18,6 +18,16 @@
   <!-- Ethers.js v6 UMD CDN -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
 
+  <!-- QR Code Generator Library (QRious - Offline First with CDN Fallback) -->
+  <script src="assets/qrious.min.js"></script>
+  <script>
+    if (typeof QRious === "undefined") {
+      const s = document.createElement("script");
+      s.src = "https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js";
+      document.head.appendChild(s);
+    }
+  </script>
+
   <style>
     :root {
       /* Theme: LIGHT MODE (Mặc định) — Minh bạch học bổng – Chắp cánh tri thức */
@@ -987,6 +997,84 @@
         align-items: flex-start;
       }
     }
+
+    /* ─── Blockchain Verification & QR Code Explorer Component ─── */
+    .verification-card {
+      background: var(--bg-card);
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-card);
+      transition: all var(--transition-fast);
+    }
+
+    .verification-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .verification-grid {
+      display: grid;
+      grid-template-columns: minmax(180px, 200px) 1fr;
+      gap: 24px;
+      align-items: center;
+    }
+
+    @media (max-width: 768px) {
+      .verification-grid {
+        grid-template-columns: 1fr;
+        justify-items: center;
+        text-align: center;
+      }
+    }
+
+    .qr-container {
+      background: #ffffff;
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid #c7d2fe;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.08);
+      width: 196px;
+      height: 196px;
+    }
+
+    .qr-container canvas {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .tx-tab-btn {
+      padding: 6px 14px;
+      border-radius: var(--radius-full);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+      background: var(--bg-box);
+      color: var(--text-muted);
+      transition: all var(--transition-fast);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tx-tab-btn:hover {
+      border-color: var(--accent-primary);
+      color: var(--accent-primary);
+    }
+
+    .tx-tab-btn.active {
+      background: var(--accent-primary);
+      color: #ffffff;
+      border-color: var(--accent-primary);
+      box-shadow: 0 2px 10px rgba(67, 56, 202, 0.3);
+    }
   </style>
 </head>
 
@@ -1478,6 +1566,122 @@
                   <!-- Generated via JS -->
                 </tbody>
               </table>
+            </div>
+
+            <!-- KHU VỰC MỚI: XÁC MINH HỌC BỔNG TRÊN BLOCKCHAIN -->
+            <div id="explorerVerificationCard" class="verification-card"
+              style="margin-top: 22px; padding: 22px; display: none;">
+              <div class="verification-header"
+                style="padding-bottom: 14px; border-bottom: 1px solid var(--border-color); margin-bottom: 18px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 1.3rem;">🛡️</span>
+                  <h4 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text-main);">Xác minh học bổng
+                    trên Blockchain</h4>
+                  <span id="verifScholarshipBadge" class="code-pill"
+                    style="font-weight: 700; color: var(--accent-primary); background: var(--pill-bg); border-color: var(--pill-border);">#1</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span class="badge badge-sepolia" style="font-size: 0.78rem; padding: 4px 10px;">
+                    <span class="badge-dot"></span> Sepolia Testnet
+                  </span>
+                  <span id="verifStatusBadge" class="status-pill disbursed" style="font-size: 0.76rem;">Đã xác
+                    thực</span>
+                </div>
+              </div>
+
+              <!-- Content Area: Success with QR or Not Available Notice -->
+              <div id="verifContentArea">
+                <!-- If transactions found -->
+                <div id="verifHasData">
+                  <!-- Tx Type Selector Tabs (Tạo suất, Nạp quỹ, Giải ngân) -->
+                  <div id="verifTxTypeTabs" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px;">
+                    <!-- Injected dynamically -->
+                  </div>
+
+                  <!-- 2-column layout (QR on left, Details on right) -->
+                  <div class="verification-grid">
+                    <!-- QR Column -->
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                      <div id="verifQrWrapper" class="qr-container">
+                        <canvas id="verifQrCanvas" width="168" height="168"></canvas>
+                      </div>
+                      <span
+                        style="font-size: 0.76rem; color: var(--text-dim); margin-top: 8px; text-align: center; display: flex; align-items: center; gap: 4px;">
+                        📱 <span>Quét bằng điện thoại để tra cứu</span>
+                      </span>
+                    </div>
+
+                    <!-- Details Column -->
+                    <div style="display: flex; flex-direction: column; gap: 12px; min-width: 0;">
+                      <div>
+                        <span id="verifTxTypeLabel"
+                          style="font-size: 0.88rem; font-weight: 700; color: var(--accent-primary); text-transform: uppercase; letter-spacing: 0.04em;">
+                          GIAO DỊCH TẠO SUẤT HỌC BỔNG
+                        </span>
+                        <div id="verifTxTypeDesc"
+                          style="font-size: 0.82rem; color: var(--text-muted); margin-top: 3px; line-height: 1.5;">
+                          Khởi tạo và phong tỏa mốc cam kết on-chain tại hợp đồng ProjectCore.
+                        </div>
+                      </div>
+
+                      <!-- Tx Hash Display Box with Copy Button -->
+                      <div
+                        style="background: var(--bg-box); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 10px 14px;">
+                        <div
+                          style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                          <span
+                            style="font-size: 0.76rem; font-weight: 600; color: var(--text-dim); text-transform: uppercase;">Transaction
+                            Hash (Sepolia)</span>
+                          <button id="btnCopyHash" type="button" class="btn btn-secondary"
+                            style="padding: 3px 10px; font-size: 0.75rem; height: auto;" onclick="copyCurrentTxHash()">
+                            📋 Sao chép Hash
+                          </button>
+                        </div>
+                        <div id="verifTxHashText" class="code-pill"
+                          style="display: block; width: 100%; word-break: break-all; font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; padding: 6px 10px; background: rgba(0,0,0,0.03); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 6px;">
+                          0x...
+                        </div>
+                      </div>
+
+                      <!-- Action Buttons -->
+                      <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px;">
+                        <a id="btnOpenEtherscan" href="#" target="_blank" rel="noopener noreferrer"
+                          class="btn btn-primary"
+                          style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-size: 0.86rem; padding: 8px 16px;">
+                          <span>🔍 Mở trên Sepolia Etherscan ↗</span>
+                        </a>
+                        <button id="btnCopyLink" type="button" class="btn btn-secondary"
+                          style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.86rem; padding: 8px 16px;"
+                          onclick="copyCurrentTxLink()">
+                          <span>🔗 Sao chép liên kết</span>
+                        </button>
+                      </div>
+                      <div id="verifCopyFeedback"
+                        style="font-size: 0.78rem; color: var(--accent-success); font-weight: 600; display: none;"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- If NO verified transaction found -->
+                <div id="verifNoData"
+                  style="display: none; padding: 24px; text-align: center; background: rgba(245, 158, 11, 0.06); border: 1px dashed rgba(245, 158, 11, 0.35); border-radius: var(--radius-sm);">
+                  <div style="font-size: 1.8rem; margin-bottom: 8px;">⚠️</div>
+                  <div style="font-weight: 700; color: var(--accent-warning); margin-bottom: 4px;">Chưa có Transaction
+                    Hash xác minh cho suất học bổng này</div>
+                  <p style="font-size: 0.84rem; color: var(--text-muted); max-width: 480px; margin: 0 auto;">
+                    Hệ thống đã tra cứu các khối log trên mạng Sepolia Testnet nhưng không phát hiện giao dịch đã xác thực
+                    thuộc đúng ID này. Không hiển thị mã QR hoặc dữ liệu chưa được bảo chứng.
+                  </p>
+                </div>
+
+                <!-- Loading State -->
+                <div id="verifLoading" style="display: none; padding: 28px; text-align: center;">
+                  <div class="spinner"
+                    style="margin: 0 auto 10px auto; width: 26px; height: 26px; border-width: 3px;"></div>
+                  <span style="font-size: 0.85rem; color: var(--text-muted);">Đang đối soát và trích xuất Transaction Hash
+                    từ Sepolia block logs...</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -3971,6 +4175,431 @@
       }
     }
 
+    // ─── Blockchain Verification & QR Code Explorer Subsystem ───────────────
+    let _activeVerifTxs = [];
+    let _activeVerifTxIndex = 0;
+    const _txVerificationCache = {};
+
+    function resetBlockchainVerification() {
+      _activeVerifTxs = [];
+      _activeVerifTxIndex = 0;
+      const card = document.getElementById("explorerVerificationCard");
+      const canvasEl = document.getElementById("verifQrCanvas");
+      const tabsEl = document.getElementById("verifTxTypeTabs");
+      const noDataEl = document.getElementById("verifNoData");
+      const hasDataEl = document.getElementById("verifHasData");
+      const loadingEl = document.getElementById("verifLoading");
+      const feedbackEl = document.getElementById("verifCopyFeedback");
+
+      if (canvasEl) {
+        const ctx = canvasEl.getContext("2d");
+        if (ctx) ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+      }
+      if (tabsEl) tabsEl.innerHTML = "";
+      if (noDataEl) noDataEl.style.display = "none";
+      if (hasDataEl) hasDataEl.style.display = "none";
+      if (loadingEl) loadingEl.style.display = "none";
+      if (feedbackEl) feedbackEl.style.display = "none";
+      if (card) card.style.display = "none";
+    }
+
+    function showVerifFeedback(msg) {
+      const fb = document.getElementById("verifCopyFeedback");
+      if (!fb) return;
+      fb.textContent = `✓ ${msg}`;
+      fb.style.display = "block";
+      setTimeout(() => {
+        if (fb) fb.style.display = "none";
+      }, 3000);
+    }
+
+    function copyCurrentTxHash() {
+      const tx = _activeVerifTxs[_activeVerifTxIndex];
+      if (!tx || !tx.hash) return;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(tx.hash).then(() => {
+          showVerifFeedback("Đã sao chép Transaction Hash!");
+        }).catch(() => fallbackCopy(tx.hash, "Đã sao chép Transaction Hash!"));
+      } else {
+        fallbackCopy(tx.hash, "Đã sao chép Transaction Hash!");
+      }
+    }
+
+    function copyCurrentTxLink() {
+      const tx = _activeVerifTxs[_activeVerifTxIndex];
+      if (!tx || !tx.hash) return;
+      const url = `https://sepolia.etherscan.io/tx/${tx.hash}`;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(() => {
+          showVerifFeedback("Đã sao chép liên kết Sepolia Etherscan!");
+        }).catch(() => fallbackCopy(url, "Đã sao chép liên kết Sepolia Etherscan!"));
+      } else {
+        fallbackCopy(url, "Đã sao chép liên kết Sepolia Etherscan!");
+      }
+    }
+
+    function fallbackCopy(text, successMsg) {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+        showVerifFeedback(successMsg);
+      } catch (err) {
+        alert("Không thể sao chép tự động: " + text);
+      }
+    }
+
+    function displayActiveVerificationTx(index) {
+      if (!_activeVerifTxs || _activeVerifTxs.length === 0) return;
+      _activeVerifTxIndex = index;
+      const tx = _activeVerifTxs[index];
+      if (!tx) return;
+
+      // Cập nhật trạng thái active trên các nút tab
+      const tabBtns = document.querySelectorAll(".verif-tx-tab");
+      tabBtns.forEach((btn, idx) => {
+        if (idx === index) {
+          btn.classList.add("active");
+        } else {
+          btn.classList.remove("active");
+        }
+      });
+
+      const labelEl = document.getElementById("verifTxTypeLabel");
+      const descEl = document.getElementById("verifTxTypeDesc");
+      const hashEl = document.getElementById("verifTxHashText");
+      const openBtn = document.getElementById("btnOpenEtherscan");
+      const copyHashBtn = document.getElementById("btnCopyHash");
+      const copyLinkBtn = document.getElementById("btnCopyLink");
+      const canvasEl = document.getElementById("verifQrCanvas");
+
+      if (labelEl) labelEl.textContent = tx.title || "GIAO DỊCH ON-CHAIN";
+      if (descEl) descEl.textContent = tx.description || "Giao dịch đã xác thực trên mạng Sepolia Testnet.";
+
+      if (tx.hash && /^0x[0-9a-fA-F]{64}$/.test(tx.hash.trim())) {
+        const cleanHash = tx.hash.trim();
+        const etherscanUrl = `https://sepolia.etherscan.io/tx/${cleanHash}`;
+
+        if (hashEl) {
+          hashEl.textContent = cleanHash;
+          hashEl.style.color = "var(--text-main)";
+        }
+        if (openBtn) {
+          openBtn.href = etherscanUrl;
+          openBtn.style.display = "inline-flex";
+        }
+        if (copyHashBtn) copyHashBtn.style.display = "inline-flex";
+        if (copyLinkBtn) copyLinkBtn.style.display = "inline-flex";
+
+        // Tạo QR Code động bằng QRious
+        if (canvasEl) {
+          try {
+            if (typeof QRious !== "undefined") {
+              new QRious({
+                element: canvasEl,
+                value: etherscanUrl,
+                size: 168,
+                level: "H"
+              });
+            }
+          } catch (qrErr) {
+            console.error("Lỗi vẽ QR Code:", qrErr);
+          }
+        }
+      } else {
+        // Trường hợp không có hash hợp lệ
+        if (hashEl) {
+          hashEl.textContent = "Chưa có transaction hash on-chain cho mốc này";
+          hashEl.style.color = "var(--accent-warning)";
+        }
+        if (openBtn) openBtn.style.display = "none";
+        if (copyHashBtn) copyHashBtn.style.display = "none";
+        if (copyLinkBtn) copyLinkBtn.style.display = "none";
+        if (canvasEl) {
+          const ctx = canvasEl.getContext("2d");
+          if (ctx) ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+        }
+      }
+    }
+
+    async function updateBlockchainVerification(scholarshipId, scholarshipData, loadedMilestones) {
+      const card = document.getElementById("explorerVerificationCard");
+      const idBadge = document.getElementById("verifScholarshipBadge");
+      const loadingEl = document.getElementById("verifLoading");
+      const hasDataEl = document.getElementById("verifHasData");
+      const noDataEl = document.getElementById("verifNoData");
+      const statusBadge = document.getElementById("verifStatusBadge");
+      const tabsEl = document.getElementById("verifTxTypeTabs");
+
+      if (!card) return;
+      card.style.display = "block";
+      if (idBadge) idBadge.textContent = `#${scholarshipId}`;
+
+      loadingEl.style.display = "block";
+      hasDataEl.style.display = "none";
+      noDataEl.style.display = "none";
+      if (tabsEl) tabsEl.innerHTML = "";
+
+      const idKey = String(scholarshipId).trim();
+      let txList = [];
+
+      // 1. Kiểm tra cache đã lưu (chỉ dùng cache nếu có dữ liệu hợp lệ)
+      if (_txVerificationCache[idKey] && _txVerificationCache[idKey].length > 0) {
+        txList = _txVerificationCache[idKey];
+      } else {
+        // 2. Tra cứu on-chain Sepolia thông qua JSON-RPC công cộng độc lập (tránh MetaMask Infura filter limit)
+        const validAddr = normalizeAddress(currentContractAddress) || DEFAULT_CONTRACT_ADDRESS;
+        let rpcProvider = null;
+        let logsContract = null;
+
+        for (const rpcUrl of SEPOLIA_RPC_LIST) {
+          try {
+            const p = new ethers.JsonRpcProvider(rpcUrl);
+            logsContract = new ethers.Contract(validAddr, PROJECT_CORE_ABI, p);
+            rpcProvider = p;
+            break;
+          } catch (_) { }
+        }
+
+        if (!rpcProvider) {
+          rpcProvider = new ethers.JsonRpcProvider(SEPOLIA_RPC_LIST[0]);
+          logsContract = new ethers.Contract(validAddr, PROJECT_CORE_ABI, rpcProvider);
+        }
+
+        let createdEvents = [];
+        let fundedEvents = [];
+        let releasedEvents = [];
+
+        try {
+          const curBlock = await rpcProvider.getBlockNumber();
+          const startBlock = 11970000; // Contract deploy ở block ~11984000
+
+          const [cEvs, fEvs, rEvs] = await Promise.all([
+            logsContract.queryFilter(logsContract.filters.ScholarshipCreated(scholarshipId), startBlock, curBlock).catch(() => []),
+            logsContract.queryFilter(logsContract.filters.ScholarshipFunded(scholarshipId), startBlock, curBlock).catch(() => []),
+            logsContract.queryFilter(logsContract.filters.ScholarshipReleased(scholarshipId), startBlock, curBlock).catch(() => [])
+          ]);
+          createdEvents = cEvs || [];
+          fundedEvents = fEvs || [];
+          releasedEvents = rEvs || [];
+        } catch (eventErr) {
+          console.warn("Lỗi đọc events on-chain Sepolia:", eventErr);
+        }
+
+        // Đảm bảo có đầy đủ dữ liệu mốc
+        const mCount = Number(scholarshipData.milestoneCount || 0);
+        let mList = loadedMilestones;
+        if (!mList || mList.length < mCount) {
+          mList = [];
+          for (let i = 0; i < mCount; i++) {
+            try {
+              const m = await getSepoliaMilestone(scholarshipId, i);
+              mList.push(m);
+            } catch (_) {
+              try {
+                const m = await logsContract.getMilestone(scholarshipId, i);
+                mList.push(m);
+              } catch (mErr) {
+                console.warn(`Lỗi đọc Mốc ${i}:`, mErr);
+              }
+            }
+          }
+        }
+
+        // BƯỚC 1: XỬ LÝ VÀ ĐỐI CHIẾU TỪNG MỐC GIẢI NGÂN (ƯU TIÊN HIỂN THỊ CÁC MỐC GIẢI NGÂN)
+        for (let i = 0; i < mCount; i++) {
+          const m = mList[i];
+          if (!m) continue;
+          const statusNum = Number(m.status);
+          const isDisbursed = statusNum === 3;
+          const mAmountEth = ethers.formatEther(m.amount);
+          const mName = `Mốc ${i}`;
+
+          if (isDisbursed) {
+            // Tìm event giải ngân khớp chính xác scholarshipId và milestoneIndex
+            const relEv = releasedEvents.find(e => {
+              try {
+                return Number(e.args.milestoneIndex) === i && String(e.args.scholarshipId) === idKey;
+              } catch (_) {
+                return false;
+              }
+            });
+
+            if (relEv && relEv.transactionHash && /^0x[0-9a-fA-F]{64}$/.test(relEv.transactionHash)) {
+              // Kiểm chứng receipt thực tế trên EVM (Chain ID 11155111, status === 1)
+              let receipt = null;
+              try {
+                receipt = await rpcProvider.getTransactionReceipt(relEv.transactionHash);
+              } catch (rcErr) {
+                console.warn(`Lỗi lấy receipt cho mốc ${i}:`, rcErr);
+              }
+
+              const isSuccessReceipt = receipt && Number(receipt.status) === 1;
+              const isAmountMatch = BigInt(relEv.args.amount) === BigInt(m.amount);
+
+              if (isSuccessReceipt && isAmountMatch) {
+                txList.push({
+                  type: "release",
+                  milestoneIndex: i,
+                  title: `🚀 GIẢI NGÂN ${mName.toUpperCase()} (${mAmountEth} ETH)`,
+                  tabLabel: `🚀 ${mName} (${mAmountEth} ETH)`,
+                  description: `Giao dịch giải ngân ${mName} (${mAmountEth} ETH) đã thực thi thành công on-chain tại block #${receipt.blockNumber}. Tiền đã chuyển vào ví sinh viên thụ hưởng.`,
+                  hash: relEv.transactionHash,
+                  blockNumber: receipt.blockNumber,
+                  amountEth: mAmountEth,
+                  statusText: "Đã xác thực On-chain (Thành công)",
+                  verified: true
+                });
+              } else {
+                txList.push({
+                  type: "unverified",
+                  milestoneIndex: i,
+                  title: `⚠️ ${mName.toUpperCase()}: CHƯA XÁC MINH ĐƯỢC RECEIPT`,
+                  tabLabel: `⚠️ ${mName} (Lỗi xác minh)`,
+                  description: !isSuccessReceipt
+                    ? `Receipt giao dịch ${relEv.transactionHash} có trạng thái thất bại hoặc không xác nhận (status !== 1).`
+                    : `Số tiền giải ngân trên event (${ethers.formatEther(relEv.args.amount)} ETH) không khớp với định mức mốc (${mAmountEth} ETH).`,
+                  hash: relEv.transactionHash,
+                  verified: false
+                });
+              }
+            } else {
+              // Trạng thái mốc ghi nhận Disbursed nhưng không tìm thấy event giải ngân on-chain
+              txList.push({
+                type: "unverified",
+                milestoneIndex: i,
+                title: `⚠️ ${mName.toUpperCase()}: CHƯA TÌM THẤY TRANSACTION HASH`,
+                tabLabel: `⚠️ ${mName} (Chưa có Hash)`,
+                description: `Hợp đồng ghi nhận trạng thái Disbursed nhưng không tìm thấy event ScholarshipReleased tương ứng trên block logs Sepolia.`,
+                hash: null,
+                verified: false
+              });
+            }
+          }
+        }
+
+        // BƯỚC 2: XỬ LÝ GIAO DỊCH TẠO SUẤT (ScholarshipCreated)
+        const cEv = createdEvents.find(e => String(e.args.scholarshipId) === idKey);
+        let createTxHash = cEv ? cEv.transactionHash : null;
+
+        // Nếu on-chain log chưa thấy, tìm trong sessionTransactions
+        if (!createTxHash) {
+          const sCreate = sessionTransactions.find(t => String(t.scholarshipId) === idKey && t.action.includes("Tạo") && t.status === "Thành công");
+          if (sCreate && sCreate.hash && /^0x[0-9a-fA-F]{64}$/.test(sCreate.hash)) {
+            createTxHash = sCreate.hash;
+          }
+        }
+
+        if (createTxHash && /^0x[0-9a-fA-F]{64}$/.test(createTxHash)) {
+          let cRc = null;
+          try {
+            cRc = await rpcProvider.getTransactionReceipt(createTxHash);
+          } catch (_) { }
+
+          if (cRc && Number(cRc.status) === 1) {
+            txList.push({
+              type: "create",
+              milestoneIndex: null,
+              title: `🎓 GIAO DỊCH TẠO SUẤT HỌC BỔNG #${idKey}`,
+              tabLabel: `🎓 Tạo Suất #${idKey}`,
+              description: `Khởi tạo suất học bổng #${idKey}, định mức ${ethers.formatEther(scholarshipData.totalAmount)} ETH, phân bổ ${scholarshipData.milestoneCount} mốc trên Sepolia tại block #${cRc.blockNumber}.`,
+              hash: createTxHash,
+              blockNumber: cRc.blockNumber,
+              statusText: "Đã xác thực On-chain (Thành công)",
+              verified: true
+            });
+          }
+        }
+
+        // BƯỚC 3: XỬ LÝ GIAO DỊCH NẠP QUỸ (ScholarshipFunded)
+        fundedEvents.forEach((fEv, fIdx) => {
+          if (fEv.transactionHash && /^0x[0-9a-fA-F]{64}$/.test(fEv.transactionHash) && !txList.some(x => x.hash === fEv.transactionHash)) {
+            const fAmountEth = ethers.formatEther(fEv.args.amount || 0);
+            txList.push({
+              type: "fund",
+              milestoneIndex: null,
+              title: `💰 NẠP QUỸ ESCROW${fundedEvents.length > 1 ? ` (LẦN ${fIdx + 1})` : ""} - ${fAmountEth} ETH`,
+              tabLabel: `💰 Nạp Quỹ${fundedEvents.length > 1 ? ` #${fIdx + 1}` : ""}`,
+              description: `Giao dịch Nhà tài trợ nạp ${fAmountEth} ETH bảo chứng vào hợp đồng TrustScholar trên mạng Sepolia.`,
+              hash: fEv.transactionHash,
+              verified: true,
+              amountEth: fAmountEth,
+              statusText: "Đã xác thực On-chain (Thành công)"
+            });
+          }
+        });
+
+        // Bổ sung các giao dịch phiên hợp lệ khác nếu chưa có trong danh sách
+        const sessionMatches = sessionTransactions.filter(
+          t => String(t.scholarshipId) === idKey && t.status === "Thành công" && t.hash && /^0x[0-9a-fA-F]{64}$/.test(t.hash)
+        );
+        sessionMatches.forEach(st => {
+          if (!txList.some(x => x.hash === st.hash)) {
+            txList.push({
+              type: "session",
+              milestoneIndex: null,
+              title: `⚡ ${st.action}`,
+              tabLabel: st.action.replace("Suất Học Bổng", "").trim(),
+              description: st.details || "Giao dịch phát sinh trong phiên làm việc hiện tại.",
+              hash: st.hash,
+              verified: true
+            });
+          }
+        });
+
+        // Chỉ lưu cache khi có dữ liệu
+        if (txList.length > 0) {
+          _txVerificationCache[idKey] = txList;
+        }
+      }
+
+      loadingEl.style.display = "none";
+      _activeVerifTxs = txList;
+      _activeVerifTxIndex = 0;
+
+      // Đếm số lượng giao dịch đã xác minh hợp lệ (có hash)
+      const validTxs = txList.filter(t => t.hash && t.verified);
+
+      if (validTxs.length === 0) {
+        // Không có giao dịch xác minh nào hợp lệ
+        hasDataEl.style.display = "none";
+        noDataEl.style.display = "block";
+        if (statusBadge) {
+          statusBadge.textContent = "Chưa có Hash";
+          statusBadge.className = "status-pill pending";
+        }
+      } else {
+        hasDataEl.style.display = "block";
+        noDataEl.style.display = "none";
+        if (statusBadge) {
+          statusBadge.textContent = "Đã xác thực on-chain";
+          statusBadge.className = "status-pill disbursed";
+        }
+
+        // Xây dựng các nút tab nếu có nhiều hơn 1 giao dịch
+        if (tabsEl) {
+          tabsEl.innerHTML = "";
+          if (txList.length > 1) {
+            txList.forEach((item, idx) => {
+              const btn = document.createElement("button");
+              btn.type = "button";
+              btn.className = `tx-tab-btn verif-tx-tab ${idx === 0 ? 'active' : ''}`;
+              btn.innerHTML = item.tabLabel;
+              btn.onclick = () => displayActiveVerificationTx(idx);
+              tabsEl.appendChild(btn);
+            });
+          }
+        }
+
+        displayActiveVerificationTx(0);
+      }
+    }
+
     // 8. Lookup Scholarship (Explorer)
     async function handleLookupScholarship() {
       const id = document.getElementById("inpLookupId").value;
@@ -3978,6 +4607,9 @@
         alert("Vui lòng nhập ID hợp lệ!");
         return;
       }
+
+      // Xóa sạch trạng thái xác minh trước đó
+      resetBlockchainVerification();
 
       try {
         showStatus(`Đang tải dữ liệu suất học bổng #${id}...`, "", "loading");
@@ -4008,6 +4640,7 @@
         const statusClasses = ["pending", "submitted", "approved", "disbursed"];
 
         const readContract = await getSepoliaReadContract();
+        const loadedMilestones = [];
 
         for (let i = 0; i < count; i++) {
           let m;
@@ -4016,6 +4649,7 @@
           } catch (_) {
             m = await readContract.getMilestone(id, i);
           }
+          loadedMilestones.push(m);
           const st = Number(m.status);
 
           const row = document.createElement("tr");
@@ -4032,8 +4666,12 @@
 
         document.getElementById("lookupResult").style.display = "block";
         showStatus(`Đã tải thành công dữ liệu suất #${id}!`, "", "info");
+
+        // Tự động tải và hiển thị khu vực Xác minh học bổng trên Blockchain kèm QR Code
+        updateBlockchainVerification(id, s, loadedMilestones);
       } catch (err) {
         console.error("Lỗi tra cứu:", err);
+        resetBlockchainVerification();
         const resEl = document.getElementById("lookupResult");
         if (resEl) resEl.style.display = "none";
         if (err.code === "SCHOLARSHIP_NOT_FOUND" || isScholarshipNotFoundError(err)) {
