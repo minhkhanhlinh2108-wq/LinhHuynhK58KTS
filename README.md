@@ -97,16 +97,14 @@ cmd /c npx hardhat test
 
 ## 4. Hướng Dẫn Vận Hành Web3 DApp (Run DApp)
 
-### Cách 1: Khởi chạy bằng máy chủ cục bộ (Khuyến nghị)
-1. Khởi động HTTP server tại thư mục `web/`:
+### Cách 1: Khởi chạy bằng máy chủ Web & Backend Registry (Khuyến nghị)
+1. Khởi động máy chủ TrustScholar Web & Backend Shared Registry:
    ```bash
-   # Dùng Python:
-   python -m http.server 8080 --directory web
-
-   # Hoặc dùng Node.js npx:
-   cmd /c npx serve web
+   npm run server
+   # Hoặc chạy trực tiếp qua Node.js:
+   node scripts/server.mjs
    ```
-2. Mở trình duyệt web và truy cập địa chỉ: [http://localhost:8080](http://localhost:8080)
+2. Mở trình duyệt web và truy cập địa chỉ: [http://localhost:3000](http://localhost:3000) hoặc [http://127.0.0.1:3000](http://127.0.0.1:3000)
 
 ### Cách 2: Mở trực tiếp file HTML
 - Nhấp đúp chuột vào file [`web/index.html`](web/index.html) để mở trên trình duyệt Chrome, Edge, Brave hoặc Firefox có cài đặt tiện ích ví **MetaMask**.
