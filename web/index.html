@@ -1688,14 +1688,26 @@
 
         <!-- Live Transaction History & Transparency Feed -->
         <div style="margin-top: 24px; border-top: 1px solid var(--border-color); padding-top: 20px;">
-          <h3
-            style="font-size: 1.05rem; color: var(--text-main); display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-            <span>📜</span> Lịch Sử Giao Dịch & Minh Bạch (Live Session Ledger)
-          </h3>
-          <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 12px;">
-            Ghi nhận thời gian thực mọi giao dịch on-chain thành công và các giao dịch bị chặn / revert từ smart
-            contract.
-          </p>
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+            <div>
+              <h3
+                style="font-size: 1.05rem; color: var(--text-main); display: flex; align-items: center; gap: 8px; margin: 0 0 4px 0;">
+                <span>📜</span> Lịch Sử Giao Dịch & Minh Bạch (Live Session Ledger)
+                <span id="ledgerCountBadge" class="code-pill" style="font-size: 0.78rem; font-weight: 700; color: var(--accent-primary);">0</span>
+              </h3>
+              <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0;">
+                Ghi nhận thời gian thực mọi giao dịch on-chain (Pending, Thành công, Revert/Thất bại) và lưu trữ bền vững qua localStorage.
+              </p>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <button id="btnSyncLedger" type="button" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 5px;" onclick="syncLedgerFromBlockchain(true)">
+                <span>🔄 Khôi phục từ Blockchain</span>
+              </button>
+              <button type="button" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 5px;" onclick="clearSessionLedger()">
+                <span>🗑️ Xóa Lịch Sử</span>
+              </button>
+            </div>
+          </div>
           <div style="overflow-x: auto;">
             <table class="milestone-table">
               <thead>
@@ -1710,8 +1722,7 @@
               </thead>
               <tbody id="sessionTxTableBody">
                 <tr>
-                  <td colspan="6" style="text-align: center; color: var(--text-dim);">Chưa có giao dịch nào được thực
-                    hiện trong phiên làm việc này.</td>
+                  <td colspan="6" style="text-align: center; color: var(--text-dim);">Chưa có giao dịch nào được thực hiện trong phiên làm việc này.</td>
                 </tr>
               </tbody>
             </table>
@@ -3483,44 +3494,331 @@
 
     // --- SMART CONTRACT INTERACTIONS & LOGIC ---
 
-    // Session Transaction History Store
-    const sessionTransactions = [];
+    // --- LIVE SESSION LEDGER: PERSISTENT TRANSACTION STORE & SYNC ---
+    const LEDGER_STORAGE_KEY_PREFIX = "trustscholar_session_ledger";
+    let sessionTransactions = [];
 
-    function recordSessionTx(action, status, hash, details, scholarshipId = "-") {
-      const timeStr = new Date().toLocaleTimeString("vi-VN");
-      sessionTransactions.unshift({
-        time: timeStr,
-        action,
-        status,
-        hash,
-        details,
-        scholarshipId
-      });
+    function getLedgerStorageKey() {
+      const chainId = 11155111; // Ethereum Sepolia Testnet
+      const addr = (normalizeAddress(currentContractAddress) || DEFAULT_CONTRACT_ADDRESS).toLowerCase();
+      return `${LEDGER_STORAGE_KEY_PREFIX}_${chainId}_${addr}`;
+    }
 
+    function loadStoredSessionTransactions() {
+      try {
+        const key = getLedgerStorageKey();
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            sessionTransactions = parsed;
+          }
+        } else {
+          // Hỗ trợ nạp từ khóa cũ nếu có
+          const legacyRaw = localStorage.getItem("trustscholar_session_txs");
+          if (legacyRaw) {
+            const legacyParsed = JSON.parse(legacyRaw);
+            if (Array.isArray(legacyParsed)) {
+              sessionTransactions = legacyParsed;
+              saveSessionTransactionsToStorage();
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Lỗi đọc session ledger từ localStorage:", err);
+        sessionTransactions = [];
+      }
+      renderSessionTxTable();
+    }
+
+    function saveSessionTransactionsToStorage() {
+      try {
+        const key = getLedgerStorageKey();
+        localStorage.setItem(key, JSON.stringify(sessionTransactions));
+      } catch (err) {
+        console.warn("Lỗi lưu session ledger vào localStorage:", err);
+      }
+    }
+
+    function renderSessionTxTable() {
       const tbody = document.getElementById("sessionTxTableBody");
+      const countBadge = document.getElementById("ledgerCountBadge");
+      if (countBadge) {
+        countBadge.textContent = sessionTransactions.length;
+      }
       if (!tbody) return;
 
       tbody.innerHTML = "";
+
+      if (sessionTransactions.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" style="text-align: center; padding: 24px; color: var(--text-dim);">
+              <div style="font-size: 1.25rem; margin-bottom: 6px;">📜</div>
+              <div style="font-weight: 600; color: var(--text-muted); margin-bottom: 4px;">Chưa có giao dịch nào được lưu trong bộ nhớ phiên này.</div>
+              <div style="font-size: 0.8rem; color: var(--text-dim); max-width: 520px; margin: 0 auto 10px auto;">
+                Các giao dịch đã thực hiện trên Sepolia Testnet có thể được khôi phục trực tiếp từ blockchain event logs.
+              </div>
+              <button type="button" class="btn btn-secondary" style="font-size: 0.8rem; padding: 6px 14px; display: inline-flex; align-items: center; gap: 6px;" onclick="syncLedgerFromBlockchain(true)">
+                <span>🔄 Khôi phục Lịch Sử Từ Blockchain (Sepolia Logs)</span>
+              </button>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
       sessionTransactions.forEach(tx => {
         const row = document.createElement("tr");
-        const statusBadge = tx.status === "Thành công"
-          ? `<span class="status-pill disbursed">Thành công</span>`
-          : `<span class="status-pill pending" style="background: rgba(239, 68, 68, 0.12); color: var(--accent-danger); border: 1px solid rgba(239, 68, 68, 0.3); font-weight: 700;">${tx.status}</span>`;
 
-        const linkHtml = tx.hash
-          ? `<a class="tx-link" href="https://sepolia.etherscan.io/tx/${tx.hash}" target="_blank" rel="noopener noreferrer">${tx.hash.slice(0, 10)}...${tx.hash.slice(-8)} ↗</a>`
-          : `<span style="color: var(--text-dim); font-size: 0.8rem;">(Chưa phát sinh on-chain)</span>`;
+        // Trạng thái giao dịch
+        let statusBadge = "";
+        const stLower = (tx.status || "").toLowerCase();
+        if (stLower.includes("thành công") || stLower === "success") {
+          statusBadge = `<span class="status-pill disbursed">Thành công</span>`;
+        } else if (stLower.includes("chờ") || stLower === "pending") {
+          statusBadge = `<span class="status-pill pending" style="display:inline-flex;align-items:center;gap:5px;"><span class="badge-dot" style="background:#f59e0b;"></span>Đang xác nhận...</span>`;
+        } else if (stLower.includes("từ chối")) {
+          statusBadge = `<span class="status-pill pending" style="background: rgba(100, 116, 139, 0.12); color: var(--text-muted); border: 1px solid var(--border-color); font-weight: 600;">Từ chối</span>`;
+        } else if (stLower.includes("bị chặn") || stLower.includes("thất bại") || stLower === "failed") {
+          statusBadge = `<span class="status-pill pending" style="background: rgba(239, 68, 68, 0.12); color: var(--accent-danger); border: 1px solid rgba(239, 68, 68, 0.3); font-weight: 700;">Thất Bại</span>`;
+        } else {
+          statusBadge = `<span class="status-pill pending">${tx.status}</span>`;
+        }
+
+        // Liên kết Etherscan
+        const hasValidHash = tx.hash && /^0x[0-9a-fA-F]{64}$/.test(tx.hash.trim());
+        const linkHtml = hasValidHash
+          ? `<a class="tx-link" href="https://sepolia.etherscan.io/tx/${tx.hash.trim()}" target="_blank" rel="noopener noreferrer">${tx.hash.trim().slice(0, 10)}...${tx.hash.trim().slice(-8)} ↗</a>`
+          : `<span style="color: var(--text-dim); font-size: 0.8rem;">(Hoạt động off-chain)</span>`;
 
         row.innerHTML = `
-          <td>${tx.time}</td>
+          <td style="font-size: 0.82rem; white-space: nowrap;">${tx.time}</td>
           <td><strong>${tx.action}</strong></td>
-          <td><span class="code-pill">#${tx.scholarshipId}</span></td>
+          <td><span class="code-pill">#${tx.scholarshipId || "-"}</span></td>
           <td>${statusBadge}</td>
           <td>${linkHtml}</td>
-          <td style="font-size: 0.82rem; color: var(--text-muted);">${tx.details}</td>
+          <td style="font-size: 0.82rem; color: var(--text-muted);">${tx.details || "—"}</td>
         `;
         tbody.appendChild(row);
       });
+    }
+
+    function recordSessionTx(action, status, hash, details, scholarshipId = "-") {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString("vi-VN") + " " + now.toLocaleDateString("vi-VN");
+      const cleanHash = hash && /^0x[0-9a-fA-F]{64}$/.test(hash.trim()) ? hash.trim() : null;
+
+      // Nếu hash đã tồn tại trong danh sách, cập nhật bản ghi cũ
+      if (cleanHash) {
+        const existingIdx = sessionTransactions.findIndex(t => t.hash && t.hash.toLowerCase() === cleanHash.toLowerCase());
+        if (existingIdx !== -1) {
+          sessionTransactions[existingIdx].status = status;
+          if (details) sessionTransactions[existingIdx].details = details;
+          if (scholarshipId && scholarshipId !== "-") sessionTransactions[existingIdx].scholarshipId = String(scholarshipId);
+          sessionTransactions[existingIdx].updatedAt = now.toISOString();
+          saveSessionTransactionsToStorage();
+          renderSessionTxTable();
+          return sessionTransactions[existingIdx];
+        }
+      }
+
+      const record = {
+        id: cleanHash || (Date.now() + "_" + Math.random().toString(36).slice(2, 7)),
+        time: timeStr,
+        action,
+        status,
+        hash: cleanHash,
+        details: details || "",
+        scholarshipId: scholarshipId !== undefined ? String(scholarshipId) : "-",
+        chainId: 11155111,
+        contractAddress: (normalizeAddress(currentContractAddress) || DEFAULT_CONTRACT_ADDRESS).toLowerCase(),
+        createdAt: now.toISOString()
+      };
+
+      sessionTransactions.unshift(record);
+      // Giới hạn tối đa 100 giao dịch gần nhất
+      if (sessionTransactions.length > 100) {
+        sessionTransactions = sessionTransactions.slice(0, 100);
+      }
+      saveSessionTransactionsToStorage();
+      renderSessionTxTable();
+      return record;
+    }
+
+    function updateSessionTx(hash, updates = {}) {
+      if (!hash) return;
+      const cleanHash = String(hash).trim().toLowerCase();
+      const target = sessionTransactions.find(t => (t.hash && t.hash.toLowerCase() === cleanHash) || t.id === cleanHash);
+      if (target) {
+        if (updates.status) target.status = updates.status;
+        if (updates.details) target.details = updates.details;
+        if (updates.scholarshipId && updates.scholarshipId !== "-") target.scholarshipId = String(updates.scholarshipId);
+        if (updates.action) target.action = updates.action;
+        target.updatedAt = new Date().toISOString();
+        saveSessionTransactionsToStorage();
+        renderSessionTxTable();
+      } else {
+        recordSessionTx(
+          updates.action || "Giao Dịch On-Chain",
+          updates.status || "Thành công",
+          hash,
+          updates.details || "",
+          updates.scholarshipId || "-"
+        );
+      }
+    }
+
+    async function syncLedgerFromBlockchain(showNotification = false) {
+      const btnSync = document.getElementById("btnSyncLedger");
+      if (btnSync) {
+        btnSync.disabled = true;
+        btnSync.innerHTML = `<span>⏳ Đang quét block logs...</span>`;
+      }
+
+      try {
+        let rpcProvider = null;
+        let logsContract = null;
+        const validAddr = normalizeAddress(currentContractAddress) || DEFAULT_CONTRACT_ADDRESS;
+
+        for (const rpcUrl of SEPOLIA_RPC_LIST) {
+          try {
+            const p = new ethers.JsonRpcProvider(rpcUrl);
+            logsContract = new ethers.Contract(validAddr, PROJECT_CORE_ABI, p);
+            rpcProvider = p;
+            break;
+          } catch (_) { }
+        }
+
+        if (!rpcProvider) {
+          rpcProvider = new ethers.JsonRpcProvider(SEPOLIA_RPC_LIST[0]);
+          logsContract = new ethers.Contract(validAddr, PROJECT_CORE_ABI, rpcProvider);
+        }
+
+        const curBlock = await rpcProvider.getBlockNumber();
+        const startBlock = 11970000;
+
+        const [created, funded, submitted, approved, released] = await Promise.all([
+          logsContract.queryFilter(logsContract.filters.ScholarshipCreated(), startBlock, curBlock).catch(() => []),
+          logsContract.queryFilter(logsContract.filters.ScholarshipFunded(), startBlock, curBlock).catch(() => []),
+          logsContract.queryFilter(logsContract.filters.MilestoneSubmitted(), startBlock, curBlock).catch(() => []),
+          logsContract.queryFilter(logsContract.filters.MilestoneApproved(), startBlock, curBlock).catch(() => []),
+          logsContract.queryFilter(logsContract.filters.ScholarshipReleased(), startBlock, curBlock).catch(() => [])
+        ]);
+
+        let addedCount = 0;
+        const onChainEvents = [];
+
+        created.forEach(e => {
+          onChainEvents.push({
+            blockNumber: e.blockNumber,
+            transactionHash: e.transactionHash,
+            action: "Tạo Suất Học Bổng",
+            scholarshipId: e.args.scholarshipId.toString(),
+            status: "Thành công",
+            details: `Khởi tạo suất học bổng #${e.args.scholarshipId} (${ethers.formatEther(e.args.totalAmount)} ETH, ${e.args.milestoneCount} mốc). Block #${e.blockNumber}`
+          });
+        });
+
+        funded.forEach(e => {
+          onChainEvents.push({
+            blockNumber: e.blockNumber,
+            transactionHash: e.transactionHash,
+            action: "Nạp Tiền Escrow",
+            scholarshipId: e.args.scholarshipId.toString(),
+            status: "Thành công",
+            details: `Nạp ${ethers.formatEther(e.args.amount)} ETH vào quỹ Escrow bảo chứng. Block #${e.blockNumber}`
+          });
+        });
+
+        submitted.forEach(e => {
+          onChainEvents.push({
+            blockNumber: e.blockNumber,
+            transactionHash: e.transactionHash,
+            action: "Nộp Minh Chứng",
+            scholarshipId: e.args.scholarshipId.toString(),
+            status: "Thành công",
+            details: `Nộp IPFS CID cho Mốc ${e.args.milestoneIndex}. Block #${e.blockNumber}`
+          });
+        });
+
+        approved.forEach(e => {
+          onChainEvents.push({
+            blockNumber: e.blockNumber,
+            transactionHash: e.transactionHash,
+            action: "Phê Duyệt Mốc",
+            scholarshipId: e.args.scholarshipId.toString(),
+            status: "Thành công",
+            details: `Đã duyệt giải ngân cho Mốc ${e.args.milestoneIndex}. Block #${e.blockNumber}`
+          });
+        });
+
+        released.forEach(e => {
+          onChainEvents.push({
+            blockNumber: e.blockNumber,
+            transactionHash: e.transactionHash,
+            action: "Giải Ngân Học Bổng",
+            scholarshipId: e.args.scholarshipId.toString(),
+            status: "Thành công",
+            details: `Chuyển ${ethers.formatEther(e.args.amount)} ETH Mốc ${e.args.milestoneIndex} về ví sinh viên. Block #${e.blockNumber}`
+          });
+        });
+
+        // Sắp xếp các sự kiện theo blockNumber giảm dần (mới nhất lên trên)
+        onChainEvents.sort((a, b) => b.blockNumber - a.blockNumber);
+
+        // Hợp nhất vào sessionTransactions (tránh trùng lặp hash)
+        onChainEvents.forEach(ev => {
+          const exists = sessionTransactions.some(t => t.hash && t.hash.toLowerCase() === ev.transactionHash.toLowerCase());
+          if (!exists) {
+            sessionTransactions.push({
+              id: ev.transactionHash,
+              time: `Block #${ev.blockNumber}`,
+              action: ev.action,
+              status: ev.status,
+              hash: ev.transactionHash,
+              details: ev.details,
+              scholarshipId: ev.scholarshipId,
+              chainId: 11155111,
+              contractAddress: validAddr.toLowerCase(),
+              createdAt: new Date().toISOString()
+            });
+            addedCount++;
+          }
+        });
+
+        saveSessionTransactionsToStorage();
+        renderSessionTxTable();
+
+        if (showNotification) {
+          showStatus(
+            "Đồng bộ lịch sử thành công!",
+            `Đã khôi phục ${addedCount} giao dịch on-chain từ Sepolia block logs. Tổng: ${sessionTransactions.length} giao dịch.`,
+            "success"
+          );
+        }
+      } catch (err) {
+        console.error("Lỗi đồng bộ lịch sử từ blockchain:", err);
+        if (showNotification) {
+          showStatus("Lỗi đồng bộ từ blockchain!", "Không thể đọc event logs từ Sepolia RPC.", "error");
+        }
+      } finally {
+        if (btnSync) {
+          btnSync.disabled = false;
+          btnSync.innerHTML = `<span>🔄 Khôi phục từ Blockchain</span>`;
+        }
+      }
+    }
+
+    function clearSessionLedger() {
+      if (sessionTransactions.length === 0) return;
+      if (confirm("Bạn có chắc chắn muốn xóa toàn bộ lịch sử giao dịch đang lưu trong bộ nhớ máy này? (Các giao dịch on-chain trên blockchain Sepolia sẽ không bị ảnh hưởng và có thể khôi phục lại bất kỳ lúc nào)")) {
+        sessionTransactions = [];
+        const key = getLedgerStorageKey();
+        localStorage.removeItem(key);
+        renderSessionTxTable();
+        showStatus("Đã xóa lịch sử!", "Bộ nhớ Live Session Ledger trên trình duyệt đã được dọn sạch.", "info");
+      }
     }
 
     // Helper: Preconditions check
@@ -3629,7 +3927,11 @@
 
       showStatus(`${prefix}!`, friendlyMsg, "error");
       const failedHash = err.transactionHash || err.receipt?.hash || null;
-      recordSessionTx(prefix, "Bị Chặn / Thất Bại", failedHash, friendlyMsg, id);
+      if (failedHash) {
+        updateSessionTx(failedHash, { status: "Bị Chặn / Thất Bại", details: friendlyMsg, scholarshipId: id, action: prefix });
+      } else {
+        recordSessionTx(prefix, "Bị Chặn / Thất Bại", null, friendlyMsg, id);
+      }
     }
 
     // 1. Create Scholarship
@@ -3690,11 +3992,16 @@
 
       try {
         const amountsWei = amountsStr.map(a => ethers.parseEther(a));
+        const totalWei = amountsWei.reduce((sum, wei) => sum + wei, 0n);
+        const totalEthStr = ethers.formatEther(totalWei);
         showStatus("Đang gửi giao dịch tạo suất học bổng...", "Vui lòng xác nhận giao dịch trên MetaMask.", "loading");
 
         // Gọi hàm với signature tường minh createScholarship(address,uint256[])
         const tx = await coreContract["createScholarship(address,uint256[])"](studentAddrToSave, amountsWei);
         showStatus("Giao dịch đang chờ xác nhận trên blockchain...", `TxHash: ${tx.hash}`, "loading", tx.hash);
+
+        // Lưu thông tin tạm thời ngay sau khi có transaction hash (pending)
+        recordSessionTx("Tạo Suất Học Bổng", "Đang chờ xác nhận", tx.hash, `Khởi tạo suất học bổng ${amountsStr.length} mốc (Tổng: ${totalEthStr} ETH) cho ${studentAddrToSave.slice(0, 8)}...`, "Mới");
 
         const receipt = await tx.wait();
 
@@ -3735,10 +4042,18 @@
 
           if (syncSuccess) {
             showStatus(`Tạo suất học bổng #${nextId} thành công! 🎉`, `Đã lưu và đồng bộ tên "${studentNameToSave || '—'}" lên server dùng chung. Block: ${receipt.blockNumber}`, "success", tx.hash);
-            recordSessionTx("Tạo Suất Học Bổng", "Thành công", tx.hash, `Đã tạo suất #${nextId} cho ${studentAddrToSave.slice(0, 8)}... (Tên: ${studentNameToSave || '—'})`, nextId);
+            updateSessionTx(tx.hash, {
+              status: "Thành công",
+              details: `Đã tạo suất #${nextId} (${amountsStr.length} mốc, ${totalEthStr} ETH) cho ${studentAddrToSave.slice(0, 8)}... (Tên: ${studentNameToSave || '—'}). Block #${receipt.blockNumber}`,
+              scholarshipId: nextId
+            });
           } else {
             showStatus(`Tạo suất #${nextId} thành công nhưng LỖI ĐỒNG BỘ TÊN! ⚠️`, `On-chain thành công, nhưng lưu tên lên server thất bại: ${syncError}`, "error", tx.hash);
-            recordSessionTx("Tạo Suất Học Bổng", "Cảnh Báo Đồng Bộ", tx.hash, `Suất #${nextId} on-chain OK, nhưng backend lỗi: ${syncError}`, nextId);
+            updateSessionTx(tx.hash, {
+              status: "Cảnh Báo Đồng Bộ",
+              details: `Suất #${nextId} on-chain OK, nhưng backend lỗi: ${syncError}`,
+              scholarshipId: nextId
+            });
             alert(`CẢNH BÁO ĐỒNG BỘ:\n\nSuất học bổng #${nextId} đã được tạo thành công trên blockchain Sepolia.\nTUY NHIÊN, việc lưu tên sinh viên "${studentNameToSave}" lên server dùng chung thất bại:\n${syncError}\n\nCác máy tính hoặc trình duyệt khác sẽ chưa thấy tên này cho đến khi kết nối backend được khắc phục.`);
           }
 
@@ -3765,7 +4080,11 @@
           // Giao dịch được khai thác trên chain nhưng không phát sinh Event từ hợp đồng ProjectCore
           const warnDetail = `Giao dịch đã xác nhận (Block: ${receipt.blockNumber}), nhưng không phát sinh Event ScholarshipCreated! Địa chỉ hiện tại (${currentContractAddress.slice(0, 8)}...) chưa có bytecode ProjectCore.sol trên Sepolia.`;
           showStatus("Giao dịch xác nhận nhưng không phát sinh Event!", warnDetail, "error", tx.hash);
-          recordSessionTx("Tạo Suất Học Bổng", "Chưa Có Contract", tx.hash, warnDetail, "-");
+          updateSessionTx(tx.hash, {
+            status: "Chưa Có Contract",
+            details: warnDetail,
+            scholarshipId: "-"
+          });
         }
       } catch (err) {
         handleContractError(err, "Tạo suất học bổng thất bại", "Mới");
@@ -3839,9 +4158,15 @@
         const tx = await coreContract.fundScholarship(id, { value: valueWei });
         showStatus("Giao dịch nạp tiền đang chờ xác thực...", `TxHash: ${tx.hash}`, "loading", tx.hash);
 
+        // Lưu thông tin tạm thời ngay sau khi có transaction hash (pending)
+        recordSessionTx("Nạp Tiền Escrow", "Đang chờ xác nhận", tx.hash, `Đang nạp ${ethAmount} ETH vào suất #${id}`, id);
+
         const receipt = await tx.wait();
         showStatus(`Nạp thành công ${ethAmount} ETH vào suất #${id}! 💰`, `Block: ${receipt.blockNumber}`, "success", tx.hash);
-        recordSessionTx("Nạp Tiền Escrow", "Thành công", tx.hash, `Nạp ${ethAmount} ETH vào suất #${id}`, id);
+        updateSessionTx(tx.hash, {
+          status: "Thành công",
+          details: `Nạp thành công ${ethAmount} ETH vào suất #${id}. Block #${receipt.blockNumber}`
+        });
         checkFundStatus();
         checkReleaseStatus();
       } catch (err) {
@@ -3909,9 +4234,15 @@
         const tx = await coreContract.submitMilestone(id, index, proof);
         showStatus("Đang chờ xác nhận trên Sepolia...", `TxHash: ${tx.hash}`, "loading", tx.hash);
 
+        // Lưu thông tin tạm thời ngay sau khi có transaction hash (pending)
+        recordSessionTx("Nộp Minh Chứng", "Đang chờ xác nhận", tx.hash, `Đang nộp IPFS CID cho Mốc ${index} của suất #${id}`, id);
+
         const receipt = await tx.wait();
         showStatus(`Đã nộp minh chứng mốc ${index} thành công! 📑`, `Block: ${receipt.blockNumber}`, "success", tx.hash);
-        recordSessionTx("Nộp Minh Chứng", "Thành công", tx.hash, `Nộp IPFS CID cho Mốc ${index}`, id);
+        updateSessionTx(tx.hash, {
+          status: "Thành công",
+          details: `Đã nộp minh chứng Mốc ${index} thành công. Block #${receipt.blockNumber}`
+        });
         checkVerifierInspection();
         checkReleaseStatus();
       } catch (err) {
@@ -3981,9 +4312,15 @@
         const tx = await coreContract.approveMilestone(id, index);
         showStatus("Đang chờ xác nhận trên Sepolia...", `TxHash: ${tx.hash}`, "loading", tx.hash);
 
+        // Lưu thông tin tạm thời ngay sau khi có transaction hash (pending)
+        recordSessionTx("Phê Duyệt Mốc", "Đang chờ xác nhận", tx.hash, `Đang phê duyệt Mốc ${index} của suất #${id}`, id);
+
         const receipt = await tx.wait();
         showStatus(`Phê duyệt mốc ${index} thành công! ✅`, `Block: ${receipt.blockNumber}`, "success", tx.hash);
-        recordSessionTx("Phê Duyệt Mốc", "Thành công", tx.hash, `Đã duyệt giải ngân cho Mốc ${index}`, id);
+        updateSessionTx(tx.hash, {
+          status: "Thành công",
+          details: `Phê duyệt mốc ${index} thành công. Block #${receipt.blockNumber}`
+        });
         checkVerifierInspection();
         checkReleaseStatus();
       } catch (err) {
@@ -4045,9 +4382,15 @@
         const tx = await coreContract.releaseMilestone(id, index);
         showStatus("Đang xác thực giao dịch giải ngân...", `TxHash: ${tx.hash}`, "loading", tx.hash);
 
+        // Lưu thông tin tạm thời ngay sau khi có transaction hash (pending)
+        recordSessionTx("Giải Ngân Học Bổng", "Đang chờ xác nhận", tx.hash, `Đang kích hoạt giải ngân Mốc ${index} của suất #${id}`, id);
+
         const receipt = await tx.wait();
         showStatus(`Giải ngân mốc ${index} thành công về ví sinh viên! 💸`, `Block: ${receipt.blockNumber}`, "success", tx.hash);
-        recordSessionTx("Giải Ngân Học Bổng", "Thành công", tx.hash, `Đã chuyển Native ETH mốc ${index} về ví sinh viên`, id);
+        updateSessionTx(tx.hash, {
+          status: "Thành công",
+          details: `Đã chuyển Native ETH mốc ${index} về ví sinh viên. Block #${receipt.blockNumber}`
+        });
         checkReleaseStatus();
         checkVerifierInspection();
       } catch (err) {
@@ -4832,7 +5175,20 @@
       checkFundStatus();
     });
 
-    // Xuất các hàm registry lên window để hỗ trợ kiểm thử và tương thích tự động
+    // Khởi tạo Live Session Ledger từ localStorage và tự động khôi phục từ blockchain nếu trống
+    loadStoredSessionTransactions();
+    if (sessionTransactions.length === 0) {
+      syncLedgerFromBlockchain(false);
+    }
+
+    // Xuất các hàm registry và ledger lên window để hỗ trợ kiểm thử và tương thích tự động
+    window.sessionTransactions = sessionTransactions;
+    window.recordSessionTx = recordSessionTx;
+    window.updateSessionTx = updateSessionTx;
+    window.syncLedgerFromBlockchain = syncLedgerFromBlockchain;
+    window.clearSessionLedger = clearSessionLedger;
+    window.loadStoredSessionTransactions = loadStoredSessionTransactions;
+    window.renderSessionTxTable = renderSessionTxTable;
     window.registerScholarshipStudentSync = registerScholarshipStudentSync;
     window.saveScholarshipStudentNameToBackend = saveScholarshipStudentNameToBackend;
     window.fetchStudentNameForScholarship = fetchStudentNameForScholarship;

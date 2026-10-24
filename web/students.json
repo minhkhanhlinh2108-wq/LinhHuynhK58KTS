@@ -96,12 +96,24 @@
       "studentAddress": "0xee917bc552f81fe4db72025e05f146919b3b4032",
       "studentName": "Khánh Linh xinh đẹp",
       "updatedAt": "2026-10-24T16:24:21.610Z"
+    },
+    "34": {
+      "scholarshipId": 34,
+      "studentAddress": "0x73fff099ada86f63217b769afcf00da80f2b9dca",
+      "studentName": "Phg",
+      "updatedAt": "2026-10-24T16:59:09.049Z"
+    },
+    "37": {
+      "scholarshipId": 37,
+      "studentAddress": "0xee917bc552f81fe4db72025e05f146919b3b4032",
+      "studentName": "LDP",
+      "updatedAt": "2026-10-24T17:32:58.114Z"
     }
   },
   "students": {
-    "0xee917bc552f81fe4db72025e05f146919b3b4032": "Khánh Linh xinh đẹp",
+    "0xee917bc552f81fe4db72025e05f146919b3b4032": "LDP",
     "0xd1695ed2a73e1d13ec63a90653d357baac7467f8": "Linh xinh đẹp",
     "0xafb64eef8093cf3dc4e2c51bb1d18e16afddb6f5": "Trần Thị Như Huỳnh",
-    "0x73fff099ada86f63217b769afcf00da80f2b9dca": "pHg"
+    "0x73fff099ada86f63217b769afcf00da80f2b9dca": "Phg"
   }
 }
