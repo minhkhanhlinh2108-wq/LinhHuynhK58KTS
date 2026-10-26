@@ -2096,7 +2096,12 @@
       const customBase = localStorage.getItem("trustscholar_api_base_url");
       if (customBase && customBase.trim()) {
         const clean = customBase.trim().replace(/\/+$/, "");
-        endpoints.push(`${clean}/api/students`);
+        // Chỉ chấp nhận URL tuyệt đối http(s)://host:port — bỏ qua giá trị sai (vd. địa chỉ ví/hợp đồng 0x...)
+        if (/^https?:\/\/[^\s\/]+/i.test(clean)) {
+          endpoints.push(`${clean}/api/students`);
+        } else {
+          console.warn(`[TrustScholar] Bỏ qua URL Backend không hợp lệ trong localStorage: "${clean}"`);
+        }
       }
       // Nếu đang mở trang từ Web Server (http/https), ưu tiên dùng chính origin của web server
       if (typeof window !== "undefined" && window.location && (window.location.protocol === "http:" || window.location.protocol === "https:")) {
@@ -5130,6 +5135,10 @@
         );
         if (input !== null) {
           const trimmed = input.trim().replace(/\/+$/, "");
+          if (trimmed && !/^https?:\/\/[^\s\/]+/i.test(trimmed)) {
+            alert(`URL Backend không hợp lệ: "${trimmed}"\n\nURL phải bắt đầu bằng http:// hoặc https:// (Ví dụ: http://localhost:3000).\nLưu ý: KHÔNG nhập địa chỉ ví hoặc địa chỉ Smart Contract vào ô này.`);
+            return;
+          }
           if (trimmed) {
             localStorage.setItem("trustscholar_api_base_url", trimmed);
             alert(`Đã cập nhật URL Backend API thành: ${trimmed}\n\nHệ thống sẽ kết nối đến máy chủ này để đọc/ghi tên sinh viên.`);
